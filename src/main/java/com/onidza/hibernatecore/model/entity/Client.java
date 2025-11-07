@@ -1,17 +1,17 @@
 package com.onidza.hibernatecore.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-@Setter
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(force = true, access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "clients")
 public class Client {
@@ -21,11 +21,41 @@ public class Client {
     private Long id;
 
     @Column(name = "name", nullable = false)
-    private String name;
+    private final String name;
 
     @Column(name = "email", nullable = false)
-    private String email;
+    private final String email;
 
     @Column(name = "registration_date", nullable = false)
-    private LocalDate registrationDate;
+    private final LocalDateTime registrationDate;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "profile_id", nullable = false, unique = true)
+    private final Profile profile;
+
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Order> orders = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "client_coupons",
+            joinColumns = @JoinColumn(name = "client_id"),
+            inverseJoinColumns = @JoinColumn(name = "coupon_id")
+    )
+    private List<Coupon> coupons = new ArrayList<>();
+
+    public Client(String name, String email, LocalDateTime registrationDate, Profile profile) {
+        this.name = name;
+        this.email = email;
+        this.registrationDate = registrationDate;
+        this.profile = profile;
+    }
+
+    public List<Order> getOrders() {
+        return Collections.unmodifiableList(orders);
+    }
+
+    public List<Coupon> getCoupons() {
+        return Collections.unmodifiableList(coupons);
+    }
 }
