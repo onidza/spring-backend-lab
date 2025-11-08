@@ -9,7 +9,8 @@ import java.util.Collections;
 import java.util.List;
 
 @Getter
-@NoArgsConstructor(force = true, access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "coupons")
 public class Coupon {
@@ -19,13 +20,13 @@ public class Coupon {
     private Long id;
 
     @Column(name = "code")
-    private final String code;
+    private String code;
 
     @Column(name = "discount")
-    private final float discount;
+    private float discount;
 
     @Column(name = "expiration_date")
-    private final LocalDateTime expirationDate;
+    private LocalDateTime expirationDate;
 
     @ManyToMany(mappedBy = "coupons")
     private List<Client> clients = new ArrayList<>();
@@ -33,7 +34,7 @@ public class Coupon {
     public Coupon(String code, float discount, LocalDateTime expirationDate) {
         this.code = code;
         this.discount = discount;
-        this.expirationDate = expirationDate;
+        this.expirationDate = LocalDateTime.now();
     }
 
     public List<Client> getClients() {

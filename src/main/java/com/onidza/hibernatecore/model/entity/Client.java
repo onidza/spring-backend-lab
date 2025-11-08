@@ -1,9 +1,7 @@
 package com.onidza.hibernatecore.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,7 +9,8 @@ import java.util.Collections;
 import java.util.List;
 
 @Getter
-@NoArgsConstructor(force = true, access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "clients")
 public class Client {
@@ -21,17 +20,17 @@ public class Client {
     private Long id;
 
     @Column(name = "name", nullable = false)
-    private final String name;
+    private String name;
 
     @Column(name = "email", nullable = false)
-    private final String email;
+    private String email;
 
     @Column(name = "registration_date", nullable = false)
-    private final LocalDateTime registrationDate;
+    private LocalDateTime registrationDate;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "profile_id", nullable = false, unique = true)
-    private final Profile profile;
+    private Profile profile;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders = new ArrayList<>();
@@ -47,7 +46,7 @@ public class Client {
     public Client(String name, String email, LocalDateTime registrationDate, Profile profile) {
         this.name = name;
         this.email = email;
-        this.registrationDate = registrationDate;
+        this.registrationDate = LocalDateTime.now();
         this.profile = profile;
     }
 

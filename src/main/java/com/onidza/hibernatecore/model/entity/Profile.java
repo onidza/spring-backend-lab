@@ -1,15 +1,11 @@
 package com.onidza.hibernatecore.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-@Setter
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "profiles")
 public class Profile {
@@ -26,4 +22,9 @@ public class Profile {
 
     @OneToOne(mappedBy = "profile")
     private Client client;
+
+    public Profile(String address, String phone) {
+        this.address = address;
+        this.phone = phone;
+    }
 }

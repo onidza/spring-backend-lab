@@ -1,18 +1,14 @@
 package com.onidza.hibernatecore.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Setter
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "orders")
 public class Order {
@@ -33,4 +29,11 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
+
+    public Order(LocalDateTime orderDate, BigDecimal totalAmount, String status, Client client) {
+        this.orderDate = LocalDateTime.now();
+        this.totalAmount = totalAmount;
+        this.status = status;
+        this.client = client;
+    }
 }
