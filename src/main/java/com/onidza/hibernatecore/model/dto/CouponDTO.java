@@ -8,5 +8,5 @@ public record CouponDTO(
         String code,
         float discount,
         LocalDateTime expirationDate,
-        List<ClientDTO> clients
+        List<Long> clientsId
 ) {}

@@ -3,10 +3,9 @@ package com.onidza.hibernatecore.controller;
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.service.ClientService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/clients")
@@ -17,5 +16,26 @@ public class ClientController {
     @GetMapping("/{id}")
     public ClientDTO getClient(@PathVariable Long id) {
         return clientService.getClientById(id);
+    }
+
+    @GetMapping
+    public List<ClientDTO> getAllClients() {
+        return clientService.getAllClients();
+    }
+
+    @PostMapping
+    public ClientDTO addClient(@RequestBody ClientDTO clientDTO) {
+        return clientService.addClient(clientDTO);
+    }
+
+    @PutMapping("/{id}")
+    public ClientDTO updateClient(@PathVariable Long id,
+                                  @RequestBody ClientDTO clientDTO) {
+        return clientService.updateClient(id, clientDTO);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteClientById(@PathVariable Long id) {
+        clientService.deleteClient(id);
     }
 }

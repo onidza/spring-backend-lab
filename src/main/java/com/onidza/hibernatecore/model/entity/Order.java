@@ -1,7 +1,10 @@
 package com.onidza.hibernatecore.model.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -30,10 +33,9 @@ public class Order {
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 
-    public Order(LocalDateTime orderDate, BigDecimal totalAmount, String status, Client client) {
-        this.orderDate = LocalDateTime.now();
+    public Order(LocalDateTime orderDate, BigDecimal totalAmount, String status) {
+        this.orderDate = orderDate != null ? orderDate : LocalDateTime.now();
         this.totalAmount = totalAmount;
         this.status = status;
-        this.client = client;
     }
 }

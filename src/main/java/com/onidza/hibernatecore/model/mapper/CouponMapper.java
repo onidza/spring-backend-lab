@@ -1,15 +1,16 @@
 package com.onidza.hibernatecore.model.mapper;
 
 import com.onidza.hibernatecore.model.dto.CouponDTO;
+import com.onidza.hibernatecore.model.entity.Client;
 import com.onidza.hibernatecore.model.entity.Coupon;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.stream.Collectors;
+
 @Component
 @RequiredArgsConstructor
 public class CouponMapper {
-
-    private final ClientMapper clientMapper;
 
     public CouponDTO toDTO(Coupon coupon) {
         if (coupon == null) return null;
@@ -20,8 +21,8 @@ public class CouponMapper {
                 coupon.getExpirationDate(),
                 coupon.getClients()
                         .stream()
-                        .map(clientMapper::toDTO)
-                        .toList()
+                        .map(Client::getId)
+                        .collect(Collectors.toList())
         );
     }
 

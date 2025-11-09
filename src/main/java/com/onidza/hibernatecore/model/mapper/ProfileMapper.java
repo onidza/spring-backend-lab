@@ -9,15 +9,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProfileMapper {
 
-    private final ClientMapper clientMapper;
-
     public ProfileDTO toDTO(Profile profile) {
         if (profile == null) return null;
+
+        Long clientId = profile.getClient() == null ? null : profile.getClient().getId();
         return new ProfileDTO(
                 profile.getId(),
                 profile.getAddress(),
                 profile.getPhone(),
-                clientMapper.toDTO(profile.getClient())
+                clientId
         );
     }
 

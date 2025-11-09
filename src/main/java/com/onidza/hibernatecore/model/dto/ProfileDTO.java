@@ -4,5 +4,5 @@ public record ProfileDTO(
         Long id,
         String address,
         String phone,
-        ClientDTO client
+        Long clientId
 ) {}

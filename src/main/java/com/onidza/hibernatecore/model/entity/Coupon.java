@@ -1,11 +1,13 @@
 package com.onidza.hibernatecore.model.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Getter
@@ -19,10 +21,10 @@ public class Coupon {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "code")
+    @Column(name = "code", nullable = false)
     private String code;
 
-    @Column(name = "discount")
+    @Column(name = "discount", nullable = false)
     private float discount;
 
     @Column(name = "expiration_date")
@@ -34,10 +36,6 @@ public class Coupon {
     public Coupon(String code, float discount, LocalDateTime expirationDate) {
         this.code = code;
         this.discount = discount;
-        this.expirationDate = LocalDateTime.now();
-    }
-
-    public List<Client> getClients() {
-        return Collections.unmodifiableList(clients);
+        this.expirationDate = expirationDate;
     }
 }

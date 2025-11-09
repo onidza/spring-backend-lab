@@ -8,5 +8,5 @@ public record OrderDTO(
         LocalDateTime orderDate,
         BigDecimal totalAmount,
         String status,
-        ClientDTO clients
+        Long clientId
 ) {}
