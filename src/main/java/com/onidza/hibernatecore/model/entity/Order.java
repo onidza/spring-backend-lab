@@ -1,5 +1,6 @@
 package com.onidza.hibernatecore.model.entity;
 
+import com.onidza.hibernatecore.model.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -27,13 +28,14 @@ public class Order {
     private BigDecimal totalAmount;
 
     @Column(name = "status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
 
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 
-    public Order(LocalDateTime orderDate, BigDecimal totalAmount, String status) {
+    public Order(LocalDateTime orderDate, BigDecimal totalAmount, OrderStatus status) {
         this.orderDate = orderDate != null ? orderDate : LocalDateTime.now();
         this.totalAmount = totalAmount;
         this.status = status;

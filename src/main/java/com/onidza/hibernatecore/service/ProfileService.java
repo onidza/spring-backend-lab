@@ -9,6 +9,7 @@ import com.onidza.hibernatecore.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public ProfileDTO updateProfile(Long id, ProfileDTO profileDTO) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
@@ -49,6 +51,6 @@ public class ProfileService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client hasn't a profile");
         }
 
-        return mapperService.profileToDTO(profileRepository.save(profile));
+        return mapperService.profileToDTO(profile);
     }
 }

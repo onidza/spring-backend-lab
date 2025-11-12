@@ -6,10 +6,12 @@ import com.onidza.hibernatecore.model.entity.Client;
 import com.onidza.hibernatecore.model.entity.Profile;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
-import com.onidza.hibernatecore.repository.ProfileRepository;
+import com.onidza.hibernatecore.repository.CouponRepository;
+import com.onidza.hibernatecore.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,8 +23,9 @@ import java.util.stream.Collectors;
 public class ClientService {
 
     private final ClientRepository clientRepository;
-    private final ProfileRepository profileRepository;
     private final MapperService mapperService;
+    private final OrderRepository orderRepository;
+    private final CouponRepository couponRepository;
 
     public ClientDTO getClientById(Long id) {
         return mapperService
@@ -39,43 +42,58 @@ public class ClientService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public ClientDTO addClient(ClientDTO clientDTO) {
-        Client client = clientRepository
-                .save(mapperService.clientDTOToEntity(clientDTO));
+        Client client = mapperService.clientDTOToEntity(clientDTO);
 
         if (client.getProfile() != null) {
             client.getProfile().setClient(client);
-            profileRepository.save(client.getProfile());
         }
-        return mapperService.clientToDTO(client);
+
+        Client saved = clientRepository.save(client);
+        return mapperService.clientToDTO(saved);
     }
 
-    public ClientDTO updateClient(Long id, ClientDTO updated) {
+    @Transactional
+    public ClientDTO updateClient(Long id, ClientDTO clientDTO) {
         Client existing = clientRepository
                 .findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
 
-        existing.setName(updated.name());
-        existing.setEmail(updated.email());
+        existing.setName(clientDTO.name());
+        existing.setEmail(clientDTO.email());
 
         Profile existingProfile = existing.getProfile();
-        if (existing.getProfile() != null && updated.profile() != null) {
-            existingProfile.setAddress(updated.profile().address());
-            existingProfile.setPhone(updated.profile().phone());
+        if (existing.getProfile() != null && clientDTO.profile() != null) {
+            existingProfile.setAddress(clientDTO.profile().address());
+            existingProfile.setPhone(clientDTO.profile().phone());
         }
 
-        if (updated.coupons() != null) {
+        if (clientDTO.coupons() != null) {
             existing.getCoupons().clear();
-            existing.setCoupons(updated.coupons()
+            clientDTO.coupons()
                     .stream()
                     .map(mapperService::couponDTOToEntity)
-                    .peek(coupon -> coupon.getClients().add(existing))
-                    .collect(Collectors.toList())
-            );
+                    .forEach(coupon -> {
+                        existing.getCoupons().add(coupon);
+                        coupon.getClients().add(existing);
+                    });
         }
 
-        Client saved = clientRepository.save(existing);
-        return mapperService.clientToDTO(saved);
+        if(clientDTO.orders() != null) {
+            existing.getOrders().clear();
+            clientDTO.orders()
+                    .stream()
+                    .map(mapperService::orderDTOToEntity)
+                    .forEach(order -> {
+                        existing.getOrders().add(order);
+                        order.setClient(existing);
+                    });
+        }
+
+        couponRepository.flush();
+        orderRepository.flush();
+        return mapperService.clientToDTO(existing);
     }
 
     public void deleteClient(@PathVariable Long id) {

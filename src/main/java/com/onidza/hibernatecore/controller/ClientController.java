@@ -2,6 +2,7 @@ package com.onidza.hibernatecore.controller;
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.service.ClientService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +25,7 @@ public class ClientController {
     }
 
     @PostMapping
-    public ClientDTO addClient(@RequestBody ClientDTO clientDTO) {
+    public ClientDTO addClient(@Valid @RequestBody ClientDTO clientDTO) {
         return clientService.addClient(clientDTO);
     }
 

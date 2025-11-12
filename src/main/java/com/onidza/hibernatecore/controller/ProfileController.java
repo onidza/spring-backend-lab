@@ -2,6 +2,7 @@ package com.onidza.hibernatecore.controller;
 
 import com.onidza.hibernatecore.model.dto.ProfileDTO;
 import com.onidza.hibernatecore.service.ProfileService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +26,8 @@ public class ProfileController {
     }
 
     @PutMapping("/{id}/profile")
-    public ProfileDTO updateProfileToClient(@PathVariable Long id, @RequestBody ProfileDTO profileDTO) {
+    public ProfileDTO updateProfileToClient(@PathVariable Long id,
+                                            @Valid @RequestBody ProfileDTO profileDTO) {
         return profileService.updateProfile(id, profileDTO);
     }
 }
