@@ -2,7 +2,7 @@ package com.onidza.hibernatecore.model.mapper;
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.CouponDTO;
-import com.onidza.hibernatecore.model.dto.OrderDTO;
+import com.onidza.hibernatecore.model.dto.order.OrderDTO;
 import com.onidza.hibernatecore.model.dto.ProfileDTO;
 import com.onidza.hibernatecore.model.entity.Client;
 import com.onidza.hibernatecore.model.entity.Coupon;

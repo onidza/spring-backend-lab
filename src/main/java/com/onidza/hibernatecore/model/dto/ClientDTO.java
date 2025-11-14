@@ -1,5 +1,6 @@
 package com.onidza.hibernatecore.model.dto;
 
+import com.onidza.hibernatecore.model.dto.order.OrderDTO;
 import com.onidza.hibernatecore.validation.UniqueEmail;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;

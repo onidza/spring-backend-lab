@@ -1,6 +1,6 @@
 package com.onidza.hibernatecore.model.mapper;
 
-import com.onidza.hibernatecore.model.dto.OrderDTO;
+import com.onidza.hibernatecore.model.dto.order.OrderDTO;
 import com.onidza.hibernatecore.model.entity.Order;
 import org.springframework.stereotype.Component;
 

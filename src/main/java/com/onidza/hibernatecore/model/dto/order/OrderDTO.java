@@ -1,4 +1,4 @@
-package com.onidza.hibernatecore.model.dto;
+package com.onidza.hibernatecore.model.dto.order;
 
 import com.onidza.hibernatecore.model.OrderStatus;
 import jakarta.validation.constraints.DecimalMax;
