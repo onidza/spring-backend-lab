@@ -7,17 +7,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-@NamedEntityGraph(
-        name = "client-full",
-        attributeNodes = {
-                @NamedAttributeNode("profile"),
-                @NamedAttributeNode("orders"),
-                @NamedAttributeNode("coupons")
-        }
-)
+//@NamedEntityGraph(
+//        name = "client-full",
+//        attributeNodes = {
+//                @NamedAttributeNode("profile"),
+//                @NamedAttributeNode("orders"),
+//                @NamedAttributeNode("coupons")
+//        }
+//)
+
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -43,7 +44,7 @@ public class Client {
     private Profile profile;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> orders = new ArrayList<>();
+    private Set<Order> orders = new HashSet<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
@@ -51,7 +52,7 @@ public class Client {
             joinColumns = @JoinColumn(name = "client_id"),
             inverseJoinColumns = @JoinColumn(name = "coupon_id")
     )
-    private List<Coupon> coupons = new ArrayList<>();
+    private Set<Coupon> coupons = new HashSet<>();
 
     public Client(String name, String email, Profile profile) {
         this.name = name;

@@ -8,6 +8,7 @@ import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
 import com.onidza.hibernatecore.repository.CouponRepository;
 import com.onidza.hibernatecore.repository.OrderRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,8 @@ public class ClientService {
     private final OrderRepository orderRepository;
     private final CouponRepository couponRepository;
 
+    private final EntityManager entityManager;
+
     public ClientDTO getClientById(Long id) {
         return mapperService
                 .clientToDTO(clientRepository.findById(id)
@@ -35,8 +38,16 @@ public class ClientService {
     }
 
     public List<ClientDTO> getAllClients() {
-        return clientRepository
-                .findAllWithDetails()
+        List<Client> clients = entityManager.createQuery(
+                """
+                        SELECT DISTINCT c FROM Client c
+                        LEFT JOIN FETCH c.profile
+                        LEFT JOIN FETCH c.orders
+                        LEFT JOIN FETCH c.coupons
+                        """, Client.class
+        ).getResultList();
+
+        return clients
                 .stream()
                 .map(mapperService::clientToDTO)
                 .collect(Collectors.toList());
@@ -80,7 +91,7 @@ public class ClientService {
                     });
         }
 
-        if(clientDTO.orders() != null) {
+        if (clientDTO.orders() != null) {
             existing.getOrders().clear();
             clientDTO.orders()
                     .stream()

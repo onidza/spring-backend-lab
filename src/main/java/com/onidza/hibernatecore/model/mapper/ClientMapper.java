@@ -7,7 +7,7 @@ import com.onidza.hibernatecore.model.entity.Order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -51,20 +51,20 @@ public class ClientMapper {
         );
 
         if (clientDTO.coupons() != null) {
-            List<Coupon> coupons = clientDTO.coupons()
+            Set<Coupon> coupons = clientDTO.coupons()
                     .stream()
                     .map(couponMapper::toEntity)
                     .peek(coupon -> coupon.getClients().add(client))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toSet());
             client.setCoupons(coupons);
         }
 
         if (clientDTO.orders() != null) {
-            List<Order> orders = clientDTO.orders()
+            Set<Order> orders = clientDTO.orders()
                     .stream()
                     .map(orderMapper::toEntity)
                     .peek(order -> order.setClient(client))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toSet());
             client.setOrders(orders);
         }
 
