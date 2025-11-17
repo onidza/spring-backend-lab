@@ -39,7 +39,7 @@ public class ClientService {
 
     public List<ClientDTO> getAllClients() {
         List<Client> clients = entityManager.createQuery(
-                """
+                     """
                         SELECT DISTINCT c FROM Client c
                         LEFT JOIN FETCH c.profile
                         LEFT JOIN FETCH c.orders
