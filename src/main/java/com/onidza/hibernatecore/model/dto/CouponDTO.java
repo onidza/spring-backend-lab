@@ -1,9 +1,14 @@
 package com.onidza.hibernatecore.model.dto;
 
+import com.onidza.hibernatecore.model.entity.Coupon;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+/**
+ * DTO for {@link Coupon}
+ * */
 
 public record CouponDTO(
         Long id,

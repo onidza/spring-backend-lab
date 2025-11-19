@@ -7,13 +7,17 @@ import com.onidza.hibernatecore.model.dto.order.OrderFilterDTO;
 import com.onidza.hibernatecore.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/clients")
@@ -22,59 +26,72 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping("/order/{id}")
-    public OrderDTO getOrderById(@PathVariable Long id) {
-        return orderService.getOrderById(id);
+    public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
+        log.info("Called getOrderById with id: {}", id);
+        OrderDTO orderDTO = orderService.getOrderById(id);
+        return ResponseEntity.ok(orderDTO);
     }
 
     @GetMapping("/orders")
-    public List<OrderDTO> getAllOrders() {
-        return orderService.getAllOrders();
+    public ResponseEntity<List<OrderDTO>> getAllOrders() {
+        log.info("Called getAllOrders");
+        List<OrderDTO> orders = orderService.getAllOrders();
+        return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/{id}/orders")
-    public List<OrderDTO> getAllOrdersByClientId(@PathVariable Long id) {
-        return orderService.getAllOrdersByClientId(id);
+    public ResponseEntity<List<OrderDTO>> getAllOrdersByClientId(@PathVariable Long id) {
+        log.info("Called getAllOrdersByClientId with id: {}", id);
+        List<OrderDTO> orders = orderService.getAllOrdersByClientId(id);
+        return ResponseEntity.ok(orders);
     }
 
     @PutMapping("/{id}/order")
-    public OrderDTO updateOrderByOrderId(@PathVariable Long id,
-                                         @Valid @RequestBody OrderDTO orderDTO) {
-        return orderService.updateOrderByOrderId(id, orderDTO);
+    public ResponseEntity<OrderDTO> updateOrderByOrderId(@PathVariable Long id,
+                                                         @Valid @RequestBody OrderDTO orderDTO) {
+        log.info("Called updateOrderByOrderId with id: {}", id);
+        OrderDTO order = orderService.updateOrderByOrderId(id, orderDTO);
+        return ResponseEntity.ok(order);
     }
 
     @PostMapping("/{id}/order")
-    public OrderDTO addOrderToClient(@PathVariable Long id,
-                                     @Valid @RequestBody OrderDTO orderDTO) {
-        return orderService.addOrderToClient(id, orderDTO);
+    public ResponseEntity<OrderDTO> addOrderToClient(@PathVariable Long id,
+                                                     @Valid @RequestBody OrderDTO orderDTO) {
+        log.info("Called addOrderToClient with id: {}", id);
+        OrderDTO order = orderService.addOrderToClient(id, orderDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
     @DeleteMapping("/{id}/order")
-    public void deleteOrderById(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteOrderById(@PathVariable Long id) {
+        log.info("Called deleteOrderById with id: {}", id);
         orderService.deleteOrderById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/orders/filtered")
-    public List<OrderDTO> findOrdersByFilters(
-            @RequestParam(required = false) String status,
+    public ResponseEntity<List<OrderDTO>> findOrdersByFilters(
+            @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
 
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
 
-            @RequestParam(required = false)BigDecimal minAmount,
-            @RequestParam(required = false)BigDecimal maxAmount
-            ) {
-
-        OrderStatus orderStatus = (status == null) ? null : OrderStatus.valueOf(status.toUpperCase());
+            @RequestParam(required = false) BigDecimal minAmount,
+            @RequestParam(required = false) BigDecimal maxAmount
+    ) {
+        log.info("Called findOrdersByFilters with status: {}, fromDate {}, toDate {}, minAmount {}, maxAmount {}",
+                status, fromDate, toDate, minAmount, maxAmount);
 
         OrderFilterDTO filter = new OrderFilterDTO(
-                orderStatus,
+                status,
                 fromDate,
                 toDate,
                 minAmount,
                 maxAmount);
 
-        return orderService.getOrdersByFilters(filter);
+        List<OrderDTO> orders = orderService.getOrdersByFilters(filter);
+        return ResponseEntity.ok(orders);
     }
 }

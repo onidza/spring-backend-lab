@@ -1,8 +1,13 @@
 package com.onidza.hibernatecore.model.dto;
 
+import com.onidza.hibernatecore.model.entity.Profile;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
+/**
+ * DTO for {@link Profile}
+ * */
 
 public record ProfileDTO(
         Long id,

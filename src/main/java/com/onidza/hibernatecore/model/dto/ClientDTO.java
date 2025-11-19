@@ -6,9 +6,14 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import com.onidza.hibernatecore.model.entity.Client;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+/**
+* DTO for {@link Client}
+* */
 
 public record ClientDTO(
         Long id,

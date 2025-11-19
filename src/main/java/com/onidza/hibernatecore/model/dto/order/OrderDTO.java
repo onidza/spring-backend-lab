@@ -1,6 +1,7 @@
 package com.onidza.hibernatecore.model.dto.order;
 
 import com.onidza.hibernatecore.model.OrderStatus;
+import com.onidza.hibernatecore.model.entity.Order;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
@@ -8,6 +9,10 @@ import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+/**
+ * DTO for {@link Order}
+ * */
 
 public record OrderDTO(
         Long id,
