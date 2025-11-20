@@ -9,6 +9,7 @@ import com.onidza.hibernatecore.repository.ClientRepository;
 import com.onidza.hibernatecore.repository.OrderRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -27,26 +29,30 @@ public class OrderService {
     private final MapperService mapperService;
 
     public OrderDTO getOrderById(Long id) {
+        log.info("Called getOrderById with id: {}", id);
+
         return mapperService.orderToDTO(orderRepository.findById(id)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found")));
     }
 
     public List<OrderDTO> getAllOrders() {
-        return orderRepository
-                .findAll()
+        log.info("Called getAllOrders");
+
+        return orderRepository.findAll()
                 .stream()
                 .map(mapperService::orderToDTO)
                 .collect(Collectors.toList());
     }
 
     public List<OrderDTO> getAllOrdersByClientId(Long id) {
+        log.info("Called getAllOrdersByClientId with id: {}", id);
+
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
 
-        return client
-                .getOrders()
+        return client.getOrders()
                 .stream()
                 .map(mapperService::orderToDTO)
                 .collect(Collectors.toList());
@@ -54,6 +60,8 @@ public class OrderService {
 
     @Transactional
     public OrderDTO updateOrderByOrderId(Long id, OrderDTO orderDTO) {
+        log.info("Called updateOrderByOrderId with id: {}", id);
+
         Order order = orderRepository.findById(id)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
@@ -67,6 +75,8 @@ public class OrderService {
 
     @Transactional
     public OrderDTO addOrderToClient(Long id, OrderDTO orderDTO) {
+        log.info("Called addOrderToClient with id: {}", id);
+
         Order order = mapperService.orderDTOToEntity(orderDTO);
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
@@ -78,10 +88,13 @@ public class OrderService {
     }
 
     public void deleteOrderById(Long id) {
+        log.info("Called deleteOrderById with id: {}", id);
         orderRepository.deleteById(id);
     }
 
     public List<OrderDTO> getOrdersByFilters(OrderFilterDTO filter) {
+        log.info("Called getOrdersByFilters with filter: {}", filter);
+
         List<Order> orders = orderRepository.findAll((root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -108,8 +121,7 @@ public class OrderService {
             return cb.and(predicates.toArray(new Predicate[0]));
         });
 
-        return orders
-                .stream()
+        return orders.stream()
                 .map(mapperService::orderToDTO)
                 .collect(Collectors.toList());
     }

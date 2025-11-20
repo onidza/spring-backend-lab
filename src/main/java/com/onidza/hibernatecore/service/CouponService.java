@@ -7,6 +7,7 @@ import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
 import com.onidza.hibernatecore.repository.CouponRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CouponService {
@@ -24,6 +26,8 @@ public class CouponService {
     private final ClientRepository clientRepository;
 
     public CouponDTO getCouponById(Long id) {
+        log.info("Called getCouponById with id: {}", id);
+
         return mapperService.couponToDTO(couponRepository.findById(id)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coupon not found")));
@@ -31,19 +35,21 @@ public class CouponService {
     }
 
     public List<CouponDTO> getAllCoupons() {
-        return couponRepository
-                .findAll()
+        log.info("Called getAllCoupons");
+
+        return couponRepository.findAll()
                 .stream()
                 .map(mapperService::couponToDTO)
                 .collect(Collectors.toList());
     }
 
     public List<CouponDTO> getAllCouponsByClientId(Long id) {
+        log.info("Called getAllCouponsByClientId with id: {}", id);
+
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
-        return client
-                .getCoupons()
+        return client.getCoupons()
                 .stream()
                 .map(mapperService::couponToDTO)
                 .collect(Collectors.toList());
@@ -51,6 +57,8 @@ public class CouponService {
 
     @Transactional
     public CouponDTO addCouponToClientById(Long id, CouponDTO couponDTO) {
+        log.info("Called addCouponToClientById with id: {}", id);
+
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
@@ -64,6 +72,8 @@ public class CouponService {
 
     @Transactional
     public CouponDTO updateCouponByCouponId(Long id, CouponDTO couponDTO) {
+        log.info("Called updateCouponByCouponId with id: {}", id);
+
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coupon not found"));
@@ -77,6 +87,8 @@ public class CouponService {
 
     @Transactional
     public void deleteCouponById(Long id) {
+        log.info("Called deleteCouponById with id: {}", id);
+
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coupon not found"));

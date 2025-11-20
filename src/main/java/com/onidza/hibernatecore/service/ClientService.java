@@ -10,6 +10,7 @@ import com.onidza.hibernatecore.repository.CouponRepository;
 import com.onidza.hibernatecore.repository.OrderRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ClientService {
@@ -31,6 +33,8 @@ public class ClientService {
     private final EntityManager entityManager;
 
     public ClientDTO getClientById(Long id) {
+        log.info("Called getClientById with id: {}", id);
+
         return mapperService
                 .clientToDTO(clientRepository.findById(id)
                         .orElseThrow(()
@@ -38,6 +42,8 @@ public class ClientService {
     }
 
     public List<ClientDTO> getAllClients() {
+        log.info("Called getAllClients");
+
         List<Client> clients = entityManager.createQuery(
                      """
                         SELECT DISTINCT c FROM Client c
@@ -47,14 +53,15 @@ public class ClientService {
                         """, Client.class
         ).getResultList();
 
-        return clients
-                .stream()
+        return clients.stream()
                 .map(mapperService::clientToDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public ClientDTO addClient(ClientDTO clientDTO) {
+        log.info("Called addClient with name: {}", clientDTO.name());
+
         Client client = mapperService.clientDTOToEntity(clientDTO);
 
         if (client.getProfile() != null) {
@@ -67,14 +74,16 @@ public class ClientService {
 
     @Transactional
     public ClientDTO updateClient(Long id, ClientDTO clientDTO) {
-        Client existing = clientRepository
-                .findById(id)
+        log.info("Called updateClient with id: {}", id);
+
+        Client existing = clientRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
 
         existing.setName(clientDTO.name());
         existing.setEmail(clientDTO.email());
 
         Profile existingProfile = existing.getProfile();
+
         if (existing.getProfile() != null && clientDTO.profile() != null) {
             existingProfile.setAddress(clientDTO.profile().address());
             existingProfile.setPhone(clientDTO.profile().phone());
@@ -107,7 +116,8 @@ public class ClientService {
         return mapperService.clientToDTO(existing);
     }
 
-    public void deleteClient(@PathVariable Long id) {
+    public void deleteClient(Long id) {
+        log.info("Called deleteClient with id: {}", id);
         clientRepository.deleteById(id);
     }
 }
