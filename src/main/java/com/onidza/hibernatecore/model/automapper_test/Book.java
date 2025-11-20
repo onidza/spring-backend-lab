@@ -5,7 +5,7 @@ import lombok.*;
 
 @Setter
 @Getter
-@Entity
+//@Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "book")
 public class Book {
