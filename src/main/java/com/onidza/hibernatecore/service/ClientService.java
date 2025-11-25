@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -98,6 +97,8 @@ public class ClientService {
                         existing.getCoupons().add(coupon);
                         coupon.getClients().add(existing);
                     });
+
+            couponRepository.flush();
         }
 
         if (clientDTO.orders() != null) {
@@ -109,10 +110,10 @@ public class ClientService {
                         existing.getOrders().add(order);
                         order.setClient(existing);
                     });
+
+            orderRepository.flush();
         }
 
-        couponRepository.flush();
-        orderRepository.flush();
         return mapperService.clientToDTO(existing);
     }
 

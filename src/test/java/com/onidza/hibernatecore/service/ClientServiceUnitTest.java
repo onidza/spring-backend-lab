@@ -1,9 +1,15 @@
 package com.onidza.hibernatecore.service;
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
+import com.onidza.hibernatecore.model.dto.CouponDTO;
+import com.onidza.hibernatecore.model.dto.order.OrderDTO;
 import com.onidza.hibernatecore.model.entity.Client;
+import com.onidza.hibernatecore.model.entity.Coupon;
+import com.onidza.hibernatecore.model.entity.Order;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
+import com.onidza.hibernatecore.repository.CouponRepository;
+import com.onidza.hibernatecore.repository.OrderRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,6 +32,12 @@ class ClientServiceUnitTest {
     @Mock
     private MapperService mapperService;
 
+    @Mock
+    private CouponRepository couponRepository;
+
+    @Mock
+    private OrderRepository orderRepository;
+
     @InjectMocks
     private ClientService clientService;
 
@@ -33,7 +46,6 @@ class ClientServiceUnitTest {
     void getClientById_existingClient_returnsDTO() {
         Client persistentClient = ClientDataFactory.createPersistentClientEntity();
         ClientDTO persistentClientDTO = ClientDataFactory.createPersistentClientDTO();
-
 
         Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.of(persistentClient));
         Mockito.when(mapperService.clientToDTO(persistentClient)).thenReturn(persistentClientDTO);
@@ -59,7 +71,8 @@ class ClientServiceUnitTest {
     void getClientById_notFound_throwsException() {
         Mockito.when(clientRepository.findById(1L)).thenReturn((Optional.empty()));
 
-        Assertions.assertThrows(ResponseStatusException.class, () -> clientService.getClientById(1L));
+        Assertions.assertThrows(ResponseStatusException.class,
+                () -> clientService.getClientById(1L));
 
         Mockito.verify(clientRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -110,12 +123,53 @@ class ClientServiceUnitTest {
 
     @Test
     void updateClient_successfully_returnDTO() {
+        Client persistentClientEntity = ClientDataFactory.createPersistentClientEntity();
+        ClientDTO distinctInputClientEntity = ClientDataFactory.createDistinctInputClientDTO();
 
+        Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.of(persistentClientEntity));
+
+        Mockito.when(mapperService.couponDTOToEntity(Mockito.any()))
+                .thenAnswer(i -> {
+                    CouponDTO dto = i.getArgument(0);
+                    return new Coupon(dto.code(), dto.discount(), dto.expirationDate());
+                });
+
+        Mockito.when(mapperService.orderDTOToEntity(Mockito.any()))
+                .thenAnswer(i -> {
+                    OrderDTO dto = i.getArgument(0);
+                    return new Order(dto.orderDate(), dto.totalAmount(), dto.status());
+                });
+
+        Mockito.when(mapperService.clientToDTO(persistentClientEntity))
+                .thenReturn(distinctInputClientEntity);
+
+        ClientDTO result = clientService.updateClient(1L, distinctInputClientEntity);
+
+        Assertions.assertEquals("Sasha", result.name());
+        Assertions.assertEquals("sasha@mail.ru", result.email());
+        Assertions.assertEquals("8(111)111-111-11", result.profile().phone());
+
+        Assertions.assertEquals(new BigDecimal("16445"), result.orders().get(0).totalAmount());
+        Assertions.assertEquals("NEW CODE777", result.coupons().get(0).code());
+        Assertions.assertEquals(result.id(), result.orders().get(0).clientId());
+
+        Mockito.verify(clientRepository).findById(1L);
+        Mockito.verify(mapperService).couponDTOToEntity(Mockito.any());
+        Mockito.verify(mapperService).orderDTOToEntity(Mockito.any());
+        Mockito.verify(couponRepository).flush();
+        Mockito.verify(orderRepository).flush();
     }
 
     @Test
     void updateClient_notFound_throwsException() {
+        ClientDTO inputClientDTO = ClientDataFactory.createInputClientDTO();
 
+        Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Assertions.assertThrows(ResponseStatusException.class,
+                () -> clientService.updateClient(1L, inputClientDTO));
+
+        Mockito.verify(clientRepository).findById(1L);
     }
 
     @Test
@@ -124,11 +178,11 @@ class ClientServiceUnitTest {
         clientService.deleteClient(1L);
         Mockito.verify(clientRepository).deleteById(1L);
     }
+
     @Test
     void deleteClient_notFound_doNothing() {
         Mockito.doNothing().when(clientRepository).deleteById(999L);
         clientService.deleteClient(999L);
         Mockito.verify(clientRepository).deleteById(999L);
     }
-
 }

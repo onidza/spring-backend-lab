@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @SpringBootTest
@@ -21,7 +22,7 @@ class ClientServiceIntegrationIT {
     @Test
     void getAllClients_returnsAllClientsDTOWithRelations() {
         ClientDTO firstInputClientDTO = ClientDataFactory.createInputClientDTO();
-        ClientDTO secondInputClientDTO = ClientDataFactory.createSecondInputClientDTO();
+        ClientDTO secondInputClientDTO = ClientDataFactory.createDistinctInputClientDTO();
 
         clientService.addClient(firstInputClientDTO);
         clientService.addClient(secondInputClientDTO);
@@ -34,11 +35,18 @@ class ClientServiceIntegrationIT {
         Assertions.assertTrue(clients.stream().anyMatch(c -> c.name().equals("Sasha")));
 
         clients.forEach(c -> {
-            Assertions.assertNotNull(c.profile(), "Profile should not be null");
-            Assertions.assertNotNull(c.orders(), "Orders list should not be null");
-            Assertions.assertNotNull(c.coupons(), "Coupons list should not be null");
-            Assertions.assertTrue(c.orders().isEmpty(), "Orders should be empty initially");
-            Assertions.assertTrue(c.coupons().isEmpty(), "Coupons should be empty initially");
+            Assertions.assertNotNull(c.profile());
+            Assertions.assertNotNull(c.orders());
+            Assertions.assertNotNull(c.coupons());
+
+            Assertions.assertTrue(c.orders().stream()
+                    .anyMatch(order ->
+                            order.totalAmount().equals(new BigDecimal("11111"))
+                            || order.totalAmount().equals(new BigDecimal("16445"))));
+
+            Assertions.assertTrue(c.coupons().stream()
+                    .anyMatch(co -> co.discount() == 8.8f || co.discount() == 5.0f));
+
         });
 
         List<Long> ids = clients.stream()

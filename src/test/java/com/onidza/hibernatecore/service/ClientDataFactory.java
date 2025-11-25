@@ -1,12 +1,19 @@
 package com.onidza.hibernatecore.service;
 
+import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.dto.ClientDTO;
+import com.onidza.hibernatecore.model.dto.CouponDTO;
 import com.onidza.hibernatecore.model.dto.ProfileDTO;
+import com.onidza.hibernatecore.model.dto.order.OrderDTO;
 import com.onidza.hibernatecore.model.entity.Client;
 import com.onidza.hibernatecore.model.entity.Profile;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 public class ClientDataFactory {
 
@@ -18,8 +25,25 @@ public class ClientDataFactory {
                 1L);
     }
 
+    static ClientDTO createPersistentClientDTO() {
+        return new ClientDTO(
+                1L,
+                "Ivan",
+                "ivan-st233@mail.ru",
+                LocalDateTime.of(2020, 1, 1, 12, 0),
+
+                createPersistentProfileDTO(),
+
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+    }
+
     static Profile createPersistentProfileEntity() {
-        Profile persistentProfile = new Profile("Voronezh, d.123", "8(904)084-47-07");
+        Profile persistentProfile = new Profile(
+                "Voronezh, d.123",
+                "8(904)084-47-07");
+
         persistentProfile.setId(1L);
         return persistentProfile;
     }
@@ -30,27 +54,13 @@ public class ClientDataFactory {
                 createPersistentProfileEntity());
 
         persistentClient.setId(1L);
-        persistentClient.setRegistrationDate(LocalDateTime.of(2020,1,1,12,0));
-        persistentClient.setOrders(Collections.emptySet());
-        persistentClient.setCoupons(Collections.emptySet());
-
+        persistentClient.setRegistrationDate(LocalDateTime
+                .of(2020, 1, 1, 12, 0));
+        persistentClient.setOrders(new HashSet<>());
+        persistentClient.setCoupons(new HashSet<>());
         persistentClient.getProfile().setClient(persistentClient);
 
         return persistentClient;
-    }
-
-    static ClientDTO createPersistentClientDTO() {
-        return new ClientDTO(
-                1L,
-                "Ivan",
-                "ivan-st233@mail.ru",
-                LocalDateTime.of(2020,1,1,12,0),
-
-                createPersistentProfileDTO(),
-
-                Collections.emptyList(),
-                Collections.emptyList()
-        );
     }
 
     static ClientDTO createInputClientDTO() {
@@ -66,12 +76,25 @@ public class ClientDataFactory {
                         "8(904)084-47-07",
                         null),
 
-                Collections.emptyList(),
-                Collections.emptyList()
+                new ArrayList<>(List.of(
+                        new OrderDTO(null,
+                                null,
+                                new BigDecimal("11111"),
+                                OrderStatus.PAID,
+                                null)
+                )),
+
+                new ArrayList<>(List.of(
+                        new CouponDTO(null,
+                                "NEW CODE000000",
+                                8.8f,
+                                LocalDateTime.now(),
+                                null)
+                ))
         );
     }
 
-    static ClientDTO createSecondInputClientDTO() {
+    static ClientDTO createDistinctInputClientDTO() {
         return new ClientDTO(
                 null,
                 "Sasha",
@@ -80,12 +103,25 @@ public class ClientDataFactory {
 
                 new ProfileDTO(
                         null,
-                        "Voronezh, d.130",
-                        "8(904)777-77-77",
+                        "Moscow, d.1",
+                        "8(111)111-111-11",
                         null),
 
-                Collections.emptyList(),
-                Collections.emptyList()
+                new ArrayList<>(List.of(
+                        new OrderDTO(null,
+                                null,
+                                new BigDecimal("16445"),
+                                OrderStatus.NEW,
+                                null)
+                )),
+
+                new ArrayList<>(List.of(
+                        new CouponDTO(null,
+                                "NEW CODE777",
+                                5.0f,
+                                LocalDateTime.now(),
+                                null)
+                ))
         );
     }
 
@@ -104,29 +140,4 @@ public class ClientDataFactory {
 
         );
     }
-
-//    static Profile createProfile() {
-//        return new Profile(
-//                "Voronezh, d.123",
-//                "8(904)084-47-07"
-//        );
-//    }
-//
-//    static CouponDTO createInputCouponDTO() {
-//        return new CouponDTO(
-//                null,
-//                "DISCOUNT5%",
-//                5.51f,
-//                null,
-//                null);
-//    }
-//
-//    static Coupon createExpectedCoupon() {
-//        return new Coupon(
-//                "DISCOUNT5%",
-//                5.51f,
-//                LocalDateTime.now()
-//        );
-//    }
-
 }
