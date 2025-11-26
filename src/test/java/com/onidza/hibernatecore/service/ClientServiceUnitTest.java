@@ -8,8 +8,6 @@ import com.onidza.hibernatecore.model.entity.Coupon;
 import com.onidza.hibernatecore.model.entity.Order;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
-import com.onidza.hibernatecore.repository.CouponRepository;
-import com.onidza.hibernatecore.repository.OrderRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,12 +29,6 @@ class ClientServiceUnitTest {
 
     @Mock
     private MapperService mapperService;
-
-    @Mock
-    private CouponRepository couponRepository;
-
-    @Mock
-    private OrderRepository orderRepository;
 
     @InjectMocks
     private ClientService clientService;
@@ -143,6 +135,8 @@ class ClientServiceUnitTest {
         Mockito.when(mapperService.clientToDTO(persistentClientEntity))
                 .thenReturn(distinctInputClientEntity);
 
+        Mockito.when(clientRepository.save(persistentClientEntity)).thenReturn(persistentClientEntity);
+
         ClientDTO result = clientService.updateClient(1L, distinctInputClientEntity);
 
         Assertions.assertEquals("Sasha", result.name());
@@ -156,8 +150,6 @@ class ClientServiceUnitTest {
         Mockito.verify(clientRepository).findById(1L);
         Mockito.verify(mapperService).couponDTOToEntity(Mockito.any());
         Mockito.verify(mapperService).orderDTOToEntity(Mockito.any());
-        Mockito.verify(couponRepository).flush();
-        Mockito.verify(orderRepository).flush();
     }
 
     @Test

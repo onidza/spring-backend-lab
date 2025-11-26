@@ -4,10 +4,12 @@ import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -110,5 +112,19 @@ class ClientServiceIntegrationIT {
 
         Assertions.assertEquals(1, updated.coupons().size());
         Assertions.assertEquals(1, updated.orders().size());
+    }
+
+    @Test
+    void deleteClient_returnNotingWithRelations() {
+        ClientDTO inputClientDTO = ClientDataFactory.createInputClientDTO();
+
+        ClientDTO saved = clientService.addClient(inputClientDTO);
+        clientService.deleteClient(saved.id());
+
+        Executable exec = () -> clientService.getClientById(saved.id());
+        Assertions.assertThrows(ResponseStatusException.class, exec);
+
+        List<ClientDTO> clients = clientService.getAllClients();
+        Assertions.assertTrue(clients.stream().noneMatch(c -> c.id().equals(saved.id())));
     }
 }
