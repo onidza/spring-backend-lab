@@ -82,7 +82,6 @@ public class ClientService {
         existing.setEmail(clientDTO.email());
 
         Profile existingProfile = existing.getProfile();
-
         if (existing.getProfile() != null && clientDTO.profile() != null) {
             existingProfile.setAddress(clientDTO.profile().address());
             existingProfile.setPhone(clientDTO.profile().phone());
@@ -97,8 +96,6 @@ public class ClientService {
                         existing.getCoupons().add(coupon);
                         coupon.getClients().add(existing);
                     });
-
-            couponRepository.flush();
         }
 
         if (clientDTO.orders() != null) {
@@ -110,11 +107,9 @@ public class ClientService {
                         existing.getOrders().add(order);
                         order.setClient(existing);
                     });
-
-            orderRepository.flush();
         }
 
-        return mapperService.clientToDTO(existing);
+        return mapperService.clientToDTO(clientRepository.save(existing));
     }
 
     public void deleteClient(Long id) {

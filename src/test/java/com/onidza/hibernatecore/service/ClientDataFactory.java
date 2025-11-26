@@ -88,7 +88,7 @@ public class ClientDataFactory {
                         new CouponDTO(null,
                                 "NEW CODE000000",
                                 8.8f,
-                                LocalDateTime.now(),
+                                LocalDateTime.of(2020, 1, 1, 12, 0),
                                 null)
                 ))
         );
@@ -119,7 +119,7 @@ public class ClientDataFactory {
                         new CouponDTO(null,
                                 "NEW CODE777",
                                 5.0f,
-                                LocalDateTime.now(),
+                                LocalDateTime.of(2020, 1, 1, 12, 0),
                                 null)
                 ))
         );
