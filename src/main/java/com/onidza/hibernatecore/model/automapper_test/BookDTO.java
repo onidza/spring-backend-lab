@@ -2,11 +2,13 @@ package com.onidza.hibernatecore.model.automapper_test;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Generated;
 
 /**
  * DTO for {@link Book}
  * */
 
+@Generated
 public record BookDTO (
         Long id,
 

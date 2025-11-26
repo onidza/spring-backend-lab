@@ -3,6 +3,7 @@ package com.onidza.hibernatecore.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+@Generated
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

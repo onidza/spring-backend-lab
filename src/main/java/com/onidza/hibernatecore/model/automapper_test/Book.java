@@ -3,6 +3,7 @@ package com.onidza.hibernatecore.model.automapper_test;
 import jakarta.persistence.*;
 import lombok.*;
 
+@Generated
 @Setter
 @Getter
 //@Entity

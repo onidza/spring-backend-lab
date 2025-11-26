@@ -2,15 +2,13 @@ package com.onidza.hibernatecore.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Generated
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

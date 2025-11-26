@@ -4,6 +4,7 @@ import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.entity.Order;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.PositiveOrZero;
+import lombok.Generated;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
  * DTO for {@link Order}
  * */
 
+@Generated
 public record OrderFilterDTO(
         OrderStatus status,
 

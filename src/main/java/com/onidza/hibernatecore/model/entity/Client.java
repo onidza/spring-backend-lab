@@ -16,6 +16,7 @@ import java.util.Set;
 //        }
 //)
 
+@Generated
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

@@ -2,14 +2,12 @@ package com.onidza.hibernatecore.model.entity;
 
 import com.onidza.hibernatecore.model.OrderStatus;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Generated
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
