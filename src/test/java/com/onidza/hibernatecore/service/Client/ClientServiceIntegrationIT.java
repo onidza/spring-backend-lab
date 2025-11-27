@@ -1,7 +1,8 @@
-package com.onidza.hibernatecore.service;
+package com.onidza.hibernatecore.service.Client;
 
 import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.dto.ClientDTO;
+import com.onidza.hibernatecore.service.ClientService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;

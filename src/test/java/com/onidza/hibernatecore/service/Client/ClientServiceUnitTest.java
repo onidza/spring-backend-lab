@@ -1,4 +1,4 @@
-package com.onidza.hibernatecore.service;
+package com.onidza.hibernatecore.service.Client;
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.CouponDTO;
@@ -8,6 +8,7 @@ import com.onidza.hibernatecore.model.entity.Coupon;
 import com.onidza.hibernatecore.model.entity.Order;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
+import com.onidza.hibernatecore.service.ClientService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
