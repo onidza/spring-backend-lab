@@ -1,11 +1,14 @@
 package com.onidza.hibernatecore.service.Profile;
 
+import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.ProfileDTO;
 import com.onidza.hibernatecore.model.entity.Client;
 import com.onidza.hibernatecore.model.entity.Profile;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashSet;
+
 
 public class ProfileDataFactory {
 
@@ -96,6 +99,42 @@ public class ProfileDataFactory {
                 "Moscow, d.1",
                 "8(111)111-111-11",
                 null
+        );
+    }
+
+    static ClientDTO createInputClientDTO() {
+        return new ClientDTO(
+                null,
+                "Ivan",
+                "ivan-st233@mail.ru",
+                null,
+
+                new ProfileDTO(
+                        null,
+                        "Voronezh, d.123",
+                        "8(904)084-47-07",
+                        null),
+
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+    }
+
+    static ClientDTO createDistinctInputClientDTO() {
+        return new ClientDTO(
+                null,
+                "Sasha",
+                "sasha@mail.ru",
+                null,
+
+                new ProfileDTO(
+                        null,
+                        "Moscow, d.1",
+                        "8(111)111-111-11",
+                        null),
+
+                Collections.emptyList(),
+                Collections.emptyList()
         );
     }
 }
