@@ -28,12 +28,14 @@ public class OrderService {
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
 
+    private static final String ORDER_NOT_FOUND = "Order not found";
+
     public OrderDTO getOrderById(Long id) {
         log.info("Called getOrderById with id: {}", id);
 
         return mapperService.orderToDTO(orderRepository.findById(id)
                 .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found")));
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND)));
     }
 
     public List<OrderDTO> getAllOrders() {
@@ -64,7 +66,7 @@ public class OrderService {
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
 
         order.setTotalAmount(orderDTO.totalAmount());
         order.setStatus(orderDTO.status());
@@ -83,12 +85,22 @@ public class OrderService {
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
 
         order.setClient(client);
+        client.getOrders().add(order);
 
         return mapperService.orderToDTO(orderRepository.save(order));
     }
 
     public void deleteOrderById(Long id) {
         log.info("Called deleteOrderById with id: {}", id);
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
+
+        Client client = order.getClient();
+        if (client != null) {
+            client.getOrders().remove(order);
+        }
+
         orderRepository.deleteById(id);
     }
 

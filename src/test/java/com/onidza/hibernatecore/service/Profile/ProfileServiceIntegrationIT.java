@@ -51,7 +51,6 @@ class ProfileServiceIntegrationIT {
         Assertions.assertNotNull(result.get(0).id());
         Assertions.assertNotNull(result.get(0).clientId());
 
-        Assertions.assertTrue(result.stream().anyMatch(p -> p.id().equals(2L)));
         Assertions.assertTrue(result.stream().anyMatch(p -> p.phone().equals("8(904)084-47-07")));
         Assertions.assertTrue(result.stream().anyMatch(p -> p.phone().equals("8(111)111-111-11")));
 

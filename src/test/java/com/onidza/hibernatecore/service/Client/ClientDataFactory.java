@@ -137,7 +137,6 @@ public class ClientDataFactory {
                 "Ivan",
                 "ivan-st233@mail.ru",
                 createInputProfileEntity()
-
         );
     }
 }
