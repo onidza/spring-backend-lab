@@ -25,12 +25,14 @@ public class CouponService {
     private final CouponRepository couponRepository;
     private final ClientRepository clientRepository;
 
+    private static final String COUPON_NOT_FOUND = "Coupon not found";
+
     public CouponDTO getCouponById(Long id) {
         log.info("Called getCouponById with id: {}", id);
 
         return mapperService.couponToDTO(couponRepository.findById(id)
                 .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coupon not found")));
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND)));
 
     }
 
@@ -48,7 +50,7 @@ public class CouponService {
 
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND));
         return client.getCoupons()
                 .stream()
                 .map(mapperService::couponToDTO)
@@ -76,7 +78,7 @@ public class CouponService {
 
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coupon not found"));
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND));
 
         coupon.setCode(couponDTO.code());
         coupon.setDiscount(couponDTO.discount());
@@ -91,7 +93,7 @@ public class CouponService {
 
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coupon not found"));
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND));
 
         coupon.getClients()
                 .forEach(client -> client.getCoupons().remove(coupon));
