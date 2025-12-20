@@ -76,8 +76,8 @@ class ProfileServiceUnitTest {
         ProfileDTO persistentProfileDTO = ProfileDataFactory.createPersistentProfileDTO();
         ProfileDTO persistentDistinctProfileDTO = ProfileDataFactory.createDistinctPersistentProfileDTO();
 
-        Mockito.when(profileRepository.findAll()).thenReturn
-                (List.of(persistentProfileEntity, persistentDistinctProfileEntity));
+        Mockito.when(profileRepository.findAll())
+                .thenReturn(List.of(persistentProfileEntity, persistentDistinctProfileEntity));
         Mockito.when(mapperService.profileToDTO(persistentProfileEntity))
                 .thenReturn(persistentProfileDTO);
         Mockito.when(mapperService.profileToDTO(persistentDistinctProfileEntity))
@@ -155,7 +155,8 @@ class ProfileServiceUnitTest {
         Client persistentClientEntity = ProfileDataFactory.createPersistentClientEntityWithNullableProfile();
         ProfileDTO profileDTOForUpdate = ProfileDataFactory.createProfileDTOForUpdate();
 
-        Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.of(persistentClientEntity));
+        Mockito.when(clientRepository.findById(1L))
+                .thenReturn(Optional.of(persistentClientEntity));
 
         Assertions.assertThrows(ResponseStatusException.class,
                 () -> profileService.updateProfile(1L, profileDTOForUpdate));

@@ -29,6 +29,7 @@ public class OrderService {
     private final MapperService mapperService;
 
     private static final String ORDER_NOT_FOUND = "Order not found";
+    private static final String CLIENT_NOT_FOUND = "Client not found";
 
     public OrderDTO getOrderById(Long id) {
         log.info("Called getOrderById with id: {}", id);
@@ -52,7 +53,7 @@ public class OrderService {
 
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND));
 
         return client.getOrders()
                 .stream()
@@ -79,11 +80,11 @@ public class OrderService {
     public OrderDTO addOrderToClient(Long id, OrderDTO orderDTO) {
         log.info("Called addOrderToClient with id: {}", id);
 
-        Order order = mapperService.orderDTOToEntity(orderDTO);
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND));
 
+        Order order = mapperService.orderDTOToEntity(orderDTO);
         order.setClient(client);
         client.getOrders().add(order);
 
