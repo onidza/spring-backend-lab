@@ -1,10 +1,14 @@
 package com.onidza.hibernatecore.service.Coupon;
 
+import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.CouponDTO;
+import com.onidza.hibernatecore.model.dto.ProfileDTO;
 import com.onidza.hibernatecore.model.entity.Client;
 import com.onidza.hibernatecore.model.entity.Coupon;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CouponDataFactory {
@@ -92,10 +96,98 @@ public class CouponDataFactory {
     static CouponDTO createCouponDTOAfterUpdate() {
         return new CouponDTO(
                 1L,
+                "NEW CODE111111",
+                2.1f,
+                LocalDateTime.of(2020, 1, 20, 20, 20),
+                List.of(1L)
+        );
+    }
+
+    static CouponDTO createCouponDTOAfterAdd() {
+        return new CouponDTO(
+                1L,
                 "NEW CODE000000",
                 8.8f,
                 LocalDateTime.of(2020, 1, 1, 12, 0),
                 List.of(1L)
+        );
+    }
+
+    static CouponDTO createCouponDTOForUpdate() {
+        return new CouponDTO(
+                null,
+                "NEW CODE111111",
+                2.1f,
+                LocalDateTime.of(2020, 1, 20, 20, 20),
+                null
+        );
+    }
+
+    static ClientDTO createClientDTOWithOneCoupon() {
+        return new ClientDTO(
+                null,
+                "Ivan",
+                "ivan-st233@mail.ru",
+                null,
+
+                new ProfileDTO(
+                        null,
+                        "Voronezh, d.123",
+                        "8(904)084-47-07",
+                        null),
+
+                Collections.emptyList(),
+
+                new ArrayList<>(List.of(
+                        new CouponDTO(null,
+                                "NEW CODE000000",
+                                8.8f,
+                                LocalDateTime.of(2020, 1, 1, 12, 0),
+                                null)
+                ))
+        );
+    }
+
+    static ClientDTO createDistinctClientDTOWithOneCoupon() {
+        return new ClientDTO(
+                null,
+                "Sasha",
+                "sasha@mail.ru",
+                null,
+
+                new ProfileDTO(
+                        null,
+                        "Moscow, d.1",
+                        "8(111)111-111-11",
+                        null),
+
+                Collections.emptyList(),
+
+                new ArrayList<>(List.of(
+                        new CouponDTO(null,
+                                "NEW CODE111111",
+                                2.1f,
+                                LocalDateTime.of(2020, 1, 20, 20, 20),
+                                null)
+                ))
+        );
+    }
+
+    static ClientDTO createInputClientDTOWithEmptyCoupons() {
+        return new ClientDTO(
+                null,
+                "Ivan",
+                "ivan-st233@mail.ru",
+                null,
+
+                new ProfileDTO(
+                        null,
+                        "Voronezh, d.123",
+                        "8(904)084-47-07",
+                        null),
+
+                Collections.emptyList(),
+                Collections.emptyList()
         );
     }
 }

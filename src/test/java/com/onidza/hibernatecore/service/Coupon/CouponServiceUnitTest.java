@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
@@ -164,7 +165,7 @@ class CouponServiceUnitTest {
         Client client = CouponDataFactory.createPersistClientWithTwoCoupons();
         CouponDTO couponDTOForAdd = CouponDataFactory.createCouponDTOForAdd();
         Coupon couponEntityForAdd = CouponDataFactory.createPersistentCouponEntityForAdd();
-        CouponDTO couponDTOAfterAdd = CouponDataFactory.createCouponDTOAfterUpdate();
+        CouponDTO couponDTOAfterAdd = CouponDataFactory.createCouponDTOAfterAdd();
 
         Mockito.when(mapperService.couponDTOToEntity(couponDTOForAdd))
                 .thenReturn(couponEntityForAdd);
@@ -189,71 +190,86 @@ class CouponServiceUnitTest {
         Mockito.verify(mapperService).couponToDTO(couponEntityForAdd);
     }
 
-//    @Test
-//    void addOrderToClient_ClientNotFound_throwsExceptions() {
-//        OrderDTO orderDTOForAdd = OrderDataFactory.createOrderDTOForUpdate();
-//
-//        Mockito.when(clientRepository.findById(1L))
-//                .thenReturn(Optional.empty());
-//
-//        Assertions.assertThrows(ResponseStatusException.class,
-//                () -> orderService.addOrderToClient(1L, orderDTOForAdd));
-//
-//        Mockito.verify(clientRepository).findById(1L);
-//        Mockito.verifyNoInteractions(mapperService);
-//        Mockito.verifyNoInteractions(orderRepository);
-//    }
-//
-//    @Test
-//    void updateOrderByOrderId_returnOrderDTOWithRelations() {
-//        Order persistOrder = OrderDataFactory.createPersistentOrderEntity();
-//        OrderDTO forUpdate = OrderDataFactory.createOrderDTOForUpdate();
-//        OrderDTO orderAfterUpdate = OrderDataFactory.createOrderDTOAfterUpdate();
-//
-//        Mockito.when(orderRepository.findById(persistOrder.getId()))
-//                .thenReturn(Optional.of(persistOrder));
-//
-//        Mockito.when(mapperService.orderToDTO(persistOrder))
-//                .thenReturn(orderAfterUpdate);
-//
-//        OrderDTO result = orderService.updateOrderByOrderId(persistOrder.getId(), forUpdate);
-//
-//        Assertions.assertEquals(forUpdate.status(), result.status());
-//        Assertions.assertEquals(persistOrder.getId(), result.id());
-//        Assertions.assertEquals(forUpdate.totalAmount(), result.totalAmount());
-//
-//        Mockito.verify(orderRepository).findById(persistOrder.getId());
-//        Mockito.verify(mapperService).orderToDTO(persistOrder);
-//    }
-//
-//    @Test
-//    void updateOrderByOrderId_notFound_throwsExceptions() {
-//        OrderDTO forUpdate = OrderDataFactory.createOrderDTOForUpdate();
-//
-//        Mockito.when(orderRepository.findById(1L)).thenReturn(Optional.empty());
-//
-//        Assertions.assertThrows(ResponseStatusException.class,
-//                () -> orderService.updateOrderByOrderId(1L, forUpdate));
-//
-//        Mockito.verify(orderRepository).findById(1L);
-//        Mockito.verifyNoInteractions(mapperService);
-//    }
-//
-//    @Test
-//    void deleteOrderById_returnNothing() {
-//        Client clientWithOrders = OrderDataFactory.createPersistClientWithOrders();
-//        Order orderForDelete = OrderDataFactory.createPersistentOrderEntity();
-//        orderForDelete.setClient(clientWithOrders);
-//
-//        Mockito.when(orderRepository.findById(orderForDelete.getId()))
-//                .thenReturn(Optional.of(orderForDelete));
-//        Mockito.doNothing()
-//                .when(orderRepository).deleteById(orderForDelete.getId());
-//
-//        orderService.deleteOrderById(orderForDelete.getId());
-//
-//        Mockito.verify(orderRepository).findById(orderForDelete.getId());
-//        Mockito.verify(orderRepository).deleteById(orderForDelete.getId());
-//    }
+    @Test
+    void addCouponToClient_ClientNotFound_throwsExceptions() {
+        CouponDTO couponDTOForAdd = CouponDataFactory.createCouponDTOForAdd();
 
+        Mockito.when(clientRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        Assertions.assertThrows(ResponseStatusException.class,
+                () -> couponService.addCouponToClientById(1L, couponDTOForAdd));
+
+        Mockito.verify(clientRepository).findById(1L);
+        Mockito.verifyNoInteractions(mapperService);
+        Mockito.verifyNoInteractions(couponRepository);
+    }
+
+    @Test
+    void updateCouponByCouponId_returnCouponDTOWithRelations() {
+        Coupon persistCoupon = CouponDataFactory.createPersistentCouponEntity();
+        CouponDTO forUpdate = CouponDataFactory.createCouponDTOForUpdate();
+        CouponDTO couponAfterUpdate = CouponDataFactory.createCouponDTOAfterUpdate();
+
+        Mockito.when(couponRepository.findById(persistCoupon.getId()))
+                .thenReturn(Optional.of(persistCoupon));
+
+        Mockito.when(mapperService.couponToDTO(persistCoupon))
+                .thenReturn(couponAfterUpdate);
+
+        CouponDTO result = couponService.updateCouponByCouponId(persistCoupon.getId(), forUpdate);
+
+        Assertions.assertEquals(forUpdate.code(), result.code());
+        Assertions.assertEquals(persistCoupon.getId(), result.id());
+        Assertions.assertEquals(forUpdate.expirationDate(), result.expirationDate());
+
+        Mockito.verify(couponRepository).findById(persistCoupon.getId());
+        Mockito.verify(mapperService).couponToDTO(persistCoupon);
+    }
+
+    @Test
+    void updateOrderByOrderId_notFound_throwsExceptions() {
+        CouponDTO forUpdate = CouponDataFactory.createCouponDTOForUpdate();
+
+        Mockito.when(couponRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        Assertions.assertThrows(ResponseStatusException.class,
+                () -> couponService.updateCouponByCouponId(1L, forUpdate));
+
+        Mockito.verify(couponRepository).findById(1L);
+        Mockito.verifyNoInteractions(mapperService);
+    }
+
+    @Test
+    void deleteCouponById_returnNothing() {
+        Client clientWithOrders = CouponDataFactory.createPersistClientWithTwoCoupons();
+        Coupon orderForDelete = CouponDataFactory.createPersistentCouponEntity();
+        orderForDelete.getClients().add(clientWithOrders);
+
+        Mockito.when(couponRepository.findById(orderForDelete.getId()))
+                .thenReturn(Optional.of(orderForDelete));
+        Mockito.doNothing()
+                .when(couponRepository).deleteById(orderForDelete.getId());
+
+        couponService.deleteCouponById(orderForDelete.getId());
+
+        Mockito.verify(couponRepository).findById(orderForDelete.getId());
+        Mockito.verify(couponRepository).deleteById(orderForDelete.getId());
+    }
+
+    @Test
+    void deleteCouponById_couponNotFound() {
+        Mockito.when(couponRepository.findById(Mockito.anyLong()))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException ex = Assertions.assertThrows(ResponseStatusException.class,
+                () -> couponService.deleteCouponById(999L));
+
+        Assertions.assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+
+        Mockito.verify(couponRepository, Mockito.times(1)).findById(999L);
+        Mockito.verify(couponRepository, Mockito.never()).deleteById(Mockito.anyLong());
+        Mockito.verifyNoMoreInteractions(couponRepository);
+    }
 }
