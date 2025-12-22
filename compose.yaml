@@ -22,7 +22,7 @@ services:
 #      SPRING_DATASOURCE_PASSWORD: postgres
 #    depends_on:
 #      - postgres
-
+#
 #  frontend:
 #    build:
 #      context: ./frontend
@@ -31,8 +31,15 @@ services:
 #    volumes:
 #      - ./frontend:/app
 #      - /app/node_modules
-##    depends_on:
-##      - backend
-
+#    depends_on:
+#      - backend
+#
 volumes:
    db_data:
+
+     ##notion
+#     Volume = “жёсткий диск для контейнера”
+#     Без него:
+#     контейнер — как RAM
+#     умер → всё пропало
+#     сервисы начинают ломаться

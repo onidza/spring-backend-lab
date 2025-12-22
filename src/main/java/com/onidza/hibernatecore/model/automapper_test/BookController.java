@@ -3,6 +3,7 @@ package com.onidza.hibernatecore.model.automapper_test;
 import lombok.AllArgsConstructor;
 import lombok.Generated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,10 +20,8 @@ public class BookController {
     private final List<Book> library = new ArrayList<>();
 
     @PostMapping("/create")
-    public BookDTO createBook(BookDTO bookDTO) {
+    public BookDTO createBook(@RequestBody BookDTO bookDTO) {
         Book book = bookMapper.dtoToBook(bookDTO);
-        book.setAuthor("Updated");
-        book.setName("Updated");
         library.add(book);
         return bookMapper.bookToBookDTO(library.get(0));
     }
