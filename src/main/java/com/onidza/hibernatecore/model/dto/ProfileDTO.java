@@ -20,7 +20,7 @@ public record ProfileDTO(
 
         @NotNull(message = "phone must be not empty")
         @Pattern(
-                regexp = "\\+?[0-9]{11}",
+                regexp = "\\+?\\d{11}",
                 message = "Phone number must have 11 digests")
         String phone,
 

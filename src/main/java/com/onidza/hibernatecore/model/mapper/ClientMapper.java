@@ -1,14 +1,16 @@
 package com.onidza.hibernatecore.model.mapper;
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
+import com.onidza.hibernatecore.model.dto.CouponDTO;
+import com.onidza.hibernatecore.model.dto.order.OrderDTO;
 import com.onidza.hibernatecore.model.entity.Client;
 import com.onidza.hibernatecore.model.entity.Coupon;
 import com.onidza.hibernatecore.model.entity.Order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -32,12 +34,12 @@ public class ClientMapper {
                 client.getOrders()
                         .stream()
                         .map(orderMapper::toDTO)
-                        .collect(Collectors.toList()),
+                        .toList(),
 
                 client.getCoupons()
                         .stream()
                         .map(couponMapper::toDTO)
-                        .collect(Collectors.toList())
+                        .toList()
                 );
     }
 
@@ -50,21 +52,23 @@ public class ClientMapper {
                 profileMapper.toEntity(clientDTO.profile())
         );
 
+        Set<Coupon> coupons = new HashSet<>();
         if (clientDTO.coupons() != null) {
-            Set<Coupon> coupons = clientDTO.coupons()
-                    .stream()
-                    .map(couponMapper::toEntity)
-                    .peek(coupon -> coupon.getClients().add(client))
-                    .collect(Collectors.toSet());
+            for (CouponDTO couponDTO : clientDTO.coupons()) {
+                Coupon coupon = couponMapper.toEntity(couponDTO);
+                coupon.getClients().add(client);
+                coupons.add(coupon);
+            }
             client.setCoupons(coupons);
         }
 
+        Set<Order> orders = new HashSet<>();
         if (clientDTO.orders() != null) {
-            Set<Order> orders = clientDTO.orders()
-                    .stream()
-                    .map(orderMapper::toEntity)
-                    .peek(order -> order.setClient(client))
-                    .collect(Collectors.toSet());
+            for (OrderDTO orderDTO : clientDTO.orders()) {
+                Order order = orderMapper.toEntity(orderDTO);
+                order.setClient(client);
+                orders.add(order);
+            }
             client.setOrders(orders);
         }
 

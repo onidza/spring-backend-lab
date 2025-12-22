@@ -6,8 +6,6 @@ import com.onidza.hibernatecore.model.entity.Client;
 import com.onidza.hibernatecore.model.entity.Profile;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
-import com.onidza.hibernatecore.repository.CouponRepository;
-import com.onidza.hibernatecore.repository.OrderRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -26,8 +23,6 @@ public class ClientService {
 
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
-    private final OrderRepository orderRepository;
-    private final CouponRepository couponRepository;
 
     private final EntityManager entityManager;
 
@@ -54,7 +49,7 @@ public class ClientService {
 
         return clients.stream()
                 .map(mapperService::clientToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional

@@ -6,8 +6,6 @@ import com.onidza.hibernatecore.model.entity.Coupon;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.stream.Collectors;
-
 @Component
 @RequiredArgsConstructor
 public class CouponMapper {
@@ -22,7 +20,7 @@ public class CouponMapper {
                 coupon.getClients()
                         .stream()
                         .map(Client::getId)
-                        .collect(Collectors.toList())
+                        .toList()
         );
     }
 

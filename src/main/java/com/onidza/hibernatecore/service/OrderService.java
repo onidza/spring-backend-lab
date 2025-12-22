@@ -17,7 +17,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -45,7 +44,7 @@ public class OrderService {
         return orderRepository.findAll()
                 .stream()
                 .map(mapperService::orderToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<OrderDTO> getAllOrdersByClientId(Long id) {
@@ -58,7 +57,7 @@ public class OrderService {
         return client.getOrders()
                 .stream()
                 .map(mapperService::orderToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
@@ -136,6 +135,6 @@ public class OrderService {
 
         return orders.stream()
                 .map(mapperService::orderToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

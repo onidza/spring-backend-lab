@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -42,7 +41,7 @@ public class CouponService {
         return couponRepository.findAll()
                 .stream()
                 .map(mapperService::couponToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<CouponDTO> getAllCouponsByClientId(Long id) {
@@ -54,7 +53,7 @@ public class CouponService {
         return client.getCoupons()
                 .stream()
                 .map(mapperService::couponToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
