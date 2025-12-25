@@ -33,4 +33,4 @@ build/
 .vscode/
 
 .env
-sql-dump.sql
+src/main/resources/db/changelog/sql-dump.sql
