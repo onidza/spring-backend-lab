@@ -23,7 +23,6 @@ public class ClientService {
 
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
-
     private final EntityManager entityManager;
 
     public ClientDTO getClientById(Long id) {

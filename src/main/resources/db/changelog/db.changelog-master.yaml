@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/changeset/003-add-indexes.sql
   - include:
       file: db/changelog/changeset/004-add-indexes.sql
+  - include:
+      file: db/changelog/changeset/005-add-indexes.sql
