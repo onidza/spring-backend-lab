@@ -6,7 +6,7 @@ import com.onidza.hibernatecore.model.entity.Profile;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
 import com.onidza.hibernatecore.repository.ProfileRepository;
-import com.onidza.hibernatecore.service.ProfileService;
+import com.onidza.hibernatecore.service.ProfileServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +33,7 @@ class ProfileServiceUnitTest {
     private ProfileRepository profileRepository;
 
     @InjectMocks
-    private ProfileService profileService;
+    private ProfileServiceImpl profileServiceImpl;
 
     @Test
     void getProfileById_returnProfileDTOWithRelations() {
@@ -43,7 +43,7 @@ class ProfileServiceUnitTest {
         Mockito.when(profileRepository.findById(1L)).thenReturn(Optional.of(persistentProfileEntity));
         Mockito.when(mapperService.profileToDTO(persistentProfileEntity)).thenReturn(persistentProfileDTO);
 
-        ProfileDTO result = profileService.getProfileById(1L);
+        ProfileDTO result = profileServiceImpl.getProfileById(1L);
 
         Assertions.assertNotNull(result.id());
         Assertions.assertNotNull(result.clientId());
@@ -61,7 +61,7 @@ class ProfileServiceUnitTest {
         Mockito.when(profileRepository.findById(1L)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> profileService.getProfileById(1L));
+                () -> profileServiceImpl.getProfileById(1L));
 
         Mockito.verify(profileRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -83,7 +83,7 @@ class ProfileServiceUnitTest {
         Mockito.when(mapperService.profileToDTO(persistentDistinctProfileEntity))
                 .thenReturn(persistentDistinctProfileDTO);
 
-        List<ProfileDTO> result = profileService.getAllProfiles();
+        List<ProfileDTO> result = profileServiceImpl.getAllProfiles();
 
         Assertions.assertNotNull(result);
         Assertions.assertEquals(2, result.size());
@@ -105,7 +105,7 @@ class ProfileServiceUnitTest {
     void getAllProfiles_returnEmptyList() {
         Mockito.when(profileRepository.findAll()).thenReturn(Collections.emptyList());
 
-        List<ProfileDTO> result = profileService.getAllProfiles();
+        List<ProfileDTO> result = profileServiceImpl.getAllProfiles();
 
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isEmpty());
@@ -126,7 +126,7 @@ class ProfileServiceUnitTest {
         Mockito.when(mapperService.profileToDTO(persistentClientEntity.getProfile()))
                 .thenReturn(profileDTOAfterUpdate);
 
-        ProfileDTO result = profileService.updateProfile(1L, profileDTOForUpdate);
+        ProfileDTO result = profileServiceImpl.updateProfile(1L, profileDTOForUpdate);
 
         Assertions.assertEquals(persistentClientEntity.getId(), result.id());
         Assertions.assertEquals(persistentClientEntity.getProfile().getClient().getId(), result.clientId());
@@ -144,7 +144,7 @@ class ProfileServiceUnitTest {
         Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> profileService.updateProfile(1L, profileDTOForUpdate));
+                () -> profileServiceImpl.updateProfile(1L, profileDTOForUpdate));
 
         Mockito.verify(clientRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -159,7 +159,7 @@ class ProfileServiceUnitTest {
                 .thenReturn(Optional.of(persistentClientEntity));
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> profileService.updateProfile(1L, profileDTOForUpdate));
+                () -> profileServiceImpl.updateProfile(1L, profileDTOForUpdate));
 
         Mockito.verify(clientRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);

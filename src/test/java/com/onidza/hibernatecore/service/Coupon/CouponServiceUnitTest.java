@@ -6,7 +6,7 @@ import com.onidza.hibernatecore.model.entity.Coupon;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
 import com.onidza.hibernatecore.repository.CouponRepository;
-import com.onidza.hibernatecore.service.CouponService;
+import com.onidza.hibernatecore.service.CouponServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +34,7 @@ class CouponServiceUnitTest {
     private ClientRepository clientRepository;
 
     @InjectMocks
-    private CouponService couponService;
+    private CouponServiceImpl couponServiceImpl;
 
     @Test
     void getCouponById_returnCouponDTOWithRelations() {
@@ -47,7 +47,7 @@ class CouponServiceUnitTest {
         Mockito.when(mapperService.couponToDTO(persistentCoupon))
                 .thenReturn(persistentCouponDTO);
 
-        CouponDTO result = couponService.getCouponById(persistentCoupon.getId());
+        CouponDTO result = couponServiceImpl.getCouponById(persistentCoupon.getId());
 
         Assertions.assertNotNull(result.id());
         Assertions.assertEquals(result.code(), persistentCoupon.getCode());
@@ -63,7 +63,7 @@ class CouponServiceUnitTest {
                 .thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> couponService.getCouponById(1L));
+                () -> couponServiceImpl.getCouponById(1L));
 
         Mockito.verify(couponRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -84,7 +84,7 @@ class CouponServiceUnitTest {
         Mockito.when(mapperService.couponToDTO(persistentDistinctCouponEntity))
                 .thenReturn(persistentDistinctOrderDTO);
 
-        List<CouponDTO> result = couponService.getAllCoupons();
+        List<CouponDTO> result = couponServiceImpl.getAllCoupons();
 
         Assertions.assertNotNull(result);
         Assertions.assertEquals(2, result.size());
@@ -105,7 +105,7 @@ class CouponServiceUnitTest {
     void getAllCoupons_emptyList() {
         Mockito.when(couponRepository.findAll()).thenReturn(Collections.emptyList());
 
-        List<CouponDTO> result = couponService.getAllCoupons();
+        List<CouponDTO> result = couponServiceImpl.getAllCoupons();
 
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isEmpty());
@@ -133,7 +133,7 @@ class CouponServiceUnitTest {
                     );
                 });
 
-        List<CouponDTO> result = couponService.getAllCouponsByClientId(persistentClientWithOrders.getId());
+        List<CouponDTO> result = couponServiceImpl.getAllCouponsByClientId(persistentClientWithOrders.getId());
 
         Assertions.assertEquals(2, result.size());
         Assertions.assertTrue(result.stream().allMatch(coupon ->
@@ -154,7 +154,7 @@ class CouponServiceUnitTest {
         Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> couponService.getAllCouponsByClientId(1L));
+                () -> couponServiceImpl.getAllCouponsByClientId(1L));
 
         Mockito.verify(clientRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -179,7 +179,7 @@ class CouponServiceUnitTest {
         Mockito.when(mapperService.couponToDTO(couponEntityForAdd))
                 .thenReturn(couponDTOAfterAdd);
 
-        CouponDTO result = couponService.addCouponToClientById(client.getId(), couponDTOForAdd);
+        CouponDTO result = couponServiceImpl.addCouponToClientById(client.getId(), couponDTOForAdd);
 
         Assertions.assertEquals(couponDTOForAdd.discount(), result.discount());
         Assertions.assertEquals(3, client.getCoupons().size());
@@ -198,7 +198,7 @@ class CouponServiceUnitTest {
                 .thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> couponService.addCouponToClientById(1L, couponDTOForAdd));
+                () -> couponServiceImpl.addCouponToClientById(1L, couponDTOForAdd));
 
         Mockito.verify(clientRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -217,7 +217,7 @@ class CouponServiceUnitTest {
         Mockito.when(mapperService.couponToDTO(persistCoupon))
                 .thenReturn(couponAfterUpdate);
 
-        CouponDTO result = couponService.updateCouponByCouponId(persistCoupon.getId(), forUpdate);
+        CouponDTO result = couponServiceImpl.updateCouponByCouponId(persistCoupon.getId(), forUpdate);
 
         Assertions.assertEquals(forUpdate.code(), result.code());
         Assertions.assertEquals(persistCoupon.getId(), result.id());
@@ -235,7 +235,7 @@ class CouponServiceUnitTest {
                 .thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> couponService.updateCouponByCouponId(1L, forUpdate));
+                () -> couponServiceImpl.updateCouponByCouponId(1L, forUpdate));
 
         Mockito.verify(couponRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -252,7 +252,7 @@ class CouponServiceUnitTest {
         Mockito.doNothing()
                 .when(couponRepository).deleteById(orderForDelete.getId());
 
-        couponService.deleteCouponById(orderForDelete.getId());
+        couponServiceImpl.deleteCouponById(orderForDelete.getId());
 
         Mockito.verify(couponRepository).findById(orderForDelete.getId());
         Mockito.verify(couponRepository).deleteById(orderForDelete.getId());
@@ -264,7 +264,7 @@ class CouponServiceUnitTest {
                 .thenReturn(Optional.empty());
 
         ResponseStatusException ex = Assertions.assertThrows(ResponseStatusException.class,
-                () -> couponService.deleteCouponById(999L));
+                () -> couponServiceImpl.deleteCouponById(999L));
 
         Assertions.assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
 

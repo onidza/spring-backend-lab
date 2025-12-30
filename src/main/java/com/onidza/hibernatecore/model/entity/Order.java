@@ -31,6 +31,7 @@ public class Order {
 
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)
+//    @JsonBackReference("client-order")
     private Client client;
 
     public Order(LocalDateTime orderDate, BigDecimal totalAmount, OrderStatus status) {

@@ -1,7 +1,10 @@
 package com.onidza.hibernatecore.controller;
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
-import com.onidza.hibernatecore.service.ClientService;
+import com.onidza.hibernatecore.service.CacheMode;
+import com.onidza.hibernatecore.service.client.ClientService;
+import com.onidza.hibernatecore.service.client.ClientServiceImpl;
+import com.onidza.hibernatecore.service.client.ManualClientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,41 +20,79 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ClientController {
 
-    private final ClientService clientService;
+    private final ClientServiceImpl clientServiceImpl;
+    private final ManualClientService manualClientService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<ClientDTO> getClient(@PathVariable Long id) {
+    public ResponseEntity<ClientDTO> getClient(
+            @PathVariable Long id,
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    ) {
         log.info("Called getClient with id: {}", id);
-        ClientDTO client = clientService.getClientById(id);
+
+        ClientService service = resolveClientService(cacheMode);
+        ClientDTO client = service.getClientById(id);
+
         return ResponseEntity.ok(client);
     }
 
     @GetMapping
-    public ResponseEntity<List<ClientDTO>> getAllClients() {
+    public ResponseEntity<List<ClientDTO>> getAllClients(
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    ) {
         log.info("Called getAllClients");
-        List<ClientDTO> clients = clientService.getAllClients();
+
+        ClientService service = resolveClientService(cacheMode);
+        List<ClientDTO> clients = service.getAllClients();
+
         return ResponseEntity.ok(clients);
     }
 
     @PostMapping
-    public ResponseEntity<ClientDTO> addClient(@Valid @RequestBody ClientDTO clientDTO) {
+    public ResponseEntity<ClientDTO> addClient(
+            @Valid @RequestBody ClientDTO clientDTO,
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    ) {
         log.info("Called addClient with name: {}", clientDTO.name());
-        ClientDTO savedClient = clientService.addClient(clientDTO);
+
+        ClientService service = resolveClientService(cacheMode);
+        ClientDTO savedClient = service.addClient(clientDTO);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(savedClient);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ClientDTO> updateClient(@PathVariable Long id,
-                                  @RequestBody ClientDTO clientDTO) {
+    public ResponseEntity<ClientDTO> updateClient(
+            @PathVariable Long id,
+            @RequestBody ClientDTO clientDTO,
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    ) {
         log.info("Called updateClient with name: {}", clientDTO.name());
-        ClientDTO updatedClient = clientService.updateClient(id, clientDTO);
+
+        ClientService service = resolveClientService(cacheMode);
+        ClientDTO updatedClient = service.updateClient(id, clientDTO);
+
         return ResponseEntity.ok(updatedClient);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteClientById(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteClientById(
+            @PathVariable Long id,
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    ) {
         log.info("Called deleteClientById with id: {}", id);
-        clientService.deleteClient(id);
+
+        ClientService service = resolveClientService(cacheMode);
+        service.deleteClient(id);
+
         return ResponseEntity.noContent().build();
+    }
+
+    private ClientService resolveClientService(CacheMode cacheMode) {
+        return switch (cacheMode) {
+            case NON_CACHE -> clientServiceImpl;
+            case MANUAL -> manualClientService;
+            case SPRING -> throw new UnsupportedOperationException("Have no such a service");
+        };
     }
 }

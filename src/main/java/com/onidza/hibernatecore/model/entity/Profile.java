@@ -22,6 +22,7 @@ public class Profile {
     private String phone;
 
     @OneToOne(mappedBy = "profile")
+//    @JsonBackReference("client-profile")
     private Client client;
 
     public Profile(String address, String phone) {

@@ -1,4 +1,4 @@
-package com.onidza.hibernatecore.service;
+package com.onidza.hibernatecore.service.client;
 
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
@@ -19,12 +19,13 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ClientService {
+public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
     private final EntityManager entityManager;
 
+    @Override
     public ClientDTO getClientById(Long id) {
         log.info("Called getClientById with id: {}", id);
 
@@ -34,6 +35,7 @@ public class ClientService {
                                 -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found")));
     }
 
+    @Override
     public List<ClientDTO> getAllClients() {
         log.info("Called getAllClients");
 
@@ -51,6 +53,7 @@ public class ClientService {
                 .toList();
     }
 
+    @Override
     @Transactional
     public ClientDTO addClient(ClientDTO clientDTO) {
         log.info("Called addClient with name: {}", clientDTO.name());
@@ -65,6 +68,7 @@ public class ClientService {
         return mapperService.clientToDTO(saved);
     }
 
+    @Override
     @Transactional
     public ClientDTO updateClient(Long id, ClientDTO clientDTO) {
         log.info("Called updateClient with id: {}", id);
@@ -106,6 +110,7 @@ public class ClientService {
         return mapperService.clientToDTO(clientRepository.save(existing));
     }
 
+    @Override
     public void deleteClient(Long id) {
         log.info("Called deleteClient with id: {}", id);
         clientRepository.deleteById(id);

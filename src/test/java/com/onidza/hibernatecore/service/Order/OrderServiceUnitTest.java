@@ -6,7 +6,7 @@ import com.onidza.hibernatecore.model.entity.Order;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
 import com.onidza.hibernatecore.repository.OrderRepository;
-import com.onidza.hibernatecore.service.OrderService;
+import com.onidza.hibernatecore.service.OrderServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +34,7 @@ class OrderServiceUnitTest {
     private MapperService mapperService;
 
     @InjectMocks
-    private OrderService orderService;
+    private OrderServiceImpl orderServiceImpl;
 
     @Test
     void getOrderById_returnOrderDTOWithRelations() {
@@ -44,7 +44,7 @@ class OrderServiceUnitTest {
         Mockito.when(orderRepository.findById(1L)).thenReturn(Optional.of(persistentOrder));
         Mockito.when(mapperService.orderToDTO(persistentOrder)).thenReturn(persistentOrderDTO);
 
-        OrderDTO result = orderService.getOrderById(1L);
+        OrderDTO result = orderServiceImpl.getOrderById(1L);
 
         Assertions.assertNotNull(result.id());
         Assertions.assertNotNull(result.totalAmount());
@@ -61,7 +61,7 @@ class OrderServiceUnitTest {
         Mockito.when(orderRepository.findById(1L)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> orderService.getOrderById(1L));
+                () -> orderServiceImpl.getOrderById(1L));
 
         Mockito.verify(orderRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -82,7 +82,7 @@ class OrderServiceUnitTest {
         Mockito.when(mapperService.orderToDTO(persistentDistinctOrderEntity))
                 .thenReturn(persistentDistinctOrderDTO);
 
-        List<OrderDTO> result = orderService.getAllOrders();
+        List<OrderDTO> result = orderServiceImpl.getAllOrders();
 
         Assertions.assertNotNull(result);
         Assertions.assertEquals(2, result.size());
@@ -104,7 +104,7 @@ class OrderServiceUnitTest {
     void getAllOrders_emptyList() {
         Mockito.when(orderRepository.findAll()).thenReturn(Collections.emptyList());
 
-        List<OrderDTO> result = orderService.getAllOrders();
+        List<OrderDTO> result = orderServiceImpl.getAllOrders();
 
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isEmpty());
@@ -132,7 +132,7 @@ class OrderServiceUnitTest {
                     );
                 });
 
-        List<OrderDTO> result = orderService.getAllOrdersByClientId(persistentClientWithOrders.getId());
+        List<OrderDTO> result = orderServiceImpl.getAllOrdersByClientId(persistentClientWithOrders.getId());
 
         Assertions.assertEquals(2, result.size());
         Assertions.assertTrue(result.stream().allMatch(order ->
@@ -152,7 +152,7 @@ class OrderServiceUnitTest {
         Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> orderService.getAllOrdersByClientId(1L));
+                () -> orderServiceImpl.getAllOrdersByClientId(1L));
 
         Mockito.verify(clientRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -170,7 +170,7 @@ class OrderServiceUnitTest {
         Mockito.when(mapperService.orderToDTO(persistOrder))
                 .thenReturn(orderAfterUpdate);
 
-        OrderDTO result = orderService.updateOrderByOrderId(persistOrder.getId(), forUpdate);
+        OrderDTO result = orderServiceImpl.updateOrderByOrderId(persistOrder.getId(), forUpdate);
 
         Assertions.assertEquals(forUpdate.status(), result.status());
         Assertions.assertEquals(persistOrder.getId(), result.id());
@@ -187,7 +187,7 @@ class OrderServiceUnitTest {
         Mockito.when(orderRepository.findById(1L)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> orderService.updateOrderByOrderId(1L, forUpdate));
+                () -> orderServiceImpl.updateOrderByOrderId(1L, forUpdate));
 
         Mockito.verify(orderRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -212,7 +212,7 @@ class OrderServiceUnitTest {
         Mockito.when(mapperService.orderToDTO(orderEntityForAdd))
                 .thenReturn(orderDTOAfterAdd);
 
-        OrderDTO result = orderService.addOrderToClient(client.getId(), orderDTOForAdd);
+        OrderDTO result = orderServiceImpl.addOrderToClient(client.getId(), orderDTOForAdd);
 
         Assertions.assertEquals(0, result.totalAmount().compareTo(orderDTOForAdd.totalAmount()));
         Assertions.assertEquals(1, client.getOrders().size());
@@ -231,7 +231,7 @@ class OrderServiceUnitTest {
                 .thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> orderService.addOrderToClient(1L, orderDTOForAdd));
+                () -> orderServiceImpl.addOrderToClient(1L, orderDTOForAdd));
 
         Mockito.verify(clientRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -249,7 +249,7 @@ class OrderServiceUnitTest {
         Mockito.doNothing()
                 .when(orderRepository).deleteById(orderForDelete.getId());
 
-        orderService.deleteOrderById(orderForDelete.getId());
+        orderServiceImpl.deleteOrderById(orderForDelete.getId());
 
         Mockito.verify(orderRepository).findById(orderForDelete.getId());
         Mockito.verify(orderRepository).deleteById(orderForDelete.getId());

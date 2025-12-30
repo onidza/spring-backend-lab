@@ -1,6 +1,5 @@
 package com.onidza.hibernatecore.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,7 +29,7 @@ public class Coupon {
     private LocalDateTime expirationDate;
 
     @ManyToMany(mappedBy = "coupons")
-    @JsonIgnore
+//    @JsonBackReference("client-coupon")
     private List<Client> clients = new ArrayList<>();
 
     public Coupon(String code, float discount, LocalDateTime expirationDate) {

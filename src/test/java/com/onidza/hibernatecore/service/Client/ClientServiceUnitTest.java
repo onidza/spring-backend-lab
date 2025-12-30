@@ -8,7 +8,7 @@ import com.onidza.hibernatecore.model.entity.Coupon;
 import com.onidza.hibernatecore.model.entity.Order;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
-import com.onidza.hibernatecore.service.ClientService;
+import com.onidza.hibernatecore.service.client.ClientServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +32,7 @@ class ClientServiceUnitTest {
     private MapperService mapperService;
 
     @InjectMocks
-    private ClientService clientService;
+    private ClientServiceImpl clientServiceImpl;
 
 
     @Test
@@ -43,7 +43,7 @@ class ClientServiceUnitTest {
         Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.of(persistentClient));
         Mockito.when(mapperService.clientToDTO(persistentClient)).thenReturn(persistentClientDTO);
 
-        ClientDTO result = clientService.getClientById(1L);
+        ClientDTO result = clientServiceImpl.getClientById(1L);
 
         Assertions.assertNotNull(result.id());
         Assertions.assertNotNull(result.profile().id());
@@ -65,7 +65,7 @@ class ClientServiceUnitTest {
         Mockito.when(clientRepository.findById(1L)).thenReturn((Optional.empty()));
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> clientService.getClientById(1L));
+                () -> clientServiceImpl.getClientById(1L));
 
         Mockito.verify(clientRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -82,7 +82,7 @@ class ClientServiceUnitTest {
         Mockito.when(clientRepository.save(inputClientEntity)).thenReturn(persistentClientEntity);
         Mockito.when(mapperService.clientToDTO(persistentClientEntity)).thenReturn(persistentClientDTO);
 
-        ClientDTO result = clientService.addClient(inputClientDTO);
+        ClientDTO result = clientServiceImpl.addClient(inputClientDTO);
 
         Assertions.assertEquals("Ivan", result.name());
         Assertions.assertEquals(persistentClientDTO.registrationDate(), result.registrationDate());
@@ -109,7 +109,7 @@ class ClientServiceUnitTest {
                 .thenThrow(new DataIntegrityViolationException("Unique index violation"));
 
         Assertions.assertThrows(DataIntegrityViolationException.class,
-                () -> clientService.addClient(inputClientDTO));
+                () -> clientServiceImpl.addClient(inputClientDTO));
 
         Mockito.verify(clientRepository).save(inputClientEntity);
     }
@@ -138,7 +138,7 @@ class ClientServiceUnitTest {
 
         Mockito.when(clientRepository.save(persistentClientEntity)).thenReturn(persistentClientEntity);
 
-        ClientDTO result = clientService.updateClient(1L, distinctInputClientEntity);
+        ClientDTO result = clientServiceImpl.updateClient(1L, distinctInputClientEntity);
 
         Assertions.assertEquals("Sasha", result.name());
         Assertions.assertEquals("sasha@mail.ru", result.email());
@@ -160,7 +160,7 @@ class ClientServiceUnitTest {
         Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> clientService.updateClient(1L, inputClientDTO));
+                () -> clientServiceImpl.updateClient(1L, inputClientDTO));
 
         Mockito.verify(clientRepository).findById(1L);
     }
@@ -168,14 +168,14 @@ class ClientServiceUnitTest {
     @Test
     void deleteClient_successfully_doNothing() {
         Mockito.doNothing().when(clientRepository).deleteById(1L);
-        clientService.deleteClient(1L);
+        clientServiceImpl.deleteClient(1L);
         Mockito.verify(clientRepository).deleteById(1L);
     }
 
     @Test
     void deleteClient_notFound_doNothing() {
         Mockito.doNothing().when(clientRepository).deleteById(999L);
-        clientService.deleteClient(999L);
+        clientServiceImpl.deleteClient(999L);
         Mockito.verify(clientRepository).deleteById(999L);
     }
 }

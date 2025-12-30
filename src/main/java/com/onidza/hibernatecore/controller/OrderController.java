@@ -4,7 +4,7 @@ package com.onidza.hibernatecore.controller;
 import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.dto.order.OrderDTO;
 import com.onidza.hibernatecore.model.dto.order.OrderFilterDTO;
-import com.onidza.hibernatecore.service.OrderService;
+import com.onidza.hibernatecore.service.OrderServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,26 +23,26 @@ import java.util.List;
 @RequestMapping("/clients")
 public class OrderController {
 
-    private final OrderService orderService;
+    private final OrderServiceImpl orderServiceImpl;
 
     @GetMapping("/order/{id}")
     public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
         log.info("Called getOrderById with id: {}", id);
-        OrderDTO orderDTO = orderService.getOrderById(id);
+        OrderDTO orderDTO = orderServiceImpl.getOrderById(id);
         return ResponseEntity.ok(orderDTO);
     }
 
     @GetMapping("/orders")
     public ResponseEntity<List<OrderDTO>> getAllOrders() {
         log.info("Called getAllOrders");
-        List<OrderDTO> orders = orderService.getAllOrders();
+        List<OrderDTO> orders = orderServiceImpl.getAllOrders();
         return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/{id}/orders")
     public ResponseEntity<List<OrderDTO>> getAllOrdersByClientId(@PathVariable Long id) {
         log.info("Called getAllOrdersByClientId with id: {}", id);
-        List<OrderDTO> orders = orderService.getAllOrdersByClientId(id);
+        List<OrderDTO> orders = orderServiceImpl.getAllOrdersByClientId(id);
         return ResponseEntity.ok(orders);
     }
 
@@ -50,7 +50,7 @@ public class OrderController {
     public ResponseEntity<OrderDTO> updateOrderByOrderId(@PathVariable Long id,
                                                          @Valid @RequestBody OrderDTO orderDTO) {
         log.info("Called updateOrderByOrderId with id: {}", id);
-        OrderDTO order = orderService.updateOrderByOrderId(id, orderDTO);
+        OrderDTO order = orderServiceImpl.updateOrderByOrderId(id, orderDTO);
         return ResponseEntity.ok(order);
     }
 
@@ -58,14 +58,14 @@ public class OrderController {
     public ResponseEntity<OrderDTO> addOrderToClient(@PathVariable Long id,
                                                      @Valid @RequestBody OrderDTO orderDTO) {
         log.info("Called addOrderToClient with id: {}", id);
-        OrderDTO order = orderService.addOrderToClient(id, orderDTO);
+        OrderDTO order = orderServiceImpl.addOrderToClient(id, orderDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
     @DeleteMapping("/{id}/order")
     public ResponseEntity<Void> deleteOrderById(@PathVariable Long id) {
         log.info("Called deleteOrderById with id: {}", id);
-        orderService.deleteOrderById(id);
+        orderServiceImpl.deleteOrderById(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -91,7 +91,7 @@ public class OrderController {
                 minAmount,
                 maxAmount);
 
-        List<OrderDTO> orders = orderService.getOrdersByFilters(filter);
+        List<OrderDTO> orders = orderServiceImpl.getOrdersByFilters(filter);
         return ResponseEntity.ok(orders);
     }
 }

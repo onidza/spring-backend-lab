@@ -2,8 +2,8 @@ package com.onidza.hibernatecore.service.Profile;
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.ProfileDTO;
-import com.onidza.hibernatecore.service.ClientService;
-import com.onidza.hibernatecore.service.ProfileService;
+import com.onidza.hibernatecore.service.client.ClientServiceImpl;
+import com.onidza.hibernatecore.service.ProfileServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,17 +19,17 @@ import java.util.List;
 class ProfileServiceIntegrationIT {
 
     @Autowired
-    private ProfileService profileService;
+    private ProfileServiceImpl profileServiceImpl;
 
     @Autowired
-    private ClientService clientService;
+    private ClientServiceImpl clientServiceImpl;
 
     @Test
     void getProfileById_returnProfileDTOWithRelations() {
         ClientDTO inputClientDTO = ProfileDataFactory.createInputClientDTO();
 
-        ProfileDTO saved = clientService.addClient(inputClientDTO).profile();
-        ProfileDTO existing = profileService.getProfileById(saved.id());
+        ProfileDTO saved = clientServiceImpl.addClient(inputClientDTO).profile();
+        ProfileDTO existing = profileServiceImpl.getProfileById(saved.id());
 
         Assertions.assertEquals(saved.id(), existing.id());
         Assertions.assertEquals(saved.address(), existing.address());
@@ -42,10 +42,10 @@ class ProfileServiceIntegrationIT {
         ClientDTO firstInputClientDTO = ProfileDataFactory.createInputClientDTO();
         ClientDTO secondInputClientDTO = ProfileDataFactory.createDistinctInputClientDTO();
 
-        clientService.addClient(firstInputClientDTO);
-        clientService.addClient(secondInputClientDTO);
+        clientServiceImpl.addClient(firstInputClientDTO);
+        clientServiceImpl.addClient(secondInputClientDTO);
 
-        List<ProfileDTO> result = profileService.getAllProfiles();
+        List<ProfileDTO> result = profileServiceImpl.getAllProfiles();
 
         Assertions.assertEquals(2, result.size());
         Assertions.assertNotNull(result.get(0).id());
@@ -63,8 +63,8 @@ class ProfileServiceIntegrationIT {
         ClientDTO firstInputClientDTO = ProfileDataFactory.createInputClientDTO();
         ClientDTO distinctInputClientDTO = ProfileDataFactory.createDistinctInputClientDTO();
 
-        ProfileDTO saved = clientService.addClient(firstInputClientDTO).profile();
-        ProfileDTO updated = profileService.updateProfile(saved.id(), distinctInputClientDTO.profile());
+        ProfileDTO saved = clientServiceImpl.addClient(firstInputClientDTO).profile();
+        ProfileDTO updated = profileServiceImpl.updateProfile(saved.id(), distinctInputClientDTO.profile());
 
         Assertions.assertNotEquals(saved.address(), updated.address());
         Assertions.assertNotEquals(saved.phone(), updated.phone());

@@ -3,8 +3,8 @@ package com.onidza.hibernatecore.service.Order;
 import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.order.OrderDTO;
-import com.onidza.hibernatecore.service.ClientService;
-import com.onidza.hibernatecore.service.OrderService;
+import com.onidza.hibernatecore.service.client.ClientServiceImpl;
+import com.onidza.hibernatecore.service.OrderServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -26,20 +26,20 @@ import java.util.stream.Collectors;
 class OrderServiceIntegrationIT {
 
     @Autowired
-    private OrderService orderService;
+    private OrderServiceImpl orderServiceImpl;
 
     @Autowired
-    private ClientService clientService;
+    private ClientServiceImpl clientServiceImpl;
 
     @Test
     void getOrdersByFilters_returnFilteredListOfOrdersWithRelations() {
         ClientDTO inputClientDTO = OrderDataFactory.createInputClientDTO();
         ClientDTO distinctInputClientDTO = OrderDataFactory.createDistinctInputClientDTO();
 
-        clientService.addClient(inputClientDTO);
-        clientService.addClient(distinctInputClientDTO);
+        clientServiceImpl.addClient(inputClientDTO);
+        clientServiceImpl.addClient(distinctInputClientDTO);
 
-        List<OrderDTO> result = orderService.getOrdersByFilters(OrderDataFactory.createFilter());
+        List<OrderDTO> result = orderServiceImpl.getOrdersByFilters(OrderDataFactory.createFilter());
 
         Assertions.assertEquals(1, result.size());
         Assertions.assertEquals(0, result.get(0).totalAmount().compareTo(new BigDecimal("1500")));
@@ -62,8 +62,8 @@ class OrderServiceIntegrationIT {
     void getOrderById_returnOrderDTOWithRelations() {
         ClientDTO inputClientDTO = OrderDataFactory.createInputClientDTO();
 
-        ClientDTO saved = clientService.addClient(inputClientDTO);
-        OrderDTO result = orderService.getOrderById(saved.orders().get(0).id());
+        ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
+        OrderDTO result = orderServiceImpl.getOrderById(saved.orders().get(0).id());
 
         Assertions.assertEquals(OrderStatus.NEW, result.status());
         Assertions.assertEquals(saved.orders().get(0).id(), result.id());
@@ -75,10 +75,10 @@ class OrderServiceIntegrationIT {
         ClientDTO inputClientDTO = OrderDataFactory.createInputClientDTO();
         ClientDTO distinctInputClientDTO = OrderDataFactory.createDistinctInputClientDTO();
 
-        clientService.addClient(inputClientDTO);
-        clientService.addClient(distinctInputClientDTO);
+        clientServiceImpl.addClient(inputClientDTO);
+        clientServiceImpl.addClient(distinctInputClientDTO);
 
-        List<OrderDTO> result = orderService.getAllOrders();
+        List<OrderDTO> result = orderServiceImpl.getAllOrders();
 
         Assertions.assertEquals(2, result.size());
 
@@ -95,8 +95,8 @@ class OrderServiceIntegrationIT {
         ClientDTO inputClientDTO = OrderDataFactory.createInputClientDTO();
         OrderDTO forUpdate = OrderDataFactory.createOrderDTOForUpdate();
 
-        ClientDTO saved = clientService.addClient(inputClientDTO);
-        OrderDTO result = orderService.updateOrderByOrderId(saved.orders().get(0).id(), forUpdate);
+        ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
+        OrderDTO result = orderServiceImpl.updateOrderByOrderId(saved.orders().get(0).id(), forUpdate);
 
         Assertions.assertEquals(0, result.totalAmount().compareTo(forUpdate.totalAmount()));
         Assertions.assertNotEquals(0, result.totalAmount()
@@ -105,7 +105,7 @@ class OrderServiceIntegrationIT {
         Assertions.assertEquals(saved.orders().get(0).id(), result.id());
         Assertions.assertEquals(OrderStatus.CANCELLED, result.status());
 
-        OrderDTO fetched = orderService.getOrderById(result.id());
+        OrderDTO fetched = orderServiceImpl.getOrderById(result.id());
         Assertions.assertEquals(OrderStatus.CANCELLED, fetched.status());
         Assertions.assertEquals(0, fetched.totalAmount().compareTo(forUpdate.totalAmount()));
     }
@@ -115,15 +115,15 @@ class OrderServiceIntegrationIT {
         ClientDTO inputClientDTO = OrderDataFactory.createInputClientDTOWithEmptyOrders();
         OrderDTO orderDTOForAdd = OrderDataFactory.createOrderDTOForUpdate();
 
-        ClientDTO saved = clientService.addClient(inputClientDTO);
-        OrderDTO result = orderService.addOrderToClient(saved.id(), orderDTOForAdd);
+        ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
+        OrderDTO result = orderServiceImpl.addOrderToClient(saved.id(), orderDTOForAdd);
 
         Assertions.assertEquals(saved.id(), result.clientId());
         Assertions.assertEquals(orderDTOForAdd.status(), result.status());
         Assertions.assertEquals(orderDTOForAdd.orderDate(), result.orderDate());
         Assertions.assertEquals(0, result.totalAmount().compareTo(orderDTOForAdd.totalAmount()));
 
-        ClientDTO clientAfter = clientService.getClientById(saved.id());
+        ClientDTO clientAfter = clientServiceImpl.getClientById(saved.id());
         Assertions.assertEquals(1, clientAfter.orders().size());
         Assertions.assertEquals(result.id(), clientAfter.orders().get(0).id());
     }
@@ -132,13 +132,13 @@ class OrderServiceIntegrationIT {
     void deleteOrderById_returnNothingWithRelations() {
         ClientDTO inputClientDTO = OrderDataFactory.createInputClientDTO();
 
-        ClientDTO saved = clientService.addClient(inputClientDTO);
-        orderService.deleteOrderById(saved.orders().get(0).id());
+        ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
+        orderServiceImpl.deleteOrderById(saved.orders().get(0).id());
 
-        Executable exec = () -> orderService.getOrderById(saved.orders().get(0).id());
+        Executable exec = () -> orderServiceImpl.getOrderById(saved.orders().get(0).id());
         Assertions.assertThrows(ResponseStatusException.class, exec);
 
-        List<OrderDTO> orders = orderService.getAllOrders();
+        List<OrderDTO> orders = orderServiceImpl.getAllOrders();
         Assertions.assertTrue(orders.stream().noneMatch(o -> o.id().equals(saved.orders().get(0).id())));
     }
 }

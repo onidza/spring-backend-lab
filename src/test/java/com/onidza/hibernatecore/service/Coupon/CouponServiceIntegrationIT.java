@@ -2,8 +2,8 @@ package com.onidza.hibernatecore.service.Coupon;
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.CouponDTO;
-import com.onidza.hibernatecore.service.ClientService;
-import com.onidza.hibernatecore.service.CouponService;
+import com.onidza.hibernatecore.service.client.ClientServiceImpl;
+import com.onidza.hibernatecore.service.CouponServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -23,17 +23,17 @@ import java.util.stream.Collectors;
 class CouponServiceIntegrationIT {
 
     @Autowired
-    private CouponService couponService;
+    private CouponServiceImpl couponServiceImpl;
 
     @Autowired
-    private ClientService clientService;
+    private ClientServiceImpl clientServiceImpl;
 
     @Test
     void getCouponById_returnCouponDTOWithRelations() {
         ClientDTO inputClientDTO = CouponDataFactory.createClientDTOWithOneCoupon();
 
-        ClientDTO saved = clientService.addClient(inputClientDTO);
-        CouponDTO result = couponService.getCouponById(saved.coupons().get(0).id());
+        ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
+        CouponDTO result = couponServiceImpl.getCouponById(saved.coupons().get(0).id());
 
         Assertions.assertEquals(saved.coupons().get(0).expirationDate(), result.expirationDate());
         Assertions.assertEquals(saved.coupons().get(0).code(), result.code());
@@ -45,10 +45,10 @@ class CouponServiceIntegrationIT {
         ClientDTO inputClientDTO = CouponDataFactory.createClientDTOWithOneCoupon();
         ClientDTO distinctInputClientDTO = CouponDataFactory.createDistinctClientDTOWithOneCoupon();
 
-        clientService.addClient(inputClientDTO);
-        clientService.addClient(distinctInputClientDTO);
+        clientServiceImpl.addClient(inputClientDTO);
+        clientServiceImpl.addClient(distinctInputClientDTO);
 
-        List<CouponDTO> result = couponService.getAllCoupons();
+        List<CouponDTO> result = couponServiceImpl.getAllCoupons();
 
         Assertions.assertEquals(2, result.size());
 
@@ -69,14 +69,14 @@ class CouponServiceIntegrationIT {
         ClientDTO inputClientDTO = CouponDataFactory.createClientDTOWithOneCoupon();
         CouponDTO forUpdate = CouponDataFactory.createCouponDTOForUpdate();
 
-        ClientDTO saved = clientService.addClient(inputClientDTO);
-        CouponDTO result = couponService.updateCouponByCouponId(saved.coupons().get(0).id(), forUpdate);
+        ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
+        CouponDTO result = couponServiceImpl.updateCouponByCouponId(saved.coupons().get(0).id(), forUpdate);
 
         Assertions.assertEquals(saved.coupons().get(0).id(), result.id());
         Assertions.assertNotEquals(saved.coupons().get(0).discount(), result.discount());
         Assertions.assertTrue(result.expirationDate().isAfter(saved.coupons().get(0).expirationDate()));
 
-        CouponDTO fetched = couponService.getCouponById(result.id());
+        CouponDTO fetched = couponServiceImpl.getCouponById(result.id());
         Assertions.assertEquals("NEW CODE111111", fetched.code());
         Assertions.assertEquals(2.1f, fetched.discount());
     }
@@ -86,15 +86,15 @@ class CouponServiceIntegrationIT {
         ClientDTO inputClientDTO = CouponDataFactory.createInputClientDTOWithEmptyCoupons();
         CouponDTO couponDTOForAdd = CouponDataFactory.createCouponDTOForAdd();
 
-        ClientDTO saved = clientService.addClient(inputClientDTO);
-        CouponDTO result = couponService.addCouponToClientById(saved.id(), couponDTOForAdd);
+        ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
+        CouponDTO result = couponServiceImpl.addCouponToClientById(saved.id(), couponDTOForAdd);
 
         Assertions.assertEquals(saved.id(), result.clientsId().get(0));
         Assertions.assertEquals(couponDTOForAdd.code(), result.code());
         Assertions.assertEquals(couponDTOForAdd.discount(), result.discount());
         Assertions.assertEquals(couponDTOForAdd.expirationDate(), result.expirationDate());
 
-        ClientDTO featured = clientService.getClientById(saved.id());
+        ClientDTO featured = clientServiceImpl.getClientById(saved.id());
         Assertions.assertEquals(1, featured.coupons().size());
         Assertions.assertEquals(result.id(), featured.coupons().get(0).id());
     }
@@ -103,13 +103,13 @@ class CouponServiceIntegrationIT {
     void deleteCouponById_returnNothingWithRelations() {
         ClientDTO inputCouponDTO = CouponDataFactory.createClientDTOWithOneCoupon();
 
-        ClientDTO saved = clientService.addClient(inputCouponDTO);
-        couponService.deleteCouponById(saved.coupons().get(0).id());
+        ClientDTO saved = clientServiceImpl.addClient(inputCouponDTO);
+        couponServiceImpl.deleteCouponById(saved.coupons().get(0).id());
 
-        Executable exec = () -> couponService.getCouponById(saved.coupons().get(0).id());
+        Executable exec = () -> couponServiceImpl.getCouponById(saved.coupons().get(0).id());
         Assertions.assertThrows(ResponseStatusException.class, exec);
 
-        List<CouponDTO> orders = couponService.getAllCoupons();
+        List<CouponDTO> orders = couponServiceImpl.getAllCoupons();
         Assertions.assertTrue(orders.stream().noneMatch(o -> o.id().equals(saved.orders().get(0).id())));
     }
 }

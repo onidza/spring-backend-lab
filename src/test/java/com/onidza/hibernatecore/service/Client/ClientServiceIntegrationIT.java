@@ -2,7 +2,7 @@ package com.onidza.hibernatecore.service.Client;
 
 import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.dto.ClientDTO;
-import com.onidza.hibernatecore.service.ClientService;
+import com.onidza.hibernatecore.service.client.ClientServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -21,14 +21,14 @@ import java.util.List;
 class ClientServiceIntegrationIT {
 
     @Autowired
-    private ClientService clientService;
+    private ClientServiceImpl clientServiceImpl;
 
     @Test
     void getClientById_returnClientDTOWithRelations() {
         ClientDTO inputClientDTO = ClientDataFactory.createInputClientDTO();
 
-        ClientDTO saved = clientService.addClient(inputClientDTO);
-        ClientDTO existing = clientService.getClientById(saved.id());
+        ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
+        ClientDTO existing = clientServiceImpl.getClientById(saved.id());
 
         Assertions.assertEquals(saved.id(), existing.id());
         Assertions.assertEquals("Ivan", existing.name());
@@ -47,10 +47,10 @@ class ClientServiceIntegrationIT {
         ClientDTO firstInputClientDTO = ClientDataFactory.createInputClientDTO();
         ClientDTO secondInputClientDTO = ClientDataFactory.createDistinctInputClientDTO();
 
-        clientService.addClient(firstInputClientDTO);
-        clientService.addClient(secondInputClientDTO);
+        clientServiceImpl.addClient(firstInputClientDTO);
+        clientServiceImpl.addClient(secondInputClientDTO);
 
-        List<ClientDTO> clients = clientService.getAllClients();
+        List<ClientDTO> clients = clientServiceImpl.getAllClients();
 
         Assertions.assertEquals(2, clients.size());
 
@@ -80,7 +80,7 @@ class ClientServiceIntegrationIT {
     void addClient_returnClientDTOWithRelations() {
         ClientDTO inputClientDTO = ClientDataFactory.createInputClientDTO();
 
-        ClientDTO saved = clientService.addClient(inputClientDTO);
+        ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
 
         Assertions.assertNotNull(saved.id());
         Assertions.assertEquals("Ivan", saved.name());
@@ -99,8 +99,8 @@ class ClientServiceIntegrationIT {
         ClientDTO inputClientDTO = ClientDataFactory.createInputClientDTO();
         ClientDTO distinctInputClientDTO = ClientDataFactory.createDistinctInputClientDTO();
 
-        ClientDTO saved = clientService.addClient(inputClientDTO);
-        ClientDTO updated = clientService.updateClient(saved.id(),
+        ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
+        ClientDTO updated = clientServiceImpl.updateClient(saved.id(),
                 distinctInputClientDTO);
 
         Assertions.assertEquals(saved.id(), updated.id());
@@ -119,13 +119,13 @@ class ClientServiceIntegrationIT {
     void deleteClient_returnNotingWithRelations() {
         ClientDTO inputClientDTO = ClientDataFactory.createInputClientDTO();
 
-        ClientDTO saved = clientService.addClient(inputClientDTO);
-        clientService.deleteClient(saved.id());
+        ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
+        clientServiceImpl.deleteClient(saved.id());
 
-        Executable exec = () -> clientService.getClientById(saved.id());
+        Executable exec = () -> clientServiceImpl.getClientById(saved.id());
         Assertions.assertThrows(ResponseStatusException.class, exec);
 
-        List<ClientDTO> clients = clientService.getAllClients();
+        List<ClientDTO> clients = clientServiceImpl.getAllClients();
         Assertions.assertTrue(clients.stream().noneMatch(c -> c.id().equals(saved.id())));
     }
 }

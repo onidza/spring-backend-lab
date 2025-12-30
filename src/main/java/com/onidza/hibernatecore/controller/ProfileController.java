@@ -1,7 +1,7 @@
 package com.onidza.hibernatecore.controller;
 
 import com.onidza.hibernatecore.model.dto.ProfileDTO;
-import com.onidza.hibernatecore.service.ProfileService;
+import com.onidza.hibernatecore.service.ProfileServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,19 +16,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProfileController {
 
-    private final ProfileService profileService;
+    private final ProfileServiceImpl profileServiceImpl;
 
     @GetMapping("/{id}/profile")
     public ResponseEntity<ProfileDTO> getProfile(@PathVariable Long id) {
         log.info("Called getProfile with id: {}", id);
-        ProfileDTO profileDTO = profileService.getProfileById(id);
+        ProfileDTO profileDTO = profileServiceImpl.getProfileById(id);
         return ResponseEntity.ok(profileDTO);
     }
 
     @GetMapping("/profiles")
     public ResponseEntity<List<ProfileDTO>> getAllProfiles() {
         log.info("Called getAllProfiles");
-        List<ProfileDTO> profiles = profileService.getAllProfiles();
+        List<ProfileDTO> profiles = profileServiceImpl.getAllProfiles();
         return ResponseEntity.ok(profiles);
     }
 
@@ -36,7 +36,7 @@ public class ProfileController {
     public ResponseEntity<ProfileDTO> updateProfileToClient(@PathVariable Long id,
                                             @Valid @RequestBody ProfileDTO profileDTO) {
         log.info("Called updateProfileToClient with id: {}", id);
-        ProfileDTO profile = profileService.updateProfile(id, profileDTO);
+        ProfileDTO profile = profileServiceImpl.updateProfile(id, profileDTO);
         return ResponseEntity.ok(profile);
     }
 }
