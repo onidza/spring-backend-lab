@@ -2,14 +2,13 @@ package com.onidza.hibernatecore.service.Coupon;
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.CouponDTO;
-import com.onidza.hibernatecore.service.client.ClientServiceImpl;
 import com.onidza.hibernatecore.service.CouponServiceImpl;
+import com.onidza.hibernatecore.service.client.ClientServiceImpl;
+import com.onidza.hibernatecore.service.testcontainers.AbstractITConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -17,10 +16,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@SpringBootTest
-@ActiveProfiles("test")
 @Transactional
-class CouponServiceIntegrationIT {
+class CouponServiceIntegrationIT extends AbstractITConfiguration {
 
     @Autowired
     private CouponServiceImpl couponServiceImpl;
@@ -109,7 +106,7 @@ class CouponServiceIntegrationIT {
         Executable exec = () -> couponServiceImpl.getCouponById(saved.coupons().get(0).id());
         Assertions.assertThrows(ResponseStatusException.class, exec);
 
-        List<CouponDTO> orders = couponServiceImpl.getAllCoupons();
-        Assertions.assertTrue(orders.stream().noneMatch(o -> o.id().equals(saved.orders().get(0).id())));
+        List<CouponDTO> coupons = couponServiceImpl.getAllCoupons();
+        Assertions.assertTrue(coupons.stream().noneMatch(o -> o.id().equals(saved.coupons().get(0).id())));
     }
 }

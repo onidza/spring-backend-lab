@@ -3,14 +3,13 @@ package com.onidza.hibernatecore.service.Order;
 import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.order.OrderDTO;
-import com.onidza.hibernatecore.service.client.ClientServiceImpl;
 import com.onidza.hibernatecore.service.OrderServiceImpl;
+import com.onidza.hibernatecore.service.client.ClientServiceImpl;
+import com.onidza.hibernatecore.service.testcontainers.AbstractITConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -20,10 +19,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@SpringBootTest
-@ActiveProfiles("test")
 @Transactional
-class OrderServiceIntegrationIT {
+class OrderServiceIntegrationIT extends AbstractITConfiguration {
 
     @Autowired
     private OrderServiceImpl orderServiceImpl;

@@ -3,22 +3,20 @@ package com.onidza.hibernatecore.service.Client;
 import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.service.client.ClientServiceImpl;
+import com.onidza.hibernatecore.service.testcontainers.AbstractITConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-@SpringBootTest
-@ActiveProfiles("test")
 @Transactional
-class ClientServiceIntegrationIT {
+class ClientServiceIntegrationIT extends AbstractITConfiguration {
 
     @Autowired
     private ClientServiceImpl clientServiceImpl;
