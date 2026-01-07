@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: 'postgres:latest'
+    image: 'postgres:18'
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:?set SPRING_DATASOURCE_USERNAME in .env}
@@ -8,10 +8,10 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
 
   redis:
-    image: 'redis:latest'
+    image: 'redis:7'
     restart: on-failure
     ports:
       - "6379:6379"
@@ -28,8 +28,12 @@ services:
 #      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
 #      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
 #      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+#      SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
+#      SPRING_REDIS_PORT: ${SPRING_REDIS_PORT}
+#
 #    depends_on:
 #      - postgres
+#      - redis
 #
 #  frontend:
 #    build:
