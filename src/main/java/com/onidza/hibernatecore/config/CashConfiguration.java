@@ -24,7 +24,7 @@ public class CashConfiguration {
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
 
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashKeySerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
 
         template.afterPropertiesSet();
 

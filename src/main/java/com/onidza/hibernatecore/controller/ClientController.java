@@ -4,7 +4,7 @@ import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.service.CacheMode;
 import com.onidza.hibernatecore.service.client.ClientService;
 import com.onidza.hibernatecore.service.client.ClientServiceImpl;
-import com.onidza.hibernatecore.service.client.ManualClientService;
+import com.onidza.hibernatecore.service.client.ManualClientServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import java.util.List;
 public class ClientController {
 
     private final ClientServiceImpl clientServiceImpl;
-    private final ManualClientService manualClientService;
+    private final ManualClientServiceImpl manualClientServiceImpl;
 
     @GetMapping("/{id}")
     public ResponseEntity<ClientDTO> getClient(
@@ -91,7 +91,7 @@ public class ClientController {
     private ClientService resolveClientService(CacheMode cacheMode) {
         return switch (cacheMode) {
             case NON_CACHE -> clientServiceImpl;
-            case MANUAL -> manualClientService;
+            case MANUAL -> manualClientServiceImpl;
             case SPRING -> throw new UnsupportedOperationException("Have no such a service");
         };
     }

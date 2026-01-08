@@ -15,6 +15,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
@@ -24,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @AllArgsConstructor
 @Service
-public class ManualClientService implements ClientService {
+public class ManualClientServiceImpl implements ClientService {
 
     private final MapperService mapperService;
     private final ClientRepository clientRepository;
@@ -32,20 +34,21 @@ public class ManualClientService implements ClientService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+
     private final RedisTemplate<String, Object> redisTemplate;
 
-    private static final String CACHE_KEY_PREFIX = "client:";
-    private static final long CACHE_TTL_MINUTES = 1;
+    private static final String CLIENT_KEY_PREFIX = "client:";
+    private static final long CLIENT_TTL_MINUTES = 1;
 
-    private static final String ALL_CLIENTS_KEY = "clients:all:v1";
-    private static final Duration ALL_CLIENTS_TTL = Duration.ofMinutes(1);
+    private static final String ALL_CLIENTS_KEY_PREFIX = "clients:all:v1:";
+    private static final Duration ALL_CLIENTS_TTL_PREFIX = Duration.ofMinutes(1);
 
     //this one method for example with stringRedisTemplate
     @Override
     public ClientDTO getClientById(Long id) {
         log.info("Called getClientById with id: {}", id);
 
-        var cacheKey = CACHE_KEY_PREFIX + id;
+        var cacheKey = CLIENT_KEY_PREFIX + id;
         String objFromCache = stringRedisTemplate.opsForValue().get(cacheKey);
 
         try {
@@ -57,7 +60,6 @@ public class ManualClientService implements ClientService {
             log.warn("Failed to read client from cache for key {}", cacheKey, e);
         }
 
-        log.info("Returned client from db with id: {}", id);
         Client clientFromDb = clientRepository.findById(id)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
@@ -66,7 +68,7 @@ public class ManualClientService implements ClientService {
             stringRedisTemplate.opsForValue().set(
                     cacheKey,
                     objectMapper.writeValueAsString(mapperService.clientToDTO(clientFromDb)),
-                    CACHE_TTL_MINUTES,
+                    CLIENT_TTL_MINUTES,
                     TimeUnit.MINUTES
             );
             log.info("getClientById was cached...");
@@ -75,6 +77,7 @@ public class ManualClientService implements ClientService {
             log.warn("Failed to write client to cache for key {}", cacheKey, e);
         }
 
+        log.info("Returned client from db with id: {}", id);
         return mapperService.clientToDTO(clientFromDb);
     }
 
@@ -82,15 +85,15 @@ public class ManualClientService implements ClientService {
     public List<ClientDTO> getAllClients() {
         log.info("Called getAllClients");
 
-        Object objFromCache = redisTemplate.opsForValue().get(ALL_CLIENTS_KEY);
+        Object objFromCache = redisTemplate.opsForValue().get(ALL_CLIENTS_KEY_PREFIX);
         if (objFromCache instanceof List<?> raw) {
 
-            List<ClientDTO> dtoList = raw.stream()
+            List<ClientDTO> clientDtoList = raw.stream()
                     .map(o -> objectMapper.convertValue(o, ClientDTO.class)) //* for fix a deserialization List<LinkedHashMap<String, Object>>
                     .toList();
 
-            log.info("Returned dtoList from cache with size={}", dtoList.size());
-            return dtoList;
+            log.info("Returned clientDtoList from cache with size={}", clientDtoList.size());
+            return clientDtoList;
         }
 
         List<Client> clients = entityManager.createQuery(
@@ -106,10 +109,10 @@ public class ManualClientService implements ClientService {
                 .map(mapperService::clientToDTO)
                 .toList();
 
-        redisTemplate.opsForValue().set(ALL_CLIENTS_KEY, dtoList, ALL_CLIENTS_TTL);
+        redisTemplate.opsForValue().set(ALL_CLIENTS_KEY_PREFIX, dtoList, ALL_CLIENTS_TTL_PREFIX);
         log.info("getAllClients was cached...");
 
-        log.info("Returned dtoList from bd with size={}", clients.size());
+        log.info("Returned dtoList from db with size={}", clients.size());
         return dtoList;
     }
 
@@ -125,6 +128,17 @@ public class ManualClientService implements ClientService {
         }
 
         Client saved = clientRepository.save(client);
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        redisTemplate.delete(ALL_CLIENTS_KEY_PREFIX);
+                        log.info("Added a new client, getAllList was invalidated too with key={}", ALL_CLIENTS_KEY_PREFIX);
+                    }
+                }
+        );
+
         return mapperService.clientToDTO(saved);
     }
 
@@ -169,16 +183,24 @@ public class ManualClientService implements ClientService {
 
         ClientDTO updated = mapperService.clientToDTO(clientRepository.save(existing));
 
-        redisTemplate.delete(CACHE_KEY_PREFIX + existing.getId());
-        redisTemplate.delete(ALL_CLIENTS_KEY);
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        redisTemplate.delete(CLIENT_KEY_PREFIX + existing.getId());
+                        redisTemplate.delete(ALL_CLIENTS_KEY_PREFIX);
 
-        log.info("Updated client was invalidated in cache with id={}", existing.getId());
-        log.info("Updated client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY);
+                        log.info("Updated client was invalidated in cache with id={}", existing.getId());
+                        log.info("Updated client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY_PREFIX);
+                    }
+                }
+        );
 
         return updated;
     }
 
     @Override
+    @Transactional
     public void deleteClient(Long id) {
         log.info("Called deleteClient with id: {}", id);
 
@@ -188,10 +210,17 @@ public class ManualClientService implements ClientService {
 
         clientRepository.deleteById(id);
 
-        redisTemplate.delete(CACHE_KEY_PREFIX + id);
-        redisTemplate.delete(ALL_CLIENTS_KEY);
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        redisTemplate.delete(CLIENT_KEY_PREFIX + id);
+                        redisTemplate.delete(ALL_CLIENTS_KEY_PREFIX);
 
-        log.info("Deleted client was invalidated in cache with id={}", id);
-        log.info("Deleted client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY);
+                        log.info("Deleted client was invalidated in cache with id={}", id);
+                        log.info("Deleted client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY_PREFIX);
+                    }
+                }
+        );
     }
 }

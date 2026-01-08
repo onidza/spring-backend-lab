@@ -1,4 +1,4 @@
-package com.onidza.hibernatecore.service;
+package com.onidza.hibernatecore.service.coupon;
 
 import com.onidza.hibernatecore.model.dto.CouponDTO;
 

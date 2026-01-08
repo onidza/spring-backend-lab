@@ -6,7 +6,7 @@ import com.onidza.hibernatecore.model.entity.Coupon;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
 import com.onidza.hibernatecore.repository.CouponRepository;
-import com.onidza.hibernatecore.service.CouponServiceImpl;
+import com.onidza.hibernatecore.service.coupon.CouponServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

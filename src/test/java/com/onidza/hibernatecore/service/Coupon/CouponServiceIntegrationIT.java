@@ -2,7 +2,7 @@ package com.onidza.hibernatecore.service.Coupon;
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.CouponDTO;
-import com.onidza.hibernatecore.service.CouponServiceImpl;
+import com.onidza.hibernatecore.service.coupon.CouponServiceImpl;
 import com.onidza.hibernatecore.service.client.ClientServiceImpl;
 import com.onidza.hibernatecore.service.testcontainers.AbstractITConfiguration;
 import org.junit.jupiter.api.Assertions;
