@@ -7,14 +7,13 @@ import com.onidza.hibernatecore.model.entity.Coupon;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
 import com.onidza.hibernatecore.repository.CouponRepository;
+import com.onidza.hibernatecore.service.TransactionAfterCommitExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
@@ -32,16 +31,18 @@ public class ManualCouponServiceImpl implements CouponService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
+    private final TransactionAfterCommitExecutor afterCommitExecutor;
+
     private static final String COUPON_NOT_FOUND = "Coupon not found";
 
     private static final String COUPON_KEY_PREFIX = "coupon:";
-    private static final Duration COUPON_TTL_PREFIX = Duration.ofMinutes(1);
+    private static final Duration COUPON_TTL = Duration.ofMinutes(1);
 
-    private static final String ALL_COUPONS_KEY_PREFIX = "coupons:all:v1:";
-    private static final Duration ALL_COUPONS_TTL_PREFIX = Duration.ofMinutes(1);
+    private static final String ALL_COUPONS_KEY = "coupons:all:v1:";
+    private static final Duration ALL_COUPONS_TTL = Duration.ofMinutes(1);
 
     private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:v1:";
-    private static final Duration ALL_COUPONS_BY_CLIENT_ID_TTL_PREFIX = Duration.ofMinutes(1);
+    private static final Duration ALL_COUPONS_BY_CLIENT_ID_TTL = Duration.ofMinutes(1);
 
     private static final String ALL_COUPONS_BY_COUPON_ID_KEY_PREFIX = "coupons:byCouponId:v1:";
 
@@ -62,7 +63,7 @@ public class ManualCouponServiceImpl implements CouponService {
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND)));
 
-        redisTemplate.opsForValue().set(cacheKey, couponDTO, COUPON_TTL_PREFIX);
+        redisTemplate.opsForValue().set(cacheKey, couponDTO, COUPON_TTL);
         log.info("getCouponById was cached...");
 
         log.info("Returned coupon from db with id: {}", id);
@@ -73,7 +74,7 @@ public class ManualCouponServiceImpl implements CouponService {
     public List<CouponDTO> getAllCoupons() {
         log.info("Called getAllCoupons");
 
-        Object objFromCache = redisTemplate.opsForValue().get(ALL_COUPONS_KEY_PREFIX);
+        Object objFromCache = redisTemplate.opsForValue().get(ALL_COUPONS_KEY);
         if (objFromCache instanceof List<?> raw) {
             List<CouponDTO> couponDtoList = raw.stream()
                     .map(c -> objectMapper.convertValue(c, CouponDTO.class))
@@ -88,7 +89,7 @@ public class ManualCouponServiceImpl implements CouponService {
                 .map(mapperService::couponToDTO)
                 .toList();
 
-        redisTemplate.opsForValue().set(ALL_COUPONS_KEY_PREFIX, couponDtoList, ALL_COUPONS_TTL_PREFIX);
+        redisTemplate.opsForValue().set(ALL_COUPONS_KEY, couponDtoList, ALL_COUPONS_TTL);
         log.info("getAllCoupons was cached...");
 
         log.info("Returned allCoupons from db with size: {}", couponDtoList.size());
@@ -121,7 +122,7 @@ public class ManualCouponServiceImpl implements CouponService {
                 .map(mapperService::couponToDTO)
                 .toList();
 
-        redisTemplate.opsForValue().set(cacheKey, couponDtoList, ALL_COUPONS_BY_CLIENT_ID_TTL_PREFIX);
+        redisTemplate.opsForValue().set(cacheKey, couponDtoList, ALL_COUPONS_BY_CLIENT_ID_TTL);
         log.info("getAllCouponsByClientId was cached...");
 
         log.info("Returned couponsListById: {} from db with size: {}", id, couponDtoList.size());
@@ -145,18 +146,13 @@ public class ManualCouponServiceImpl implements CouponService {
 
         Coupon saved = couponRepository.save(coupon);
 
-        TransactionSynchronizationManager.registerSynchronization ( //for synchronize ACID transaction and cache
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        redisTemplate.delete(ALL_COUPONS_KEY_PREFIX);
-                        redisTemplate.delete(cacheKeyByClientId);
+        afterCommitExecutor.run(() -> {
+            redisTemplate.delete(ALL_COUPONS_KEY);
+            redisTemplate.delete(cacheKeyByClientId);
 
-                        log.info("Added a new coupon, getAllList was invalidated with key={}", ALL_COUPONS_KEY_PREFIX);
-                        log.info("Added a new coupon, getAllCouponsByClientId was invalidated too with key={}", cacheKeyByClientId);
-                    }
-                }
-        );
+            log.info("Added a new coupon, getAllList was invalidated with key={}", ALL_COUPONS_KEY);
+            log.info("Added a new coupon, getAllCouponsByClientId was invalidated too with key={}", cacheKeyByClientId);
+        });
 
         return mapperService.couponToDTO(saved);
     }
@@ -176,20 +172,15 @@ public class ManualCouponServiceImpl implements CouponService {
         coupon.setDiscount(couponDTO.discount());
         coupon.setExpirationDate(couponDTO.expirationDate());
 
-        TransactionSynchronizationManager.registerSynchronization ( //for synchronize ACID transaction and cache
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        redisTemplate.delete(COUPON_KEY_PREFIX + id);
-                        redisTemplate.delete(ALL_COUPONS_KEY_PREFIX);
-                        redisTemplate.delete(cacheKeyById);
+        afterCommitExecutor.run(() -> {
+            redisTemplate.delete(COUPON_KEY_PREFIX + id);
+            redisTemplate.delete(ALL_COUPONS_KEY);
+            redisTemplate.delete(cacheKeyById);
 
-                        log.info("Updated coupon was invalidated in cache with id={}", coupon.getId());
-                        log.info("Updated coupon in getAllList was invalidated too with key={}", ALL_COUPONS_KEY_PREFIX);
-                        log.info("Updated coupon in getAllCouponsByClientId was invalidated too with key={}", cacheKeyById);
-                    }
-                }
-        );
+            log.info("Updated coupon was invalidated in cache with id={}", coupon.getId());
+            log.info("Updated coupon in getAllList was invalidated too with key={}", ALL_COUPONS_KEY);
+            log.info("Updated coupon in getAllCouponsByClientId was invalidated too with key={}", cacheKeyById);
+        });
 
         return mapperService.couponToDTO(coupon);
     }
@@ -211,19 +202,14 @@ public class ManualCouponServiceImpl implements CouponService {
         coupon.getClients().clear();
         couponRepository.deleteById(id);
 
-        TransactionSynchronizationManager.registerSynchronization ( //for synchronize ACID transaction and cache
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        redisTemplate.delete(COUPON_KEY_PREFIX + id);
-                        redisTemplate.delete(ALL_COUPONS_KEY_PREFIX);
-                        redisTemplate.delete(cacheKeyById);
+        afterCommitExecutor.run(() -> {
+            redisTemplate.delete(COUPON_KEY_PREFIX + id);
+            redisTemplate.delete(ALL_COUPONS_KEY);
+            redisTemplate.delete(cacheKeyById);
 
-                        log.info("Deleted coupon was invalidated in cache with id={}", coupon.getId());
-                        log.info("Deleted coupon in getAllList was invalidated too with key={}", ALL_COUPONS_KEY_PREFIX);
-                        log.info("Deleted coupon in getAllCouponsByClientId was invalidated too with key={}", cacheKeyById);
-                    }
-                }
-        );
+            log.info("Deleted coupon was invalidated in cache with id={}", coupon.getId());
+            log.info("Deleted coupon in getAllList was invalidated too with key={}", ALL_COUPONS_KEY);
+            log.info("Deleted coupon in getAllCouponsByClientId was invalidated too with key={}", cacheKeyById);
+        });
     }
 }

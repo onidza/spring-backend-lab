@@ -7,6 +7,7 @@ import com.onidza.hibernatecore.model.entity.Client;
 import com.onidza.hibernatecore.model.entity.Profile;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
+import com.onidza.hibernatecore.service.TransactionAfterCommitExecutor;
 import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +16,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
@@ -34,14 +33,15 @@ public class ManualClientServiceImpl implements ClientService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
-
     private final RedisTemplate<String, Object> redisTemplate;
+
+    private final TransactionAfterCommitExecutor afterCommitExecutor;
 
     private static final String CLIENT_KEY_PREFIX = "client:";
     private static final long CLIENT_TTL_MINUTES = 1;
 
-    private static final String ALL_CLIENTS_KEY_PREFIX = "clients:all:v1:";
-    private static final Duration ALL_CLIENTS_TTL_PREFIX = Duration.ofMinutes(1);
+    private static final String ALL_CLIENTS_KEY = "clients:all:v1:";
+    private static final Duration ALL_CLIENTS_TTL = Duration.ofMinutes(1);
 
     //this one method for example with stringRedisTemplate
     @Override
@@ -85,7 +85,7 @@ public class ManualClientServiceImpl implements ClientService {
     public List<ClientDTO> getAllClients() {
         log.info("Called getAllClients");
 
-        Object objFromCache = redisTemplate.opsForValue().get(ALL_CLIENTS_KEY_PREFIX);
+        Object objFromCache = redisTemplate.opsForValue().get(ALL_CLIENTS_KEY);
         if (objFromCache instanceof List<?> raw) {
 
             List<ClientDTO> clientDtoList = raw.stream()
@@ -109,7 +109,7 @@ public class ManualClientServiceImpl implements ClientService {
                 .map(mapperService::clientToDTO)
                 .toList();
 
-        redisTemplate.opsForValue().set(ALL_CLIENTS_KEY_PREFIX, dtoList, ALL_CLIENTS_TTL_PREFIX);
+        redisTemplate.opsForValue().set(ALL_CLIENTS_KEY, dtoList, ALL_CLIENTS_TTL);
         log.info("getAllClients was cached...");
 
         log.info("Returned dtoList from db with size={}", clients.size());
@@ -129,15 +129,10 @@ public class ManualClientServiceImpl implements ClientService {
 
         Client saved = clientRepository.save(client);
 
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        redisTemplate.delete(ALL_CLIENTS_KEY_PREFIX);
-                        log.info("Added a new client, getAllList was invalidated too with key={}", ALL_CLIENTS_KEY_PREFIX);
-                    }
-                }
-        );
+        afterCommitExecutor.run(() -> {
+            redisTemplate.delete(ALL_CLIENTS_KEY);
+            log.info("Added a new client, getAllList was invalidated too with key={}", ALL_CLIENTS_KEY);
+        });
 
         return mapperService.clientToDTO(saved);
     }
@@ -183,18 +178,13 @@ public class ManualClientServiceImpl implements ClientService {
 
         ClientDTO updated = mapperService.clientToDTO(clientRepository.save(existing));
 
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        redisTemplate.delete(CLIENT_KEY_PREFIX + existing.getId());
-                        redisTemplate.delete(ALL_CLIENTS_KEY_PREFIX);
+        afterCommitExecutor.run(() -> {
+            redisTemplate.delete(CLIENT_KEY_PREFIX + existing.getId());
+            redisTemplate.delete(ALL_CLIENTS_KEY);
 
-                        log.info("Updated client was invalidated in cache with id={}", existing.getId());
-                        log.info("Updated client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY_PREFIX);
-                    }
-                }
-        );
+            log.info("Updated client was invalidated in cache with id={}", existing.getId());
+            log.info("Updated client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY);
+        });
 
         return updated;
     }
@@ -210,17 +200,12 @@ public class ManualClientServiceImpl implements ClientService {
 
         clientRepository.deleteById(id);
 
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        redisTemplate.delete(CLIENT_KEY_PREFIX + id);
-                        redisTemplate.delete(ALL_CLIENTS_KEY_PREFIX);
+        afterCommitExecutor.run(() -> {
+            redisTemplate.delete(CLIENT_KEY_PREFIX + id);
+            redisTemplate.delete(ALL_CLIENTS_KEY);
 
-                        log.info("Deleted client was invalidated in cache with id={}", id);
-                        log.info("Deleted client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY_PREFIX);
-                    }
-                }
-        );
+            log.info("Deleted client was invalidated in cache with id={}", id);
+            log.info("Deleted client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY);
+        });
     }
 }
