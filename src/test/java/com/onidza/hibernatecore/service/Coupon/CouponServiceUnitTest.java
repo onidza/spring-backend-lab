@@ -242,7 +242,7 @@ class CouponServiceUnitTest {
     }
 
     @Test
-    void deleteCouponById_returnNothing() {
+    void deleteCouponByCouponId_returnNothing() {
         Client clientWithOrders = CouponDataFactory.createPersistClientWithTwoCoupons();
         Coupon orderForDelete = CouponDataFactory.createPersistentCouponEntity();
         orderForDelete.getClients().add(clientWithOrders);
@@ -252,19 +252,19 @@ class CouponServiceUnitTest {
         Mockito.doNothing()
                 .when(couponRepository).deleteById(orderForDelete.getId());
 
-        couponServiceImpl.deleteCouponById(orderForDelete.getId());
+        couponServiceImpl.deleteCouponByCouponId(orderForDelete.getId());
 
         Mockito.verify(couponRepository).findById(orderForDelete.getId());
         Mockito.verify(couponRepository).deleteById(orderForDelete.getId());
     }
 
     @Test
-    void deleteCouponById_couponNotFound() {
+    void deleteCouponByCouponId_couponNotFound() {
         Mockito.when(couponRepository.findById(Mockito.anyLong()))
                 .thenReturn(Optional.empty());
 
         ResponseStatusException ex = Assertions.assertThrows(ResponseStatusException.class,
-                () -> couponServiceImpl.deleteCouponById(999L));
+                () -> couponServiceImpl.deleteCouponByCouponId(999L));
 
         Assertions.assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
 

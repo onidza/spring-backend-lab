@@ -4,7 +4,7 @@ package com.onidza.hibernatecore.controller;
 import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.dto.order.OrderDTO;
 import com.onidza.hibernatecore.model.dto.order.OrderFilterDTO;
-import com.onidza.hibernatecore.service.OrderServiceImpl;
+import com.onidza.hibernatecore.service.order.OrderServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

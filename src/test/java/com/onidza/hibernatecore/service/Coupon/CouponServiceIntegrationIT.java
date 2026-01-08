@@ -97,11 +97,11 @@ class CouponServiceIntegrationIT extends AbstractITConfiguration {
     }
 
     @Test
-    void deleteCouponById_returnNothingWithRelations() {
+    void deleteCouponByCouponId_returnNothingWithRelations() {
         ClientDTO inputCouponDTO = CouponDataFactory.createClientDTOWithOneCoupon();
 
         ClientDTO saved = clientServiceImpl.addClient(inputCouponDTO);
-        couponServiceImpl.deleteCouponById(saved.coupons().get(0).id());
+        couponServiceImpl.deleteCouponByCouponId(saved.coupons().get(0).id());
 
         Executable exec = () -> couponServiceImpl.getCouponById(saved.coupons().get(0).id());
         Assertions.assertThrows(ResponseStatusException.class, exec);

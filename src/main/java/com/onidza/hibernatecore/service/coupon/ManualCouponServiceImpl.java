@@ -38,13 +38,16 @@ public class ManualCouponServiceImpl implements CouponService {
     private static final String COUPON_KEY_PREFIX = "coupon:";
     private static final Duration COUPON_TTL = Duration.ofMinutes(1);
 
-    private static final String ALL_COUPONS_KEY = "coupons:all:v1:";
+    private static final String ALL_COUPONS_KEY = "coupons:all:v1";
     private static final Duration ALL_COUPONS_TTL = Duration.ofMinutes(1);
 
     private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:v1:";
     private static final Duration ALL_COUPONS_BY_CLIENT_ID_TTL = Duration.ofMinutes(1);
 
     private static final String ALL_COUPONS_BY_COUPON_ID_KEY_PREFIX = "coupons:byCouponId:v1:";
+
+    private static final String CLIENT_KEY_PREFIX = "client:";
+    private static final String ALL_CLIENTS_KEY = "clients:all:v1";
 
     @Override
     public CouponDTO getCouponById(Long id) {
@@ -135,6 +138,7 @@ public class ManualCouponServiceImpl implements CouponService {
         log.info("Called addCouponToClientById with id: {}", id);
 
         String cacheKeyByClientId = ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id;
+        String cacheKeyClientKey = CLIENT_KEY_PREFIX + id;
 
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
@@ -150,8 +154,14 @@ public class ManualCouponServiceImpl implements CouponService {
             redisTemplate.delete(ALL_COUPONS_KEY);
             redisTemplate.delete(cacheKeyByClientId);
 
+            redisTemplate.delete(cacheKeyClientKey);
+            redisTemplate.delete(ALL_CLIENTS_KEY);
+
             log.info("Added a new coupon, getAllList was invalidated with key={}", ALL_COUPONS_KEY);
             log.info("Added a new coupon, getAllCouponsByClientId was invalidated too with key={}", cacheKeyByClientId);
+
+            log.info("Added a new coupon, getClientById was invalidated with key={}", cacheKeyClientKey);
+            log.info("Added a new coupon, getAllClients was invalidated with key={}", ALL_CLIENTS_KEY);
         });
 
         return mapperService.couponToDTO(saved);
@@ -162,7 +172,9 @@ public class ManualCouponServiceImpl implements CouponService {
     public CouponDTO updateCouponByCouponId(Long id, CouponDTO couponDTO) {
         log.info("Called updateCouponByCouponId with id: {}", id);
 
-        String cacheKeyById = ALL_COUPONS_BY_COUPON_ID_KEY_PREFIX + id;
+        String cacheKeyCouponKey = COUPON_KEY_PREFIX + id;
+        String cacheKeyAllCouponsByCouponId = ALL_COUPONS_BY_COUPON_ID_KEY_PREFIX + id;
+        List<Long> cacheKeyClientKeys = couponRepository.findClientIdsByCouponId(id);
 
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(()
@@ -173,13 +185,23 @@ public class ManualCouponServiceImpl implements CouponService {
         coupon.setExpirationDate(couponDTO.expirationDate());
 
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(COUPON_KEY_PREFIX + id);
+            redisTemplate.delete(cacheKeyCouponKey);
             redisTemplate.delete(ALL_COUPONS_KEY);
-            redisTemplate.delete(cacheKeyById);
+            redisTemplate.delete(cacheKeyAllCouponsByCouponId);
 
-            log.info("Updated coupon was invalidated in cache with id={}", coupon.getId());
+            for (Long clientId : cacheKeyClientKeys) {
+                redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
+            }
+            redisTemplate.delete(ALL_CLIENTS_KEY);
+
+            log.info("Updated coupon was invalidated in cache with id={}", id);
             log.info("Updated coupon in getAllList was invalidated too with key={}", ALL_COUPONS_KEY);
-            log.info("Updated coupon in getAllCouponsByClientId was invalidated too with key={}", cacheKeyById);
+            log.info("Updated coupon in getAllCouponsByClientId was invalidated too with key={}", cacheKeyAllCouponsByCouponId);
+
+            log.info("Invalidated {} client caches due to coupon update: clientIds={}",
+                    cacheKeyClientKeys.size(),
+                    cacheKeyClientKeys);
+            log.info("Updated coupon in getAllClients was invalidated with key={}", ALL_CLIENTS_KEY);
         });
 
         return mapperService.couponToDTO(coupon);
@@ -187,10 +209,11 @@ public class ManualCouponServiceImpl implements CouponService {
 
     @Override
     @Transactional
-    public void deleteCouponById(Long id) {
+    public void deleteCouponByCouponId(Long id) {
         log.info("Called deleteCouponById with id: {}", id);
 
-        String cacheKeyById = ALL_COUPONS_BY_COUPON_ID_KEY_PREFIX + id;
+        String cacheKeyAllCouponsByCouponId = ALL_COUPONS_BY_COUPON_ID_KEY_PREFIX + id;
+        List<Long> cacheKeyClientKeys = couponRepository.findClientIdsByCouponId(id);
 
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(()
@@ -205,11 +228,21 @@ public class ManualCouponServiceImpl implements CouponService {
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(COUPON_KEY_PREFIX + id);
             redisTemplate.delete(ALL_COUPONS_KEY);
-            redisTemplate.delete(cacheKeyById);
+            redisTemplate.delete(cacheKeyAllCouponsByCouponId);
+
+            for (Long clientId : cacheKeyClientKeys) {
+                redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
+            }
+            redisTemplate.delete(ALL_CLIENTS_KEY);
 
             log.info("Deleted coupon was invalidated in cache with id={}", coupon.getId());
             log.info("Deleted coupon in getAllList was invalidated too with key={}", ALL_COUPONS_KEY);
-            log.info("Deleted coupon in getAllCouponsByClientId was invalidated too with key={}", cacheKeyById);
+            log.info("Deleted coupon in getAllCouponsByClientId was invalidated too with key={}", cacheKeyAllCouponsByCouponId);
+
+            log.info("Invalidated {} client caches due to coupon delete: clientIds={}",
+                    cacheKeyClientKeys.size(),
+                    cacheKeyClientKeys);
+            log.info("Deleted coupon in getAllClients was invalidated with key={}", ALL_CLIENTS_KEY);
         });
     }
 }

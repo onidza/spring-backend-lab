@@ -1,4 +1,4 @@
-package com.onidza.hibernatecore.service;
+package com.onidza.hibernatecore.service.order;
 
 import com.onidza.hibernatecore.model.dto.order.OrderDTO;
 import com.onidza.hibernatecore.model.dto.order.OrderFilterDTO;

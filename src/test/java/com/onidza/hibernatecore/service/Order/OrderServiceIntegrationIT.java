@@ -3,7 +3,7 @@ package com.onidza.hibernatecore.service.Order;
 import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.order.OrderDTO;
-import com.onidza.hibernatecore.service.OrderServiceImpl;
+import com.onidza.hibernatecore.service.order.OrderServiceImpl;
 import com.onidza.hibernatecore.service.client.ClientServiceImpl;
 import com.onidza.hibernatecore.service.testcontainers.AbstractITConfiguration;
 import org.junit.jupiter.api.Assertions;

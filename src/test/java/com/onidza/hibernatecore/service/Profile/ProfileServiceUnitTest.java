@@ -6,7 +6,7 @@ import com.onidza.hibernatecore.model.entity.Profile;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
 import com.onidza.hibernatecore.repository.ProfileRepository;
-import com.onidza.hibernatecore.service.ProfileServiceImpl;
+import com.onidza.hibernatecore.service.profile.ProfileServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

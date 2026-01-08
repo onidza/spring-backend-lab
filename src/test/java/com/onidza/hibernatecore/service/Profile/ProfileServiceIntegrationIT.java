@@ -2,7 +2,7 @@ package com.onidza.hibernatecore.service.Profile;
 
 import com.onidza.hibernatecore.model.dto.ClientDTO;
 import com.onidza.hibernatecore.model.dto.ProfileDTO;
-import com.onidza.hibernatecore.service.ProfileServiceImpl;
+import com.onidza.hibernatecore.service.profile.ProfileServiceImpl;
 import com.onidza.hibernatecore.service.client.ClientServiceImpl;
 import com.onidza.hibernatecore.service.testcontainers.AbstractITConfiguration;
 import org.junit.jupiter.api.Assertions;

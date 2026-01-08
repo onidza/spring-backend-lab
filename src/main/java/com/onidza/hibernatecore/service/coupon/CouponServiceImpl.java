@@ -87,7 +87,7 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Transactional
-    public void deleteCouponById(Long id) {
+    public void deleteCouponByCouponId(Long id) {
         log.info("Called deleteCouponById with id: {}", id);
 
         Coupon coupon = couponRepository.findById(id)

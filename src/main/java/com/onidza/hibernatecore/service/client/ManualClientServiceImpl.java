@@ -40,7 +40,7 @@ public class ManualClientServiceImpl implements ClientService {
     private static final String CLIENT_KEY_PREFIX = "client:";
     private static final long CLIENT_TTL_MINUTES = 1;
 
-    private static final String ALL_CLIENTS_KEY = "clients:all:v1:";
+    private static final String ALL_CLIENTS_KEY = "clients:all:v1";
     private static final Duration ALL_CLIENTS_TTL = Duration.ofMinutes(1);
 
     //this one method for example with stringRedisTemplate

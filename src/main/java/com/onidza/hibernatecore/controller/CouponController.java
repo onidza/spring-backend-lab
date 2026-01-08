@@ -98,7 +98,7 @@ public class CouponController {
         log.info("Called deleteCouponById with id: {}", id);
 
         CouponService service = resolveCouponService(cacheMode);
-        service.deleteCouponById(id);
+        service.deleteCouponByCouponId(id);
 
         return ResponseEntity.noContent().build();
     }

@@ -6,7 +6,7 @@ import com.onidza.hibernatecore.model.entity.Order;
 import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
 import com.onidza.hibernatecore.repository.OrderRepository;
-import com.onidza.hibernatecore.service.OrderServiceImpl;
+import com.onidza.hibernatecore.service.order.OrderServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,7 +1,7 @@
 package com.onidza.hibernatecore.controller;
 
 import com.onidza.hibernatecore.model.dto.ProfileDTO;
-import com.onidza.hibernatecore.service.ProfileServiceImpl;
+import com.onidza.hibernatecore.service.profile.ProfileServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
