@@ -9,6 +9,10 @@ import com.onidza.hibernatecore.model.mapper.MapperService;
 import com.onidza.hibernatecore.repository.ClientRepository;
 import com.onidza.hibernatecore.repository.OrderRepository;
 import com.onidza.hibernatecore.service.TransactionAfterCommitExecutor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +30,8 @@ import java.util.List;
 @Service
 public class ManualOrderServiceImpl implements OrderService {
 
+    private final MeterRegistry meterRegistry;
+
     private final OrderRepository orderRepository;
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
@@ -34,8 +40,24 @@ public class ManualOrderServiceImpl implements OrderService {
     private final ObjectMapper objectMapper;
     private final TransactionAfterCommitExecutor afterCommitExecutor;
 
+    private Counter filterCalls;
+    private Timer filterTimer;
+
     private static final String ORDER_NOT_FOUND = "Order not found";
     private static final String CLIENT_NOT_FOUND = "Client not found";
+
+    @PostConstruct
+    void initMetrics() {
+        this.filterCalls = Counter.builder("orders.filters.calls")
+                .tag("type", "dynamic")
+                .register(meterRegistry);
+
+        this.filterTimer = Timer.builder("orders.filters.latency")
+                .publishPercentiles(0.95, 0.99)
+                .register(meterRegistry);
+
+        log.info("Order metrics initialized");
+    }
 
     public OrderDTO getOrderById(Long id) {
         log.info("Called getOrderById with id: {}", id);
@@ -114,34 +136,38 @@ public class ManualOrderServiceImpl implements OrderService {
     public List<OrderDTO> getOrdersByFilters(OrderFilterDTO filter) {
         log.info("Called getOrdersByFilters with filter: {}", filter);
 
-        List<Order> orders = orderRepository.findAll((root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
+        filterCalls.increment();
 
-            if (filter.status() != null) {
-                predicates.add(cb.equal((root.get("status")), filter.status())); //WHERE status = 'PAID'
-            }
+        return filterTimer.record(() -> {
+            List<Order> orders = orderRepository.findAll((root, query, cb) -> {
+                List<Predicate> predicates = new ArrayList<>();
 
-            if (filter.fromDate() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("orderDate"), filter.fromDate()));
-            }
+                if (filter.status() != null) {
+                    predicates.add(cb.equal((root.get("status")), filter.status())); //WHERE status = 'PAID'
+                }
 
-            if (filter.toDate() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("orderDate"), filter.toDate()));
-            }
+                if (filter.fromDate() != null) {
+                    predicates.add(cb.greaterThanOrEqualTo(root.get("orderDate"), filter.fromDate()));
+                }
 
-            if (filter.minAmount() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("totalAmount"), filter.minAmount()));
-            }
+                if (filter.toDate() != null) {
+                    predicates.add(cb.lessThanOrEqualTo(root.get("orderDate"), filter.toDate()));
+                }
 
-            if (filter.maxAmount() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("totalAmount"), filter.maxAmount()));
-            }
+                if (filter.minAmount() != null) {
+                    predicates.add(cb.greaterThanOrEqualTo(root.get("totalAmount"), filter.minAmount()));
+                }
 
-            return cb.and(predicates.toArray(new Predicate[0]));
+                if (filter.maxAmount() != null) {
+                    predicates.add(cb.lessThanOrEqualTo(root.get("totalAmount"), filter.maxAmount()));
+                }
+
+                return cb.and(predicates.toArray(new Predicate[0]));
+            });
+
+            return orders.stream()
+                    .map(mapperService::orderToDTO)
+                    .toList();
         });
-
-        return orders.stream()
-                .map(mapperService::orderToDTO)
-                .toList();
     }
 }
