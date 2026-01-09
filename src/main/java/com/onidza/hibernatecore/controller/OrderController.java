@@ -4,6 +4,9 @@ package com.onidza.hibernatecore.controller;
 import com.onidza.hibernatecore.model.OrderStatus;
 import com.onidza.hibernatecore.model.dto.order.OrderDTO;
 import com.onidza.hibernatecore.model.dto.order.OrderFilterDTO;
+import com.onidza.hibernatecore.service.CacheMode;
+import com.onidza.hibernatecore.service.order.ManualOrderServiceImpl;
+import com.onidza.hibernatecore.service.order.OrderService;
 import com.onidza.hibernatecore.service.order.OrderServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,48 +27,78 @@ import java.util.List;
 public class OrderController {
 
     private final OrderServiceImpl orderServiceImpl;
+    private final ManualOrderServiceImpl manualOrderService;
 
     @GetMapping("/order/{id}")
-    public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<OrderDTO> getOrderById(
+            @PathVariable Long id,
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    ) {
         log.info("Called getOrderById with id: {}", id);
-        OrderDTO orderDTO = orderServiceImpl.getOrderById(id);
+
+        OrderService service = resolveOrderService(cacheMode);
+        OrderDTO orderDTO = service.getOrderById(id);
         return ResponseEntity.ok(orderDTO);
     }
 
     @GetMapping("/orders")
-    public ResponseEntity<List<OrderDTO>> getAllOrders() {
+    public ResponseEntity<List<OrderDTO>> getAllOrders(
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    ) {
         log.info("Called getAllOrders");
-        List<OrderDTO> orders = orderServiceImpl.getAllOrders();
+
+        OrderService service = resolveOrderService(cacheMode);
+        List<OrderDTO> orders = service.getAllOrders();
         return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/{id}/orders")
-    public ResponseEntity<List<OrderDTO>> getAllOrdersByClientId(@PathVariable Long id) {
+    public ResponseEntity<List<OrderDTO>> getAllOrdersByClientId(
+            @PathVariable Long id,
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    ) {
         log.info("Called getAllOrdersByClientId with id: {}", id);
-        List<OrderDTO> orders = orderServiceImpl.getAllOrdersByClientId(id);
+
+        OrderService service = resolveOrderService(cacheMode);
+        List<OrderDTO> orders = service.getAllOrdersByClientId(id);
         return ResponseEntity.ok(orders);
     }
 
     @PutMapping("/{id}/order")
-    public ResponseEntity<OrderDTO> updateOrderByOrderId(@PathVariable Long id,
-                                                         @Valid @RequestBody OrderDTO orderDTO) {
+    public ResponseEntity<OrderDTO> updateOrderByOrderId(
+            @PathVariable Long id,
+            @Valid @RequestBody OrderDTO orderDTO,
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    ) {
         log.info("Called updateOrderByOrderId with id: {}", id);
-        OrderDTO order = orderServiceImpl.updateOrderByOrderId(id, orderDTO);
+
+        OrderService service = resolveOrderService(cacheMode);
+        OrderDTO order = service.updateOrderByOrderId(id, orderDTO);
         return ResponseEntity.ok(order);
     }
 
     @PostMapping("/{id}/order")
-    public ResponseEntity<OrderDTO> addOrderToClient(@PathVariable Long id,
-                                                     @Valid @RequestBody OrderDTO orderDTO) {
+    public ResponseEntity<OrderDTO> addOrderToClient(
+            @PathVariable Long id,
+            @Valid @RequestBody OrderDTO orderDTO,
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    ) {
         log.info("Called addOrderToClient with id: {}", id);
-        OrderDTO order = orderServiceImpl.addOrderToClient(id, orderDTO);
+
+        OrderService service = resolveOrderService(cacheMode);
+        OrderDTO order = service.addOrderToClient(id, orderDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
     @DeleteMapping("/{id}/order")
-    public ResponseEntity<Void> deleteOrderById(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteOrderById(
+            @PathVariable Long id,
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    ) {
         log.info("Called deleteOrderById with id: {}", id);
-        orderServiceImpl.deleteOrderById(id);
+
+        OrderService service = resolveOrderService(cacheMode);
+        service.deleteOrderById(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -79,7 +112,9 @@ public class OrderController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
 
             @RequestParam(required = false) BigDecimal minAmount,
-            @RequestParam(required = false) BigDecimal maxAmount
+            @RequestParam(required = false) BigDecimal maxAmount,
+
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
     ) {
         log.info("Called findOrdersByFilters with status: {}, fromDate {}, toDate {}, minAmount {}, maxAmount {}",
                 status, fromDate, toDate, minAmount, maxAmount);
@@ -91,7 +126,16 @@ public class OrderController {
                 minAmount,
                 maxAmount);
 
-        List<OrderDTO> orders = orderServiceImpl.getOrdersByFilters(filter);
+        OrderService service = resolveOrderService(cacheMode);
+        List<OrderDTO> orders = service.getOrdersByFilters(filter);
         return ResponseEntity.ok(orders);
+    }
+
+    private OrderService resolveOrderService(CacheMode cacheMode) {
+        return switch (cacheMode) {
+            case NON_CACHE -> orderServiceImpl;
+            case MANUAL -> manualOrderService;
+            case SPRING -> throw new UnsupportedOperationException("Have no such a service");
+        };
     }
 }
