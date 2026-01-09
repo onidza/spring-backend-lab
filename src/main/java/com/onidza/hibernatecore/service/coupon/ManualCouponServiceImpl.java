@@ -44,13 +44,11 @@ public class ManualCouponServiceImpl implements CouponService {
     private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:v1:";
     private static final Duration ALL_COUPONS_BY_CLIENT_ID_TTL = Duration.ofMinutes(1);
 
-    private static final String ALL_COUPONS_BY_COUPON_ID_KEY_PREFIX = "coupons:byCouponId:v1:";
-
     private static final String CLIENT_KEY_PREFIX = "client:";
     private static final String ALL_CLIENTS_KEY = "clients:all:v1";
 
     @Override
-    public CouponDTO getCouponById(Long id) {
+    public CouponDTO getCouponByCouponId(Long id) {
         log.info("Called getCouponById with id: {}", id);
 
         String cacheKey = COUPON_KEY_PREFIX + id;
@@ -134,7 +132,7 @@ public class ManualCouponServiceImpl implements CouponService {
 
     @Override
     @Transactional
-    public CouponDTO addCouponToClientById(Long id, CouponDTO couponDTO) {
+    public CouponDTO addCouponToClientByClientId(Long id, CouponDTO couponDTO) {
         log.info("Called addCouponToClientById with id: {}", id);
 
         String cacheKeyByClientId = ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id;
@@ -173,7 +171,6 @@ public class ManualCouponServiceImpl implements CouponService {
         log.info("Called updateCouponByCouponId with id: {}", id);
 
         String cacheKeyCouponKey = COUPON_KEY_PREFIX + id;
-        String cacheKeyAllCouponsByCouponId = ALL_COUPONS_BY_COUPON_ID_KEY_PREFIX + id;
         List<Long> cacheKeyClientKeys = couponRepository.findClientIdsByCouponId(id);
 
         Coupon coupon = couponRepository.findById(id)
@@ -187,16 +184,16 @@ public class ManualCouponServiceImpl implements CouponService {
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(cacheKeyCouponKey);
             redisTemplate.delete(ALL_COUPONS_KEY);
-            redisTemplate.delete(cacheKeyAllCouponsByCouponId);
 
             for (Long clientId : cacheKeyClientKeys) {
                 redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
+                redisTemplate.delete(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + clientId);
             }
             redisTemplate.delete(ALL_CLIENTS_KEY);
 
             log.info("Updated coupon was invalidated in cache with id={}", id);
             log.info("Updated coupon in getAllList was invalidated too with key={}", ALL_COUPONS_KEY);
-            log.info("Updated coupon in getAllCouponsByClientId was invalidated too with key={}", cacheKeyAllCouponsByCouponId);
+            log.info("Updated coupon in getAllCouponsByClientId was invalidated too with key={}", ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX);
 
             log.info("Invalidated {} client caches due to coupon update: clientIds={}",
                     cacheKeyClientKeys.size(),
@@ -212,7 +209,6 @@ public class ManualCouponServiceImpl implements CouponService {
     public void deleteCouponByCouponId(Long id) {
         log.info("Called deleteCouponById with id: {}", id);
 
-        String cacheKeyAllCouponsByCouponId = ALL_COUPONS_BY_COUPON_ID_KEY_PREFIX + id;
         List<Long> cacheKeyClientKeys = couponRepository.findClientIdsByCouponId(id);
 
         Coupon coupon = couponRepository.findById(id)
@@ -228,16 +224,16 @@ public class ManualCouponServiceImpl implements CouponService {
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(COUPON_KEY_PREFIX + id);
             redisTemplate.delete(ALL_COUPONS_KEY);
-            redisTemplate.delete(cacheKeyAllCouponsByCouponId);
 
             for (Long clientId : cacheKeyClientKeys) {
                 redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
+                redisTemplate.delete(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + clientId);
             }
             redisTemplate.delete(ALL_CLIENTS_KEY);
 
             log.info("Deleted coupon was invalidated in cache with id={}", coupon.getId());
             log.info("Deleted coupon in getAllList was invalidated too with key={}", ALL_COUPONS_KEY);
-            log.info("Deleted coupon in getAllCouponsByClientId was invalidated too with key={}", cacheKeyAllCouponsByCouponId);
+            log.info("Deleted coupon in getAllCouponsByClientId was invalidated too with key={}", ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX);
 
             log.info("Invalidated {} client caches due to coupon delete: clientIds={}",
                     cacheKeyClientKeys.size(),

@@ -26,7 +26,7 @@ public class CouponServiceImpl implements CouponService {
 
     private static final String COUPON_NOT_FOUND = "Coupon not found";
 
-    public CouponDTO getCouponById(Long id) {
+    public CouponDTO getCouponByCouponId(Long id) {
         log.info("Called getCouponById with id: {}", id);
 
         return mapperService.couponToDTO(couponRepository.findById(id)
@@ -57,7 +57,7 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Transactional
-    public CouponDTO addCouponToClientById(Long id, CouponDTO couponDTO) {
+    public CouponDTO addCouponToClientByClientId(Long id, CouponDTO couponDTO) {
         log.info("Called addCouponToClientById with id: {}", id);
 
         Client client = clientRepository.findById(id)

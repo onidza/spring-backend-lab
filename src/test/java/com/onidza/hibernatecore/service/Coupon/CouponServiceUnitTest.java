@@ -37,7 +37,7 @@ class CouponServiceUnitTest {
     private CouponServiceImpl couponServiceImpl;
 
     @Test
-    void getCouponById_returnCouponDTOWithRelations() {
+    void getCouponByCouponId_returnCouponDTOWithRelations() {
         Coupon persistentCoupon = CouponDataFactory.createPersistentCouponEntity();
         CouponDTO persistentCouponDTO = CouponDataFactory.createPersistentCouponDTO();
 
@@ -47,7 +47,7 @@ class CouponServiceUnitTest {
         Mockito.when(mapperService.couponToDTO(persistentCoupon))
                 .thenReturn(persistentCouponDTO);
 
-        CouponDTO result = couponServiceImpl.getCouponById(persistentCoupon.getId());
+        CouponDTO result = couponServiceImpl.getCouponByCouponId(persistentCoupon.getId());
 
         Assertions.assertNotNull(result.id());
         Assertions.assertEquals(result.code(), persistentCoupon.getCode());
@@ -58,12 +58,12 @@ class CouponServiceUnitTest {
     }
 
     @Test
-    void getCouponById_notFound() {
+    void getCouponByCouponId_notFound() {
         Mockito.when(couponRepository.findById(Mockito.anyLong()))
                 .thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> couponServiceImpl.getCouponById(1L));
+                () -> couponServiceImpl.getCouponByCouponId(1L));
 
         Mockito.verify(couponRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);
@@ -179,7 +179,7 @@ class CouponServiceUnitTest {
         Mockito.when(mapperService.couponToDTO(couponEntityForAdd))
                 .thenReturn(couponDTOAfterAdd);
 
-        CouponDTO result = couponServiceImpl.addCouponToClientById(client.getId(), couponDTOForAdd);
+        CouponDTO result = couponServiceImpl.addCouponToClientByClientId(client.getId(), couponDTOForAdd);
 
         Assertions.assertEquals(couponDTOForAdd.discount(), result.discount());
         Assertions.assertEquals(3, client.getCoupons().size());
@@ -198,7 +198,7 @@ class CouponServiceUnitTest {
                 .thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResponseStatusException.class,
-                () -> couponServiceImpl.addCouponToClientById(1L, couponDTOForAdd));
+                () -> couponServiceImpl.addCouponToClientByClientId(1L, couponDTOForAdd));
 
         Mockito.verify(clientRepository).findById(1L);
         Mockito.verifyNoInteractions(mapperService);

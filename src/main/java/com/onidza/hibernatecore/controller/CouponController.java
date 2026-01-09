@@ -32,7 +32,7 @@ public class CouponController {
         log.info("Called getCouponById with id: {}", id);
 
         CouponService service = resolveCouponService(cacheMode);
-        CouponDTO couponDTO = service.getCouponById(id);
+        CouponDTO couponDTO = service.getCouponByCouponId(id);
 
         return ResponseEntity.ok(couponDTO);
     }
@@ -71,7 +71,7 @@ public class CouponController {
         log.info("Called addCouponToClientById with id: {}", id);
 
         CouponService service = resolveCouponService(cacheMode);
-        CouponDTO coupon = service.addCouponToClientById(id, couponDTO);
+        CouponDTO coupon = service.addCouponToClientByClientId(id, couponDTO);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(coupon);
     }

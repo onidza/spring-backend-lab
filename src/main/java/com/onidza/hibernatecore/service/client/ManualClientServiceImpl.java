@@ -43,6 +43,9 @@ public class ManualClientServiceImpl implements ClientService {
     private static final String ALL_CLIENTS_KEY = "clients:all:v1";
     private static final Duration ALL_CLIENTS_TTL = Duration.ofMinutes(1);
 
+    private static final String ALL_COUPONS_KEY = "coupons:all:v1";
+    private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:v1:";
+
     //this one method for example with stringRedisTemplate
     @Override
     public ClientDTO getClientById(Long id) {
@@ -129,9 +132,15 @@ public class ManualClientServiceImpl implements ClientService {
 
         Client saved = clientRepository.save(client);
 
+        boolean hasCoupons = client.getCoupons() != null && !client.getCoupons().isEmpty();
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(ALL_CLIENTS_KEY);
             log.info("Added a new client, getAllList was invalidated too with key={}", ALL_CLIENTS_KEY);
+
+            if (hasCoupons) {
+                redisTemplate.delete(ALL_COUPONS_KEY);
+                log.info("Added a new client, getAllCoupons was invalidated too with key={}", ALL_CLIENTS_KEY);
+            }
         });
 
         return mapperService.clientToDTO(saved);
@@ -178,12 +187,22 @@ public class ManualClientServiceImpl implements ClientService {
 
         ClientDTO updated = mapperService.clientToDTO(clientRepository.save(existing));
 
+        boolean couponsTouched = clientDTO.coupons() != null;
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CLIENT_KEY_PREFIX + existing.getId());
+            redisTemplate.delete(CLIENT_KEY_PREFIX + id);
             redisTemplate.delete(ALL_CLIENTS_KEY);
 
-            log.info("Updated client was invalidated in cache with id={}", existing.getId());
+            log.info("Updated client was invalidated in cache with id={}", id);
             log.info("Updated client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY);
+
+            if (couponsTouched) {
+                redisTemplate.delete(ALL_COUPONS_KEY);
+                redisTemplate.delete(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
+
+                log.info("Updated client, getAllCoupons was invalidated too with key={}", ALL_COUPONS_KEY);
+                log.info("Updated client, getAllCouponsByClientId was invalidated too with key={}",
+                        ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
+            }
         });
 
         return updated;
@@ -203,6 +222,8 @@ public class ManualClientServiceImpl implements ClientService {
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(CLIENT_KEY_PREFIX + id);
             redisTemplate.delete(ALL_CLIENTS_KEY);
+
+            redisTemplate.delete(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
 
             log.info("Deleted client was invalidated in cache with id={}", id);
             log.info("Deleted client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY);
