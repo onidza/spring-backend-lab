@@ -9,10 +9,10 @@
         <relativePath/>
     </parent>
     <groupId>com.onidza</groupId>
-    <artifactId>hibernateCore</artifactId>
+    <artifactId>spring-backend-lab</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>hibernateCore</name>
-    <description>hibernateCore</description>
+    <name>spring-backend-lab</name>
+    <description>spring-backend-lab</description>
     <url/>
     <licenses>
         <license/>
