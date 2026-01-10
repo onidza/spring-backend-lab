@@ -1,6 +1,7 @@
 package com.onidza.backend.controller;
 
 import com.onidza.backend.model.dto.ClientDTO;
+import com.onidza.backend.model.dto.PageResponse;
 import com.onidza.backend.service.CacheMode;
 import com.onidza.backend.service.client.ClientService;
 import com.onidza.backend.service.client.ClientServiceImpl;
@@ -8,11 +9,10 @@ import com.onidza.backend.service.client.ManualClientServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -37,15 +37,24 @@ public class ClientController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ClientDTO>> getAllClients(
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    public ResponseEntity<PageResponse<ClientDTO>> getAllClientsPage(
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         log.info("Called getAllClients");
 
         ClientService service = resolveClientService(cacheMode);
-        List<ClientDTO> clients = service.getAllClients();
+        Page<ClientDTO> result = service.getAllClientsPage(page, size);
 
-        return ResponseEntity.ok(clients);
+        return ResponseEntity.ok(new PageResponse<>(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        ));
     }
 
     @PostMapping

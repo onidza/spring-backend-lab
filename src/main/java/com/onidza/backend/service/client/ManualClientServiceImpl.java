@@ -11,6 +11,7 @@ import com.onidza.backend.service.TransactionAfterCommitExecutor;
 import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -84,7 +85,7 @@ public class ManualClientServiceImpl implements ClientService {
     }
 
     @Override
-    public List<ClientDTO> getAllClients() {
+    public Page<ClientDTO> getAllClientsPage(int page, int size) {
         log.info("Called getAllClients");
 
         Object objFromCache = redisTemplate.opsForValue().get(ALL_CLIENTS_KEY);

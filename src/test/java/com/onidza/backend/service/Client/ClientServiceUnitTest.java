@@ -34,7 +34,6 @@ class ClientServiceUnitTest {
     @InjectMocks
     private ClientServiceImpl clientServiceImpl;
 
-
     @Test
     void getClientById_existingClient_returnsDTO() {
         Client persistentClient = ClientDataFactory.createPersistentClientEntity();

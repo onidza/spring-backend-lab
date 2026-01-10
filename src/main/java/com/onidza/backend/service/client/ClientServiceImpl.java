@@ -9,6 +9,10 @@ import com.onidza.backend.repository.ClientRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,21 +40,18 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public List<ClientDTO> getAllClients() {
+    public Page<ClientDTO> getAllClientsPage(int page, int size) {
         log.info("Called getAllClients");
 
-        List<Client> clients = entityManager.createQuery(
-                     """
-                        SELECT DISTINCT c FROM Client c
-                        LEFT JOIN FETCH c.profile
-                        LEFT JOIN FETCH c.orders
-                        LEFT JOIN FETCH c.coupons
-                        """, Client.class
-        ).getResultList();
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        Pageable pageable = PageRequest.of(
+                page,
+                safeSize,
+                Sort.by(Sort.Direction.ASC, "id"));
 
-        return clients.stream()
-                .map(mapperService::clientToDTO)
-                .toList();
+        Page<Client> result = clientRepository.findAll(pageable);
+
+        return result.map(mapperService::clientToDTO);
     }
 
     @Override
