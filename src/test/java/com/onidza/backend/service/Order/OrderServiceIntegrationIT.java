@@ -126,11 +126,11 @@ class OrderServiceIntegrationIT extends AbstractITConfiguration {
     }
 
     @Test
-    void deleteOrderById_returnNothingWithRelations() {
+    void deleteOrderByOrderId_returnNothingWithRelations() {
         ClientDTO inputClientDTO = OrderDataFactory.createInputClientDTO();
 
         ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
-        orderServiceImpl.deleteOrderById(saved.orders().get(0).id());
+        orderServiceImpl.deleteOrderByOrderId(saved.orders().get(0).id());
 
         Executable exec = () -> orderServiceImpl.getOrderById(saved.orders().get(0).id());
         Assertions.assertThrows(ResponseStatusException.class, exec);

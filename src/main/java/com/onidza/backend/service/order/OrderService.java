@@ -17,7 +17,7 @@ public interface OrderService {
 
     OrderDTO addOrderToClient(Long id, OrderDTO orderDTO);
 
-    void deleteOrderById(Long id);
+    void deleteOrderByOrderId(Long id);
 
     List<OrderDTO> getOrdersByFilters(OrderFilterDTO filter);
 }

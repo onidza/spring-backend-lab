@@ -22,8 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -43,17 +45,46 @@ public class ManualOrderServiceImpl implements OrderService {
     private Counter filterCalls;
     private Timer filterTimer;
 
+    private Counter filterCacheHits;
+    private Counter filterCacheMisses;
+
     private static final String ORDER_NOT_FOUND = "Order not found";
     private static final String CLIENT_NOT_FOUND = "Client not found";
 
+    private static final String ORDER_KEY_PREFIX = "order:";
+    private static final Duration ORDER_TTL = Duration.ofMinutes(10);
+
+    private static final String ALL_ORDERS_KEY = "orders:all:v1";
+    private static final Duration ALL_ORDERS_TTL = Duration.ofMinutes(10);
+
+    private static final String ALL_ORDERS_BY_CLIENT_ID_KEY_PREFIX = "orders:byClientId:v1:";
+    private static final Duration ALL_ORDERS_BY_CLIENT_ID_TTL = Duration.ofMinutes(10);
+
+    private static final String ORDERS_FILTER_STATUS_KEY_PREFIX = "orders:filter:status:v1:";
+    private static final Duration ORDERS_FILTER_STATUS_TTL = Duration.ofSeconds(30);
+
+    private static final String CLIENT_KEY_PREFIX = "client:";
+    private static final String ALL_CLIENTS_KEY = "clients:all:v1";
+
     @PostConstruct
     void initMetrics() {
+        String dynamicTag = "dynamic";
+        String dynamicType = "type";
+
         this.filterCalls = Counter.builder("orders.filters.calls")
-                .tag("type", "dynamic")
+                .tag(dynamicType, dynamicTag)
                 .register(meterRegistry);
 
         this.filterTimer = Timer.builder("orders.filters.latency")
                 .publishPercentiles(0.95, 0.99)
+                .register(meterRegistry);
+
+        this.filterCacheHits = Counter.builder("orders.filters.cache.hits")
+                .tag(dynamicType, dynamicTag)
+                .register(meterRegistry);
+
+        this.filterCacheMisses = Counter.builder("orders.filters.cache.misses")
+                .tag(dynamicType, dynamicTag)
                 .register(meterRegistry);
 
         log.info("Order metrics initialized");
@@ -62,31 +93,75 @@ public class ManualOrderServiceImpl implements OrderService {
     public OrderDTO getOrderById(Long id) {
         log.info("Called getOrderById with id: {}", id);
 
-        return mapperService.orderToDTO(orderRepository.findById(id)
+        Object objFromCache = redisTemplate.opsForValue().get(ORDER_KEY_PREFIX + id);
+        if (objFromCache != null) {
+            log.info("Returned order from cache with id: {}", id);
+            return objectMapper.convertValue(objFromCache, OrderDTO.class);
+        }
+
+        OrderDTO existing = mapperService.orderToDTO(orderRepository.findById(id)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND)));
+
+        redisTemplate.opsForValue().set(ORDER_KEY_PREFIX + id, existing, ORDER_TTL);
+        log.info("getOrderById was cached...");
+
+        log.info("Returned order from db with id: {}", id);
+        return existing;
     }
 
     public List<OrderDTO> getAllOrders() {
         log.info("Called getAllOrders");
 
-        return orderRepository.findAll()
+        Object objFromCache = redisTemplate.opsForValue().get(ALL_ORDERS_KEY);
+        if (objFromCache instanceof List<?> raw) {
+            List<OrderDTO> orderDTOList = raw.stream()
+                    .map(o -> objectMapper.convertValue(o, OrderDTO.class))
+                    .toList();
+
+            log.info("Returned orderDtoList from cache with size={}", orderDTOList.size());
+            return orderDTOList;
+        }
+
+        List<OrderDTO> orderDTOList = orderRepository.findAll()
                 .stream()
                 .map(mapperService::orderToDTO)
                 .toList();
+
+        redisTemplate.opsForValue().set(ALL_ORDERS_KEY, orderDTOList, ALL_ORDERS_TTL);
+        log.info("getAllOrders was cached...");
+
+        log.info("Returned allOrders from db with size: {}", orderDTOList.size());
+        return orderDTOList;
     }
 
     public List<OrderDTO> getAllOrdersByClientId(Long id) {
         log.info("Called getAllOrdersByClientId with id: {}", id);
 
+        Object objFromCache = redisTemplate.opsForValue().get(ALL_ORDERS_BY_CLIENT_ID_KEY_PREFIX + id);
+        if (objFromCache instanceof List<?> raw) {
+            List<OrderDTO> orderDTOList = raw.stream()
+                    .map(o -> objectMapper.convertValue(o, OrderDTO.class))
+                    .toList();
+
+            log.info("Returned ordersDtoListById from cache with size={}", orderDTOList.size());
+            return orderDTOList;
+        }
+
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND));
 
-        return client.getOrders()
+        List<OrderDTO> orderDTOList = client.getOrders()
                 .stream()
                 .map(mapperService::orderToDTO)
                 .toList();
+
+        redisTemplate.opsForValue().set(ALL_ORDERS_BY_CLIENT_ID_KEY_PREFIX + id, orderDTOList, ALL_ORDERS_BY_CLIENT_ID_TTL);
+        log.info("getAllOrdersByClientId was cached...");
+
+        log.info("Returned ordersListByClientId: {} from db with size: {}", id, orderDTOList.size());
+        return orderDTOList;
     }
 
     @Transactional
@@ -97,9 +172,26 @@ public class ManualOrderServiceImpl implements OrderService {
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
 
+        Long clientId = order.getClient().getId();
+        String oldStatus = order.getStatus().name();
+        String newStatus = orderDTO.status().name();
+
         order.setTotalAmount(orderDTO.totalAmount());
         order.setStatus(orderDTO.status());
         order.setOrderDate(orderDTO.orderDate());
+
+        afterCommitExecutor.run(() -> {
+            redisTemplate.delete(ORDER_KEY_PREFIX + id);
+            redisTemplate.delete((ALL_ORDERS_KEY));
+            redisTemplate.delete(ALL_ORDERS_BY_CLIENT_ID_KEY_PREFIX + clientId);
+
+            redisTemplate.delete(ORDERS_FILTER_STATUS_KEY_PREFIX + newStatus);
+            redisTemplate.delete(ORDERS_FILTER_STATUS_KEY_PREFIX + oldStatus);
+
+            redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
+            redisTemplate.delete(ALL_CLIENTS_KEY);
+
+        });
 
         return mapperService.orderToDTO(order);
     }
@@ -116,19 +208,48 @@ public class ManualOrderServiceImpl implements OrderService {
         order.setClient(client);
         client.getOrders().add(order);
 
+        Long clientId = client.getId();
+        String status = order.getStatus().name();
+
+        afterCommitExecutor.run(() -> {
+            redisTemplate.delete(ALL_ORDERS_KEY);
+            redisTemplate.delete(ALL_ORDERS_BY_CLIENT_ID_KEY_PREFIX + clientId);
+
+            redisTemplate.delete(ORDERS_FILTER_STATUS_KEY_PREFIX + status);
+
+            redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
+            redisTemplate.delete(ALL_CLIENTS_KEY);
+        });
+
         return mapperService.orderToDTO(orderRepository.save(order));
     }
 
-    public void deleteOrderById(Long id) {
-        log.info("Called deleteOrderById with id: {}", id);
+    @Transactional
+    public void deleteOrderByOrderId(Long id) {
+        log.info("Called deleteOrderByOrderId with id: {}", id);
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
 
         Client client = order.getClient();
-        if (client != null) {
-            client.getOrders().remove(order);
+        if (client == null) {
+            throw new IllegalStateException("Order has no client");
         }
+        client.getOrders().remove(order);
+
+        Long clientId = client.getId();
+        String status = order.getStatus().name();
+
+        afterCommitExecutor.run(() -> {
+            redisTemplate.delete(ORDER_KEY_PREFIX + id);
+            redisTemplate.delete(ALL_ORDERS_KEY);
+            redisTemplate.delete(ALL_ORDERS_BY_CLIENT_ID_KEY_PREFIX + clientId);
+
+            redisTemplate.delete(ORDERS_FILTER_STATUS_KEY_PREFIX + status);
+
+            redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
+            redisTemplate.delete(ALL_CLIENTS_KEY);
+        });
 
         orderRepository.deleteById(id);
     }
@@ -138,13 +259,48 @@ public class ManualOrderServiceImpl implements OrderService {
 
         filterCalls.increment();
 
+        boolean cacheable = isCacheableStatusOnly(filter);
+        if (cacheable) {
+            var key = ORDERS_FILTER_STATUS_KEY_PREFIX + filter.status().name();
+
+            Object objFromCache = redisTemplate.opsForValue().get(key);
+
+            if (objFromCache instanceof List<?> raw) {
+                List<OrderDTO> orderDTOList = raw.stream()
+                        .map(o -> objectMapper.convertValue(o, OrderDTO.class))
+                        .toList();
+
+                filterCacheHits.increment();
+
+                log.info("Returned getOrdersByFilters with status: {} from cache", filter.status().name());
+                return orderDTOList;
+            }
+
+            filterCacheMisses.increment();
+
+            List<OrderDTO> dtoList = Objects.requireNonNull(filterTimer.record(() -> {
+                List<Order> orders = orderRepository.findAll((root, query, cb) -> {
+                    List<Predicate> predicates = new ArrayList<>();
+                    predicates.add(cb.equal(root.get("status"), filter.status()));
+                    return cb.and(predicates.toArray(new Predicate[0]));
+                });
+
+                return orders.stream()
+                        .map(mapperService::orderToDTO)
+                        .toList();
+            }));
+
+            redisTemplate.opsForValue().set(key, dtoList, ORDERS_FILTER_STATUS_TTL);
+            log.info("Cached orders by status: key={}, size={} ...", key, dtoList.size());
+            return dtoList;
+        }
+
         return filterTimer.record(() -> {
             List<Order> orders = orderRepository.findAll((root, query, cb) -> {
                 List<Predicate> predicates = new ArrayList<>();
 
-                if (filter.status() != null) {
-                    predicates.add(cb.equal((root.get("status")), filter.status())); //WHERE status = 'PAID'
-                }
+                //NULL already checked above in cache
+                predicates.add(cb.equal((root.get("status")), filter.status())); //WHERE status = 'PAID'
 
                 if (filter.fromDate() != null) {
                     predicates.add(cb.greaterThanOrEqualTo(root.get("orderDate"), filter.fromDate()));
@@ -169,5 +325,13 @@ public class ManualOrderServiceImpl implements OrderService {
                     .map(mapperService::orderToDTO)
                     .toList();
         });
+    }
+
+    private boolean isCacheableStatusOnly(OrderFilterDTO filter) {
+        return filter.status() != null
+                && filter.fromDate() == null
+                && filter.toDate() == null
+                && filter.minAmount() == null
+                && filter.maxAmount() == null;
     }
 }

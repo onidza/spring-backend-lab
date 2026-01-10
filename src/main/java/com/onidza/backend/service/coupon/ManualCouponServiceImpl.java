@@ -51,9 +51,7 @@ public class ManualCouponServiceImpl implements CouponService {
     public CouponDTO getCouponByCouponId(Long id) {
         log.info("Called getCouponById with id: {}", id);
 
-        String cacheKey = COUPON_KEY_PREFIX + id;
-
-        Object objFromCache = redisTemplate.opsForValue().get(cacheKey);
+        Object objFromCache = redisTemplate.opsForValue().get(COUPON_KEY_PREFIX + id);
 
         if (objFromCache != null) {
             log.info("Returned coupon from cache with id: {}", id);
@@ -64,7 +62,7 @@ public class ManualCouponServiceImpl implements CouponService {
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND)));
 
-        redisTemplate.opsForValue().set(cacheKey, couponDTO, COUPON_TTL);
+        redisTemplate.opsForValue().set(COUPON_KEY_PREFIX + id, couponDTO, COUPON_TTL);
         log.info("getCouponById was cached...");
 
         log.info("Returned coupon from db with id: {}", id);
@@ -101,9 +99,7 @@ public class ManualCouponServiceImpl implements CouponService {
     public List<CouponDTO> getAllCouponsByClientId(Long id) {
         log.info("Called getAllCouponsByClientId with id: {}", id);
 
-        String cacheKey = ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id;
-
-        Object objFromCache = redisTemplate.opsForValue().get(cacheKey);
+        Object objFromCache = redisTemplate.opsForValue().get(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
         if (objFromCache instanceof List<?> raw) {
             List<CouponDTO> couponDtoList = raw.stream()
                     .map(c -> objectMapper.convertValue(c, CouponDTO.class))
@@ -123,10 +119,10 @@ public class ManualCouponServiceImpl implements CouponService {
                 .map(mapperService::couponToDTO)
                 .toList();
 
-        redisTemplate.opsForValue().set(cacheKey, couponDtoList, ALL_COUPONS_BY_CLIENT_ID_TTL);
+        redisTemplate.opsForValue().set(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id, couponDtoList, ALL_COUPONS_BY_CLIENT_ID_TTL);
         log.info("getAllCouponsByClientId was cached...");
 
-        log.info("Returned couponsListById: {} from db with size: {}", id, couponDtoList.size());
+        log.info("Returned couponsListByClientId: {} from db with size: {}", id, couponDtoList.size());
         return couponDtoList;
     }
 

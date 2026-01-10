@@ -90,7 +90,7 @@ public class OrderServiceImpl implements OrderService {
         return mapperService.orderToDTO(orderRepository.save(order));
     }
 
-    public void deleteOrderById(Long id) {
+    public void deleteOrderByOrderId(Long id) {
         log.info("Called deleteOrderById with id: {}", id);
 
         Order order = orderRepository.findById(id)

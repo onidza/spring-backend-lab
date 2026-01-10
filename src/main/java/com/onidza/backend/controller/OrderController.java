@@ -98,7 +98,7 @@ public class OrderController {
         log.info("Called deleteOrderById with id: {}", id);
 
         OrderService service = resolveOrderService(cacheMode);
-        service.deleteOrderById(id);
+        service.deleteOrderByOrderId(id);
         return ResponseEntity.noContent().build();
     }
 

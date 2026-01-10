@@ -51,8 +51,7 @@ public class ManualClientServiceImpl implements ClientService {
     public ClientDTO getClientById(Long id) {
         log.info("Called getClientById with id: {}", id);
 
-        var cacheKey = CLIENT_KEY_PREFIX + id;
-        String objFromCache = stringRedisTemplate.opsForValue().get(cacheKey);
+        String objFromCache = stringRedisTemplate.opsForValue().get(CLIENT_KEY_PREFIX + id);
 
         try {
             if (objFromCache != null) {
@@ -60,7 +59,7 @@ public class ManualClientServiceImpl implements ClientService {
                 return objectMapper.readValue(objFromCache, ClientDTO.class);
             }
         } catch (JsonProcessingException e) {
-            log.warn("Failed to read client from cache for key {}", cacheKey, e);
+            log.warn("Failed to read client from cache for key {}", CLIENT_KEY_PREFIX + id, e);
         }
 
         Client clientFromDb = clientRepository.findById(id)
@@ -69,7 +68,7 @@ public class ManualClientServiceImpl implements ClientService {
 
         try {
             stringRedisTemplate.opsForValue().set(
-                    cacheKey,
+                    CLIENT_KEY_PREFIX + id,
                     objectMapper.writeValueAsString(mapperService.clientToDTO(clientFromDb)),
                     CLIENT_TTL_MINUTES,
                     TimeUnit.MINUTES
@@ -77,7 +76,7 @@ public class ManualClientServiceImpl implements ClientService {
             log.info("getClientById was cached...");
 
         } catch (JsonProcessingException e) {
-            log.warn("Failed to write client to cache for key {}", cacheKey, e);
+            log.warn("Failed to write client to cache for key {}", CLIENT_KEY_PREFIX + id, e);
         }
 
         log.info("Returned client from db with id: {}", id);

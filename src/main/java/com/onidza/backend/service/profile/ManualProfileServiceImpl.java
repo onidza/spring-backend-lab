@@ -74,8 +74,6 @@ public class ManualProfileServiceImpl implements ProfileService {
             return dtoList;
         }
 
-
-
         List<ProfileDTO> dtoList = profileRepository.findAll()
                 .stream()
                 .map(mapperService::profileToDTO)

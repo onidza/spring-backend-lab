@@ -239,7 +239,7 @@ class OrderServiceUnitTest {
     }
 
     @Test
-    void deleteOrderById_returnNothing() {
+    void deleteOrderByOrderId_returnNothing() {
         Client clientWithOrders = OrderDataFactory.createPersistClientWithOrders();
         Order orderForDelete = OrderDataFactory.createPersistentOrderEntity();
         orderForDelete.setClient(clientWithOrders);
@@ -249,7 +249,7 @@ class OrderServiceUnitTest {
         Mockito.doNothing()
                 .when(orderRepository).deleteById(orderForDelete.getId());
 
-        orderServiceImpl.deleteOrderById(orderForDelete.getId());
+        orderServiceImpl.deleteOrderByOrderId(orderForDelete.getId());
 
         Mockito.verify(orderRepository).findById(orderForDelete.getId());
         Mockito.verify(orderRepository).deleteById(orderForDelete.getId());
