@@ -7,7 +7,7 @@ public interface ClientService {
 
     ClientDTO getClientById(Long id);
 
-    ClientsPageDTO getAllClientsPage(int page, int size);
+    ClientsPageDTO getClientsPage(int page, int size);
 
     ClientDTO addClient(ClientDTO clientDTO);
 

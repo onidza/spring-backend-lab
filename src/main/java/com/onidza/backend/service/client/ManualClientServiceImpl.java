@@ -42,8 +42,8 @@ public class ManualClientServiceImpl implements ClientService {
     private static final String CLIENT_KEY_PREFIX = "client:";
     private static final long CLIENT_TTL_MINUTES = 10;
 
-    private static final String ALL_CLIENTS_KEY = "clients:p=";
-    private static final Duration ALL_CLIENTS_TTL = Duration.ofMinutes(10);
+    private static final String PAGE_CLIENTS_KEY = "clients:p=";
+    private static final Duration PAGE_CLIENTS_TTL = Duration.ofMinutes(10);
 
     private static final String ALL_COUPONS_KEY = "coupons:all:v1";
     private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:v1:";
@@ -86,13 +86,13 @@ public class ManualClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ClientsPageDTO getAllClientsPage(int page, int size) {
+    public ClientsPageDTO getClientsPage(int page, int size) {
         log.info("Called getAllClients");
 
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
-        String key = ALL_CLIENTS_KEY + safePage + ":s=" + safeSize;
+        String key = PAGE_CLIENTS_KEY + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -108,6 +108,7 @@ public class ManualClientServiceImpl implements ClientService {
                 Sort.by("id").ascending());
 
         Page<ClientDTO> result = clientRepository.findAll(pageable).map(mapperService::clientToDTO);
+
         ClientsPageDTO response = new ClientsPageDTO(
                 result.getContent(),
                 result.getNumber(),
@@ -117,7 +118,7 @@ public class ManualClientServiceImpl implements ClientService {
                 result.hasNext()
         );
 
-        redisTemplate.opsForValue().set(key, response, ALL_CLIENTS_TTL);
+        redisTemplate.opsForValue().set(key, response, PAGE_CLIENTS_TTL);
         log.info("getAllClients was cached...");
 
         log.info("Returned page from db with size={}", response.items().size());
@@ -139,12 +140,12 @@ public class ManualClientServiceImpl implements ClientService {
 
         boolean hasCoupons = client.getCoupons() != null && !client.getCoupons().isEmpty();
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(ALL_CLIENTS_KEY);
-            log.info("Added a new client, getAllList was invalidated too with key={}", ALL_CLIENTS_KEY);
+            redisTemplate.delete(PAGE_CLIENTS_KEY);
+            log.info("Added a new client, getAllList was invalidated too with key={}", PAGE_CLIENTS_KEY);
 
             if (hasCoupons) {
                 redisTemplate.delete(ALL_COUPONS_KEY);
-                log.info("Added a new client, getAllCoupons was invalidated too with key={}", ALL_CLIENTS_KEY);
+                log.info("Added a new client, getAllCoupons was invalidated too with key={}", PAGE_CLIENTS_KEY);
             }
         });
 
@@ -195,10 +196,10 @@ public class ManualClientServiceImpl implements ClientService {
         boolean couponsTouched = clientDTO.coupons() != null;
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(CLIENT_KEY_PREFIX + id);
-            redisTemplate.delete(ALL_CLIENTS_KEY);
+            redisTemplate.delete(PAGE_CLIENTS_KEY);
 
             log.info("Updated client was invalidated in cache with key={}", CLIENT_KEY_PREFIX + id);
-            log.info("Updated client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY);
+            log.info("Updated client in getAllList was invalidated too with key={}", PAGE_CLIENTS_KEY);
 
             if (couponsTouched) {
                 redisTemplate.delete(ALL_COUPONS_KEY);
@@ -226,12 +227,12 @@ public class ManualClientServiceImpl implements ClientService {
 
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(CLIENT_KEY_PREFIX + id);
-            redisTemplate.delete(ALL_CLIENTS_KEY);
+            redisTemplate.delete(PAGE_CLIENTS_KEY);
 
             redisTemplate.delete(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
 
             log.info("Deleted client was invalidated in cache with key={}", CLIENT_KEY_PREFIX + id);
-            log.info("Deleted client in getAllList was invalidated too with key={}", ALL_CLIENTS_KEY);
+            log.info("Deleted client in getAllList was invalidated too with key={}", PAGE_CLIENTS_KEY);
             log.info("Deleted client was invalidated in getAllCouponsByClientId with key={}", ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
         });
     }

@@ -2,6 +2,7 @@ package com.onidza.backend.service.order;
 
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
+import com.onidza.backend.model.dto.order.OrdersPageDTO;
 
 import java.util.List;
 
@@ -9,7 +10,7 @@ public interface OrderService {
 
     OrderDTO getOrderById(Long id);
 
-    List<OrderDTO> getAllOrders();
+    OrdersPageDTO getOrdersPage(int page, int size);
 
     List<OrderDTO> getAllOrdersByClientId(Long id);
 

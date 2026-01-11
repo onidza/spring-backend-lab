@@ -1,8 +1,11 @@
 package com.onidza.backend.service.order;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.onidza.backend.model.dto.client.ClientDTO;
+import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
+import com.onidza.backend.model.dto.order.OrdersPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Order;
 import com.onidza.backend.model.mapper.MapperService;
@@ -16,6 +19,10 @@ import jakarta.annotation.PostConstruct;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -54,8 +61,8 @@ public class ManualOrderServiceImpl implements OrderService {
     private static final String ORDER_KEY_PREFIX = "order:";
     private static final Duration ORDER_TTL = Duration.ofMinutes(10);
 
-    private static final String ALL_ORDERS_KEY = "orders:all:v1";
-    private static final Duration ALL_ORDERS_TTL = Duration.ofMinutes(10);
+    private static final String PAGE_ORDERS_KEY = "orders:p=";
+    private static final Duration PAGE_ORDERS_TTL = Duration.ofMinutes(10);
 
     private static final String ALL_ORDERS_BY_CLIENT_ID_KEY_PREFIX = "orders:byClientId:v1:";
     private static final Duration ALL_ORDERS_BY_CLIENT_ID_TTL = Duration.ofMinutes(10);
@@ -110,29 +117,44 @@ public class ManualOrderServiceImpl implements OrderService {
         return existing;
     }
 
-    public List<OrderDTO> getAllOrders() {
-        log.info("Called getAllOrders");
+    public OrdersPageDTO getOrdersPage(int page, int size) {
+        log.info("Called getOrdersPage");
 
-        Object objFromCache = redisTemplate.opsForValue().get(ALL_ORDERS_KEY);
-        if (objFromCache instanceof List<?> raw) {
-            List<OrderDTO> orderDTOList = raw.stream()
-                    .map(o -> objectMapper.convertValue(o, OrderDTO.class))
-                    .toList();
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
 
-            log.info("Returned orderDtoList from cache with size={}", orderDTOList.size());
-            return orderDTOList;
+        String key = PAGE_ORDERS_KEY + safePage + ":s=" + safeSize;
+
+
+        Object objFromCache = redisTemplate.opsForValue().get(key);
+        if (objFromCache != null) {
+            OrdersPageDTO cached = objectMapper.convertValue(objFromCache, OrdersPageDTO.class);
+
+            log.info("Returned page from cache with size={}", cached.items().size());
+            return cached;
         }
 
-        List<OrderDTO> orderDTOList = orderRepository.findAll()
-                .stream()
-                .map(mapperService::orderToDTO)
-                .toList();
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by("id").ascending());
 
-        redisTemplate.opsForValue().set(ALL_ORDERS_KEY, orderDTOList, ALL_ORDERS_TTL);
-        log.info("getAllOrders was cached...");
+        Page<OrderDTO> result = orderRepository.findAll(pageable).map(mapperService::orderToDTO);
 
-        log.info("Returned allOrders from db with size: {}", orderDTOList.size());
-        return orderDTOList;
+        OrdersPageDTO response = new OrdersPageDTO(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
+
+        redisTemplate.opsForValue().set(key, response, PAGE_ORDERS_TTL);
+        log.info("getOrdersPage was cached...");
+
+        log.info("Returned page from db with size={}", response.items().size());
+        return response;
     }
 
     public List<OrderDTO> getAllOrdersByClientId(Long id) {
@@ -182,7 +204,7 @@ public class ManualOrderServiceImpl implements OrderService {
 
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(ORDER_KEY_PREFIX + id);
-            redisTemplate.delete((ALL_ORDERS_KEY));
+            redisTemplate.delete((PAGE_ORDERS_KEY));
             redisTemplate.delete(ALL_ORDERS_BY_CLIENT_ID_KEY_PREFIX + clientId);
 
             redisTemplate.delete(ORDERS_FILTER_STATUS_KEY_PREFIX + newStatus);
@@ -212,7 +234,7 @@ public class ManualOrderServiceImpl implements OrderService {
         String status = order.getStatus().name();
 
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(ALL_ORDERS_KEY);
+            redisTemplate.delete(PAGE_ORDERS_KEY);
             redisTemplate.delete(ALL_ORDERS_BY_CLIENT_ID_KEY_PREFIX + clientId);
 
             redisTemplate.delete(ORDERS_FILTER_STATUS_KEY_PREFIX + status);
@@ -242,7 +264,7 @@ public class ManualOrderServiceImpl implements OrderService {
 
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(ORDER_KEY_PREFIX + id);
-            redisTemplate.delete(ALL_ORDERS_KEY);
+            redisTemplate.delete(PAGE_ORDERS_KEY);
             redisTemplate.delete(ALL_ORDERS_BY_CLIENT_ID_KEY_PREFIX + clientId);
 
             redisTemplate.delete(ORDERS_FILTER_STATUS_KEY_PREFIX + status);

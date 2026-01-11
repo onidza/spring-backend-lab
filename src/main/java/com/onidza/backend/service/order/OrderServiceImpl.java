@@ -2,6 +2,7 @@ package com.onidza.backend.service.order;
 
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
+import com.onidza.backend.model.dto.order.OrdersPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Order;
 import com.onidza.backend.model.mapper.MapperService;
@@ -10,6 +11,10 @@ import com.onidza.backend.repository.OrderRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,13 +43,28 @@ public class OrderServiceImpl implements OrderService {
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND)));
     }
 
-    public List<OrderDTO> getAllOrders() {
-        log.info("Called getAllOrders");
+    public OrdersPageDTO getOrdersPage(int page, int size) {
+        log.info("Called getOrdersPage");
 
-        return orderRepository.findAll()
-                .stream()
-                .map(mapperService::orderToDTO)
-                .toList();
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
+
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
+
+        Page<OrderDTO> result = orderRepository.findAll(pageable).map(mapperService::orderToDTO);
+
+        return new OrdersPageDTO(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
     }
 
     public List<OrderDTO> getAllOrdersByClientId(Long id) {

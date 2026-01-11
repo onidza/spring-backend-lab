@@ -4,6 +4,7 @@ package com.onidza.backend.controller;
 import com.onidza.backend.model.OrderStatus;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
+import com.onidza.backend.model.dto.order.OrdersPageDTO;
 import com.onidza.backend.service.CacheMode;
 import com.onidza.backend.service.order.ManualOrderServiceImpl;
 import com.onidza.backend.service.order.OrderService;
@@ -42,14 +43,15 @@ public class OrderController {
     }
 
     @GetMapping("/orders")
-    public ResponseEntity<List<OrderDTO>> getAllOrders(
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    public ResponseEntity<OrdersPageDTO> getOrdersPage(
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
-        log.info("Called getAllOrders");
+        log.info("Called getOrdersPage");
 
         OrderService service = resolveOrderService(cacheMode);
-        List<OrderDTO> orders = service.getAllOrders();
-        return ResponseEntity.ok(orders);
+        return ResponseEntity.ok(service.getOrdersPage(page, size));
     }
 
     @GetMapping("/{id}/orders")

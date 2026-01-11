@@ -37,12 +37,14 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ClientsPageDTO getAllClientsPage(int page, int size) {
-        log.info("Called getAllClients");
+    public ClientsPageDTO getClientsPage(int page, int size) {
+        log.info("Called getClientsPage");
 
         int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
+
         Pageable pageable = PageRequest.of(
-                page,
+                safePage,
                 safeSize,
                 Sort.by(Sort.Direction.ASC, "id"));
 

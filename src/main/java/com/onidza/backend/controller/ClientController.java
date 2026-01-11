@@ -44,7 +44,7 @@ public class ClientController {
         log.info("Called getClientsPage");
 
         ClientService service = resolveClientService(cacheMode);
-        return ResponseEntity.ok(service.getAllClientsPage(page, size));
+        return ResponseEntity.ok(service.getClientsPage(page, size));
     }
 
     @PostMapping
