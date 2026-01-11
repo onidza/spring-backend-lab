@@ -1,5 +1,7 @@
-package com.onidza.backend.model.dto;
+package com.onidza.backend.model.dto.client;
 
+import com.onidza.backend.model.dto.CouponDTO;
+import com.onidza.backend.model.dto.ProfileDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.validation.UniqueEmail;
 import jakarta.validation.Valid;

@@ -1,12 +1,12 @@
 package com.onidza.backend.service.client;
 
 
-import com.onidza.backend.model.dto.ClientDTO;
+import com.onidza.backend.model.dto.client.ClientDTO;
+import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Profile;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -18,8 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -27,7 +25,6 @@ public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
-    private final EntityManager entityManager;
 
     @Override
     public ClientDTO getClientById(Long id) {
@@ -40,7 +37,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Page<ClientDTO> getAllClientsPage(int page, int size) {
+    public ClientsPageDTO getAllClientsPage(int page, int size) {
         log.info("Called getAllClients");
 
         int safeSize = Math.min(Math.max(size, 1), 20);
@@ -49,9 +46,16 @@ public class ClientServiceImpl implements ClientService {
                 safeSize,
                 Sort.by(Sort.Direction.ASC, "id"));
 
-        Page<Client> result = clientRepository.findAll(pageable);
+        Page<ClientDTO> result = clientRepository.findAll(pageable).map(mapperService::clientToDTO);
 
-        return result.map(mapperService::clientToDTO);
+        return new ClientsPageDTO(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
     }
 
     @Override

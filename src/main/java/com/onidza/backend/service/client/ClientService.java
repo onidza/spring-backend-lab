@@ -1,13 +1,13 @@
 package com.onidza.backend.service.client;
 
-import com.onidza.backend.model.dto.ClientDTO;
-import org.springframework.data.domain.Page;
+import com.onidza.backend.model.dto.client.ClientDTO;
+import com.onidza.backend.model.dto.client.ClientsPageDTO;
 
 public interface ClientService {
 
     ClientDTO getClientById(Long id);
 
-    Page<ClientDTO> getAllClientsPage(int page, int size);
+    ClientsPageDTO getAllClientsPage(int page, int size);
 
     ClientDTO addClient(ClientDTO clientDTO);
 

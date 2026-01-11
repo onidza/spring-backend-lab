@@ -1,9 +1,9 @@
-package com.onidza.backend.model.dto;
+package com.onidza.backend.model.dto.client;
 
 import java.util.List;
 
-public record PageResponse<T> (
-        List<T> items,
+public record ClientsPageDTO (
+        List<ClientDTO> items,
         int page,
         int size,
         long totalElements,

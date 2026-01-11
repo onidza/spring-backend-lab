@@ -1,6 +1,6 @@
 package com.onidza.backend.service.Coupon;
 
-import com.onidza.backend.model.dto.ClientDTO;
+import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.CouponDTO;
 import com.onidza.backend.service.coupon.CouponServiceImpl;
 import com.onidza.backend.service.client.ClientServiceImpl;

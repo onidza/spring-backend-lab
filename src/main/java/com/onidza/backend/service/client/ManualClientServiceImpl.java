@@ -2,16 +2,19 @@ package com.onidza.backend.service.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.model.dto.ClientDTO;
+import com.onidza.backend.model.dto.client.ClientDTO;
+import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Profile;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.service.TransactionAfterCommitExecutor;
-import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -20,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -30,7 +32,6 @@ public class ManualClientServiceImpl implements ClientService {
 
     private final MapperService mapperService;
     private final ClientRepository clientRepository;
-    private final EntityManager entityManager;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
@@ -41,13 +42,13 @@ public class ManualClientServiceImpl implements ClientService {
     private static final String CLIENT_KEY_PREFIX = "client:";
     private static final long CLIENT_TTL_MINUTES = 10;
 
-    private static final String ALL_CLIENTS_KEY = "clients:all:v1";
+    private static final String ALL_CLIENTS_KEY = "clients:p=";
     private static final Duration ALL_CLIENTS_TTL = Duration.ofMinutes(10);
 
     private static final String ALL_COUPONS_KEY = "coupons:all:v1";
     private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:v1:";
 
-    //this one method for example with stringRedisTemplate
+    //stringRedisTemplate
     @Override
     public ClientDTO getClientById(Long id) {
         log.info("Called getClientById with id: {}", id);
@@ -85,38 +86,42 @@ public class ManualClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Page<ClientDTO> getAllClientsPage(int page, int size) {
+    public ClientsPageDTO getAllClientsPage(int page, int size) {
         log.info("Called getAllClients");
 
-        Object objFromCache = redisTemplate.opsForValue().get(ALL_CLIENTS_KEY);
-        if (objFromCache instanceof List<?> raw) {
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
 
-            List<ClientDTO> clientDtoList = raw.stream()
-                    .map(o -> objectMapper.convertValue(o, ClientDTO.class)) //* for fix a deserialization List<LinkedHashMap<String, Object>>
-                    .toList();
+        String key = ALL_CLIENTS_KEY + safePage + ":s=" + safeSize;
 
-            log.info("Returned clientDtoList from cache with size={}", clientDtoList.size());
-            return clientDtoList;
+        Object objFromCache = redisTemplate.opsForValue().get(key);
+        if (objFromCache != null) {
+            ClientsPageDTO cached = objectMapper.convertValue(objFromCache, ClientsPageDTO.class);
+
+            log.info("Returned page from cache with size={}", cached.items().size());
+            return cached;
         }
 
-        List<Client> clients = entityManager.createQuery(
-                """
-                        SELECT DISTINCT c FROM Client c
-                        LEFT JOIN FETCH c.profile
-                        LEFT JOIN FETCH c.orders
-                        LEFT JOIN FETCH c.coupons
-                        """, Client.class
-        ).getResultList();
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by("id").ascending());
 
-        List<ClientDTO> dtoList = clients.stream()
-                .map(mapperService::clientToDTO)
-                .toList();
+        Page<ClientDTO> result = clientRepository.findAll(pageable).map(mapperService::clientToDTO);
+        ClientsPageDTO response = new ClientsPageDTO(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
 
-        redisTemplate.opsForValue().set(ALL_CLIENTS_KEY, dtoList, ALL_CLIENTS_TTL);
+        redisTemplate.opsForValue().set(key, response, ALL_CLIENTS_TTL);
         log.info("getAllClients was cached...");
 
-        log.info("Returned dtoList from db with size={}", clients.size());
-        return dtoList;
+        log.info("Returned page from db with size={}", response.items().size());
+        return response;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.onidza.backend.service.Order;
 
 import com.onidza.backend.model.OrderStatus;
-import com.onidza.backend.model.dto.ClientDTO;
+import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.ProfileDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;

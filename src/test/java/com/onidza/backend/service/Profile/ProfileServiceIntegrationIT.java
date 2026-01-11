@@ -1,6 +1,6 @@
 package com.onidza.backend.service.Profile;
 
-import com.onidza.backend.model.dto.ClientDTO;
+import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.ProfileDTO;
 import com.onidza.backend.service.profile.ProfileServiceImpl;
 import com.onidza.backend.service.client.ClientServiceImpl;

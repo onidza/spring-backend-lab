@@ -1,18 +1,13 @@
 package com.onidza.backend.service.Client;
 
 import com.onidza.backend.model.OrderStatus;
-import com.onidza.backend.model.dto.ClientDTO;
+import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.service.client.ClientServiceImpl;
 import com.onidza.backend.service.testcontainers.AbstractITConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 @Transactional
 class ClientServiceIntegrationIT extends AbstractITConfiguration {
