@@ -2,6 +2,7 @@ package com.onidza.backend.service.Profile;
 
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.profile.ProfileDTO;
+import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 import com.onidza.backend.service.client.ClientServiceImpl;
 import com.onidza.backend.service.profile.ProfileServiceImpl;
 import com.onidza.backend.service.testcontainers.AbstractITConfiguration;
@@ -9,6 +10,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Transactional
 class ProfileServiceIntegrationIT extends AbstractITConfiguration {
@@ -32,26 +35,26 @@ class ProfileServiceIntegrationIT extends AbstractITConfiguration {
         Assertions.assertEquals(saved.clientId(), existing.clientId());
     }
 
-//    @Test
-//    void getProfilesPage_returnPageDTOWithRelations() {
-//        ClientDTO firstInputClientDTO = ProfileDataFactory.createInputClientDTO();
-//        ClientDTO secondInputClientDTO = ProfileDataFactory.createDistinctInputClientDTO();
-//
-//        clientServiceImpl.addClient(firstInputClientDTO);
-//        clientServiceImpl.addClient(secondInputClientDTO);
-//
-//        List<ProfileDTO> result = profileServiceImpl.getProfilesPage();
-//
-//        Assertions.assertEquals(2, result.size());
-//        Assertions.assertNotNull(result.get(0).id());
-//        Assertions.assertNotNull(result.get(0).clientId());
-//
-//        Assertions.assertTrue(result.stream().anyMatch(p -> p.phone().equals("8(904)084-47-07")));
-//        Assertions.assertTrue(result.stream().anyMatch(p -> p.phone().equals("8(111)111-111-11")));
-//
-//        List<Long> ids = result.stream().map(ProfileDTO::id).toList();
-//        Assertions.assertEquals(2, ids.stream().distinct().count());
-//    }
+    @Test
+    void getProfilesPage_returnPageDTOWithRelations() {
+        ClientDTO firstInputClientDTO = ProfileDataFactory.createInputClientDTO();
+        ClientDTO secondInputClientDTO = ProfileDataFactory.createDistinctInputClientDTO();
+
+        clientServiceImpl.addClient(firstInputClientDTO);
+        clientServiceImpl.addClient(secondInputClientDTO);
+
+        ProfilesPageDTO result = profileServiceImpl.getProfilesPage(0, 20);
+
+        Assertions.assertEquals(2, result.items().size());
+        Assertions.assertNotNull(result.items().get(0).id());
+        Assertions.assertNotNull(result.items().get(0).clientId());
+
+        Assertions.assertTrue(result.items().stream().anyMatch(p -> p.phone().equals("8(904)084-47-07")));
+        Assertions.assertTrue(result.items().stream().anyMatch(p -> p.phone().equals("8(111)111-111-11")));
+
+        List<Long> ids = result.items().stream().map(ProfileDTO::id).toList();
+        Assertions.assertEquals(2, ids.stream().distinct().count());
+    }
 
     @Test
     void updateProfile_returnProfileDTOWithRelations() {

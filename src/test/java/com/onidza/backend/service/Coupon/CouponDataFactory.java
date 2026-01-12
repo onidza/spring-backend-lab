@@ -23,7 +23,7 @@ public class CouponDataFactory {
         );
     }
 
-    static CouponDTO createDistinctPersistentClientDTO() {
+    static CouponDTO createDistinctPersistentCouponDTO() {
         return new CouponDTO(
                 2L,
                 "NEW CODE111111",

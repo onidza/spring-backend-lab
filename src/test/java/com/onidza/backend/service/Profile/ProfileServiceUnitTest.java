@@ -1,6 +1,7 @@
 package com.onidza.backend.service.Profile;
 
 import com.onidza.backend.model.dto.profile.ProfileDTO;
+import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Profile;
 import com.onidza.backend.model.mapper.MapperService;
@@ -14,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
@@ -67,51 +69,81 @@ class ProfileServiceUnitTest {
         Mockito.verifyNoInteractions(mapperService);
     }
 
-//    @Test
-//    void getProfilesPage_returnPageDTOWithRelations() {
-//        Profile persistentProfileEntity = ProfileDataFactory.createPersistentProfileEntity();
-//        Profile persistentDistinctProfileEntity = ProfileDataFactory.createDistinctPersistentProfileEntity();
-//
-//        ProfileDTO persistentProfileDTO = ProfileDataFactory.createPersistentProfileDTO();
-//        ProfileDTO persistentDistinctProfileDTO = ProfileDataFactory.createDistinctPersistentProfileDTO();
-//
-//        Mockito.when(profileRepository.findAll())
-//                .thenReturn(List.of(persistentProfileEntity, persistentDistinctProfileEntity));
-//        Mockito.when(mapperService.profileToDTO(persistentProfileEntity))
-//                .thenReturn(persistentProfileDTO);
-//        Mockito.when(mapperService.profileToDTO(persistentDistinctProfileEntity))
-//                .thenReturn(persistentDistinctProfileDTO);
-//
-//        List<ProfileDTO> result = profileServiceImpl.getProfilesPage();
-//
-//        Assertions.assertNotNull(result);
-//        Assertions.assertEquals(2, result.size());
-//        Assertions.assertTrue(result.stream().anyMatch(profileDTO
-//                -> profileDTO.clientId().equals(1L)));
-//
-//        Assertions.assertTrue(result.stream().anyMatch(profileDTO
-//                -> profileDTO.id().equals(2L)));
-//
-//        Assertions.assertTrue(result.stream().anyMatch(profileDTO
-//                -> profileDTO.address().equals("Moscow, d.1")));
-//
-//        Mockito.verify(profileRepository).findAll();
-//        Mockito.verify(mapperService, Mockito.times(2))
-//                .profileToDTO(Mockito.any(Profile.class));
-//    }
+    @Test
+    void getProfilesPage_returnPageDTOWithRelations() {
+        Profile persistentProfileEntity = ProfileDataFactory.createPersistentProfileEntity();
+        Profile persistentDistinctProfileEntity = ProfileDataFactory.createDistinctPersistentProfileEntity();
 
-//    @Test
-//    void getProfiles_Page_returnEmptyPage() {
-//        Mockito.when(profileRepository.findAll()).thenReturn(Collections.emptyList());
-//
-//        List<ProfileDTO> result = profileServiceImpl.getProfilesPage();
-//
-//        Assertions.assertNotNull(result);
-//        Assertions.assertTrue(result.isEmpty());
-//
-//        Mockito.verify(profileRepository).findAll();
-//        Mockito.verifyNoInteractions(mapperService);
-//    }
+        ProfileDTO persistentProfileDTO = ProfileDataFactory.createPersistentProfileDTO();
+        ProfileDTO persistentDistinctProfileDTO = ProfileDataFactory.createDistinctPersistentProfileDTO();
+
+        Pageable pageable = PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
+
+        Slice<Profile> sliceFromRepo = new SliceImpl<>(
+                List.of(persistentProfileEntity, persistentDistinctProfileEntity),
+                pageable,
+                false
+        );
+
+        Mockito.when(profileRepository.findBy(pageable))
+                .thenReturn(sliceFromRepo);
+
+        Mockito.when(mapperService.profileToDTO(persistentProfileEntity))
+                .thenReturn(persistentProfileDTO);
+        Mockito.when(mapperService.profileToDTO(persistentDistinctProfileEntity))
+                .thenReturn(persistentDistinctProfileDTO);
+
+        ProfilesPageDTO result = profileServiceImpl.getProfilesPage(0, 20);
+
+        // then
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(2, result.items().size());
+        Assertions.assertEquals(0, result.page());
+        Assertions.assertEquals(20, result.size());
+        Assertions.assertFalse(result.hasNext());
+
+        Assertions.assertTrue(result.items().stream().anyMatch(p -> p.clientId().equals(1L)));
+        Assertions.assertTrue(result.items().stream().anyMatch(p -> p.id().equals(2L)));
+        Assertions.assertTrue(result.items().stream().anyMatch(p -> "Moscow, d.1".equals(p.address())));
+
+        Mockito.verify(profileRepository).findBy(pageable);
+        Mockito.verify(mapperService).profileToDTO(persistentProfileEntity);
+        Mockito.verify(mapperService).profileToDTO(persistentDistinctProfileEntity);
+        Mockito.verifyNoMoreInteractions(profileRepository, mapperService);
+    }
+
+    @Test
+    void getProfiles_Page_returnEmptyPage() {
+        Pageable pageable = PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
+
+        Slice<Profile> emptySlice = new SliceImpl<>(
+                Collections.emptyList(),
+                pageable,
+                false
+        );
+
+        Mockito.when(profileRepository.findBy(pageable))
+                .thenReturn(emptySlice);
+
+        ProfilesPageDTO result = profileServiceImpl.getProfilesPage(0, 20);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.items().isEmpty());
+        Assertions.assertEquals(0, result.page());
+        Assertions.assertEquals(20, result.size());
+        Assertions.assertFalse(result.hasNext());
+
+        Mockito.verify(profileRepository).findBy(pageable);
+        Mockito.verifyNoInteractions(mapperService);
+    }
 
     @Test
     void updateProfile_returnProfileDTOWithRelations() {

@@ -167,6 +167,26 @@ public class OrderDataFactory {
         );
     }
 
+    static OrderDTO createPersistentOrderDTOWithId(Long clientId) {
+        return new OrderDTO(
+                1L,
+                LocalDateTime.of(2020, 1, 1, 12, 0),
+                new BigDecimal("1500"),
+                OrderStatus.NEW,
+                clientId
+        );
+    }
+
+    static OrderDTO createDistinctPersistentOrderDTOWithId(Long clientId) {
+        return new OrderDTO(
+                2L,
+                LocalDateTime.of(2021, 1, 1, 12, 0),
+                new BigDecimal("99"),
+                OrderStatus.CANCELLED,
+                clientId
+        );
+    }
+
     static Client createPersistClientWithOrders() {
         Client client = new Client(
                 "Ivan",

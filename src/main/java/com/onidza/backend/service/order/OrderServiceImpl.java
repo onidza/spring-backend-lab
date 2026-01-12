@@ -1,6 +1,5 @@
 package com.onidza.backend.service.order;
 
-import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
@@ -73,9 +72,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrdersPageDTO getOrdersPageByClientId(Long id, int page, int size) {
         log.info("Called getOrdersPageByClientId with id: {}", id);
-
-        if (!clientRepository.existsById(id))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND);
 
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);

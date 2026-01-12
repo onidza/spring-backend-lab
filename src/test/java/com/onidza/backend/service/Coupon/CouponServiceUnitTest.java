@@ -1,6 +1,7 @@
 package com.onidza.backend.service.Coupon;
 
 import com.onidza.backend.model.dto.coupon.CouponDTO;
+import com.onidza.backend.model.dto.coupon.CouponPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Coupon;
 import com.onidza.backend.model.mapper.MapperService;
@@ -14,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -69,96 +71,170 @@ class CouponServiceUnitTest {
         Mockito.verifyNoInteractions(mapperService);
     }
 
-//    @Test
-//    void getCouponsPageByClientId_returnPageDTOWithRelations() {
-//        Coupon persistentCouponEntity = CouponDataFactory.createPersistentCouponEntity();
-//        Coupon persistentDistinctCouponEntity = CouponDataFactory.createDistinctPersistentCouponEntity();
-//
-//        CouponDTO persistentOrderDTO = CouponDataFactory.createPersistentCouponDTO();
-//        CouponDTO persistentDistinctOrderDTO = CouponDataFactory.createDistinctPersistentClientDTO();
-//
-//        Mockito.when(couponRepository.findAll())
-//                .thenReturn(List.of(persistentCouponEntity, persistentDistinctCouponEntity));
-//        Mockito.when(mapperService.couponToDTO(persistentCouponEntity))
-//                .thenReturn(persistentOrderDTO);
-//        Mockito.when(mapperService.couponToDTO(persistentDistinctCouponEntity))
-//                .thenReturn(persistentDistinctOrderDTO);
-//
-//        List<CouponDTO> result = couponServiceImpl.getCouponsPage();
-//
-//        Assertions.assertNotNull(result);
-//        Assertions.assertEquals(2, result.size());
-//        Assertions.assertTrue(result.stream().anyMatch(orderDTO
-//                -> orderDTO.id().equals(1L)));
-//
-//        Assertions.assertTrue(result.stream().anyMatch(orderDTO
-//                -> orderDTO.id().equals(2L)));
-//
-//        Assertions.assertTrue(result.stream().anyMatch(c -> c.discount() == 8.8f));
-//
-//        Mockito.verify(couponRepository).findAll();
-//        Mockito.verify(mapperService, Mockito.times(2))
-//                .couponToDTO(Mockito.any(Coupon.class));
-//    }
+    @Test
+    void getCouponsPage_returnCouponsPageWithRelations() {
+        Coupon persistentCouponEntity = CouponDataFactory.createPersistentCouponEntity();
+        Coupon persistentDistinctCouponEntity = CouponDataFactory.createDistinctPersistentCouponEntity();
 
-//    @Test
-//    void getCoupons_Page_emptyList() {
-//        Mockito.when(couponRepository.findAll()).thenReturn(Collections.emptyList());
-//
-//        List<CouponDTO> result = couponServiceImpl.getCouponsPage();
-//
-//        Assertions.assertNotNull(result);
-//        Assertions.assertTrue(result.isEmpty());
-//
-//        Mockito.verify(couponRepository).findAll();
-//        Mockito.verifyNoInteractions(mapperService);
-//    }
+        CouponDTO persistentCouponDTO = CouponDataFactory.createPersistentCouponDTO();
+        CouponDTO persistentDistinctCouponDTO = CouponDataFactory.createDistinctPersistentCouponDTO();
 
-//    @Test
-//    void getCouponsPageByClientId_returnPageDTOWithRelations() {
-//        Client persistentClientWithOrders = CouponDataFactory.createPersistClientWithTwoCoupons();
-//
-//        Mockito.when(clientRepository.findById(persistentClientWithOrders.getId()))
-//                .thenReturn(Optional.of(persistentClientWithOrders));
-//
-//        Mockito.when(mapperService.couponToDTO(Mockito.any(Coupon.class)))
-//                .thenAnswer(invocation -> {
-//                    Coupon coupon = invocation.getArgument(0);
-//                    return new CouponDTO(
-//                            coupon.getId(),
-//                            coupon.getCode(),
-//                            coupon.getDiscount(),
-//                            coupon.getExpirationDate(),
-//                            List.of(persistentClientWithOrders.getId())
-//                    );
-//                });
-//
-//        List<CouponDTO> result = couponServiceImpl.getCouponsPageByClientId(persistentClientWithOrders.getId());
-//
-//        Assertions.assertEquals(2, result.size());
-//        Assertions.assertTrue(result.stream().allMatch(coupon ->
-//                coupon.clientsId().get(0).equals(persistentClientWithOrders.getId())
-//        ));
-//
-//        Assertions.assertTrue(result.stream().anyMatch(coupon ->
-//                coupon.discount() == 8.8f || coupon.discount() == 2.1f)
-//        );
-//
-//        Mockito.verify(clientRepository).findById(persistentClientWithOrders.getId());
-//        Mockito.verify(mapperService, Mockito.times(2))
-//                .couponToDTO(Mockito.any(Coupon.class));
-//    }
+        Pageable pageable = PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
 
-//    @Test
-//    void getCouponsPageByClientId_notFound_throwsException() {
-//        Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.empty());
-//
-//        Assertions.assertThrows(ResponseStatusException.class,
-//                () -> couponServiceImpl.getCouponsPageByClientId(1L));
-//
-//        Mockito.verify(clientRepository).findById(1L);
-//        Mockito.verifyNoInteractions(mapperService);
-//    }
+        Page<Coupon> pageFromRepo = new PageImpl<>(
+                List.of(persistentCouponEntity, persistentDistinctCouponEntity),
+                pageable,
+                2
+        );
+
+        Mockito.when(couponRepository.findAll(pageable))
+                .thenReturn(pageFromRepo);
+        Mockito.when(mapperService.couponToDTO(persistentCouponEntity))
+                .thenReturn(persistentCouponDTO);
+        Mockito.when(mapperService.couponToDTO(persistentDistinctCouponEntity))
+                .thenReturn(persistentDistinctCouponDTO);
+
+        CouponPageDTO page = couponServiceImpl.getCouponsPage(0, 20);
+
+        Assertions.assertNotNull(page);
+        Assertions.assertEquals(2, page.items().size());
+        Assertions.assertEquals(0, page.page());
+        Assertions.assertEquals(20, page.size());
+        Assertions.assertFalse(page.hasNext());
+
+        Assertions.assertTrue(page.items().stream().anyMatch(c -> c.id().equals(1L)));
+        Assertions.assertTrue(page.items().stream().anyMatch(c -> c.id().equals(2L)));
+
+        Mockito.verify(couponRepository).findAll(pageable);
+        Mockito.verify(mapperService).couponToDTO(persistentCouponEntity);
+        Mockito.verify(mapperService).couponToDTO(persistentDistinctCouponEntity);
+        Mockito.verifyNoMoreInteractions(couponRepository, mapperService);
+    }
+
+    @Test
+    void getCoupons_Page_emptyList() {
+        Pageable pageable = PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
+
+        Page<Coupon> emptyPage = new PageImpl<>(
+                Collections.emptyList(),
+                pageable,
+                0
+        );
+
+        Mockito.when(couponRepository.findAll(pageable))
+                .thenReturn(emptyPage);
+
+        CouponPageDTO result = couponServiceImpl.getCouponsPage(0, 20);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.items().isEmpty());
+        Assertions.assertFalse(result.hasNext());
+        Assertions.assertEquals(0, result.page());
+        Assertions.assertEquals(20, result.size());
+
+        Mockito.verify(couponRepository).findAll(pageable);
+        Mockito.verifyNoInteractions(mapperService);
+    }
+
+    @Test
+    void getCouponsPageByClientId_returnPageDTOWithRelations() {
+        Long clientId = 1L;
+
+        Coupon persistentCouponEntity = CouponDataFactory.createPersistentCouponEntity();
+        Coupon persistentDistinctCouponEntity = CouponDataFactory.createDistinctPersistentCouponEntity();
+
+        CouponDTO persistentCouponDTO = CouponDataFactory.createPersistentCouponDTO();
+        CouponDTO persistentDistinctCouponDTO = CouponDataFactory.createDistinctPersistentCouponDTO();
+
+
+        Pageable pageable = PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
+
+        Slice<Coupon> slice = new SliceImpl<>(List.of(
+                persistentCouponEntity,
+                persistentDistinctCouponEntity),
+                pageable,
+                false);
+
+        Mockito.when(couponRepository.findByClientsId(clientId, pageable))
+                .thenReturn(slice);
+        Mockito.when(mapperService.couponToDTO(persistentCouponEntity))
+                .thenReturn(persistentCouponDTO);
+        Mockito.when(mapperService.couponToDTO(persistentDistinctCouponEntity))
+                .thenReturn(persistentDistinctCouponDTO);
+
+        CouponPageDTO page = couponServiceImpl.getCouponsPageByClientId(clientId, 0, 20);
+
+        Assertions.assertNotNull(page);
+        Assertions.assertEquals(2, page.items().size());
+        Assertions.assertFalse(page.hasNext());
+
+        Assertions.assertTrue(page.items().stream()
+                .anyMatch(c -> c.id().equals(1L)));
+
+        Assertions.assertTrue(page.items().stream()
+                .anyMatch(c -> c.id().equals(2L)));
+
+        Assertions.assertTrue(page.items().stream()
+                .anyMatch(c -> c.discount() == 8.8f));
+
+        Mockito.verify(couponRepository)
+                .findByClientsId(clientId, pageable);
+
+        Mockito.verify(mapperService, Mockito.times(2))
+                .couponToDTO(Mockito.any(Coupon.class));
+
+        Mockito.verifyNoMoreInteractions(
+                clientRepository,
+                couponRepository,
+                mapperService
+        );
+    }
+
+    @Test
+    void getCouponsPageByClientId_notFound_throwsException() {
+        Long clientId = 1L;
+
+        Pageable pageable = PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
+
+        Page<Coupon> emptyPage = new PageImpl<>(
+                Collections.emptyList(),
+                pageable,
+                0
+        );
+
+        Mockito.when(couponRepository.findByClientsId(clientId, pageable))
+                .thenReturn(emptyPage);
+
+        CouponPageDTO result =
+                couponServiceImpl.getCouponsPageByClientId(clientId, 0, 20);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.items().isEmpty());
+        Assertions.assertFalse(result.hasNext());
+        Assertions.assertEquals(0, result.page());
+        Assertions.assertEquals(20, result.size());
+
+        Mockito.verify(couponRepository)
+                .findByClientsId(clientId, pageable);
+
+        Mockito.verifyNoInteractions(mapperService);
+    }
 
     @Test
     void addOrderToClient_returnOrderDTOWithRelations() {

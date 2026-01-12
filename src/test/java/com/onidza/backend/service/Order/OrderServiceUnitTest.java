@@ -1,6 +1,7 @@
 package com.onidza.backend.service.Order;
 
 import com.onidza.backend.model.dto.order.OrderDTO;
+import com.onidza.backend.model.dto.order.OrdersPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Order;
 import com.onidza.backend.model.mapper.MapperService;
@@ -14,8 +15,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,96 +69,166 @@ class OrderServiceUnitTest {
         Mockito.verifyNoInteractions(mapperService);
     }
 
-//    @Test
-//    void getOrdersPage_returnOrdersPageDTOWithRelations() {
-//        Order persistentOrderEntity = OrderDataFactory.createPersistentOrderEntity();
-//        Order persistentDistinctOrderEntity = OrderDataFactory.createDistinctPersistentOrderEntity();
-//
-//        OrderDTO persistentOrderDTO = OrderDataFactory.createPersistentOrderDTO();
-//        OrderDTO persistentDistinctOrderDTO = OrderDataFactory.createDistinctPersistentOrderDTO();
-//
-//        Mockito.when(orderRepository.findAll())
-//                .thenReturn(List.of(persistentOrderEntity, persistentDistinctOrderEntity));
-//        Mockito.when(mapperService.orderToDTO(persistentOrderEntity))
-//                .thenReturn(persistentOrderDTO);
-//        Mockito.when(mapperService.orderToDTO(persistentDistinctOrderEntity))
-//                .thenReturn(persistentDistinctOrderDTO);
-//
-//        List<OrderDTO> result = orderServiceImpl.getOrdersPage();
-//
-//        Assertions.assertNotNull(result);
-//        Assertions.assertEquals(2, result.size());
-//        Assertions.assertTrue(result.stream().anyMatch(orderDTO
-//                -> orderDTO.id().equals(1L)));
-//
-//        Assertions.assertTrue(result.stream().anyMatch(orderDTO
-//                -> orderDTO.id().equals(2L)));
-//
-//        Assertions.assertTrue(result.stream().anyMatch(orderDTO
-//                -> orderDTO.totalAmount().equals(new BigDecimal("1500"))));
-//
-//        Mockito.verify(orderRepository).findAll();
-//        Mockito.verify(mapperService, Mockito.times(2))
-//                .orderToDTO(Mockito.any(Order.class));
-//    }
+    @Test
+    void getOrdersPage_returnOrdersPageDTOWithRelations() {
+        Order persistentOrderEntity = OrderDataFactory.createPersistentOrderEntity();
+        Order persistentDistinctOrderEntity = OrderDataFactory.createDistinctPersistentOrderEntity();
 
-//    @Test
-//    void getOrdersPage_emptyList() {
-//        Mockito.when(orderRepository.findAll()).thenReturn(Collections.emptyList());
-//
-//        List<OrderDTO> result = orderServiceImpl.getOrdersPage();
-//
-//        Assertions.assertNotNull(result);
-//        Assertions.assertTrue(result.isEmpty());
-//
-//        Mockito.verify(orderRepository).findAll();
-//        Mockito.verifyNoInteractions(mapperService);
-//    }
+        OrderDTO persistentOrderDTO = OrderDataFactory.createPersistentOrderDTO();
+        OrderDTO persistentDistinctOrderDTO = OrderDataFactory.createDistinctPersistentOrderDTO();
 
-//    @Test
-//    void getOrdersPageByClientId_returnOrdersPageDTOWithRelations() {
-//        Client persistentClientWithOrders = OrderDataFactory.createPersistClientWithOrders();
-//
-//        Mockito.when(clientRepository.findById(persistentClientWithOrders.getId()))
-//                .thenReturn(Optional.of(persistentClientWithOrders));
-//
-//        Mockito.when(mapperService.orderToDTO(Mockito.any(Order.class)))
-//                .thenAnswer(invocation -> {
-//                    Order order = invocation.getArgument(0);
-//                    return new OrderDTO(
-//                            order.getId(),
-//                            order.getOrderDate(),
-//                            order.getTotalAmount(),
-//                            order.getStatus(),
-//                            order.getClient().getId()
-//                    );
-//                });
-//
-//        List<OrderDTO> result = orderServiceImpl.getAllOrdersByClientId(persistentClientWithOrders.getId());
-//
-//        Assertions.assertEquals(2, result.size());
-//        Assertions.assertTrue(result.stream().allMatch(order ->
-//            order.clientId().equals(persistentClientWithOrders.getId())
-//        ));
-//
-//        Assertions.assertTrue(result.stream().anyMatch(order ->
-//                order.totalAmount().compareTo(new BigDecimal("1500")) == 0)
-//        );
-//
-//        Mockito.verify(clientRepository).findById(persistentClientWithOrders.getId());
-//        Mockito.verify(mapperService, Mockito.times(2)).orderToDTO(Mockito.any(Order.class));
-//    }
+        Pageable pageable = PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
 
-//    @Test
-//    void getOrdersPageByClientId_notFound_throwsException() {
-//        Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.empty());
-//
-//        Assertions.assertThrows(ResponseStatusException.class,
-//                () -> orderServiceImpl.getAllOrdersByClientId(1L));
-//
-//        Mockito.verify(clientRepository).findById(1L);
-//        Mockito.verifyNoInteractions(mapperService);
-//    }
+        Page<Order> pageFromRepo = new PageImpl<>(
+                List.of(persistentOrderEntity, persistentDistinctOrderEntity),
+                pageable,
+                2
+        );
+
+        Mockito.when(orderRepository.findAll(pageable))
+                .thenReturn(pageFromRepo);
+        Mockito.when(mapperService.orderToDTO(persistentOrderEntity))
+                .thenReturn(persistentOrderDTO);
+        Mockito.when(mapperService.orderToDTO(persistentDistinctOrderEntity))
+                .thenReturn(persistentDistinctOrderDTO);
+
+        OrdersPageDTO result = orderServiceImpl.getOrdersPage(0, 20);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(2, result.items().size());
+        Assertions.assertEquals(0, result.page());
+        Assertions.assertEquals(20, result.size());
+        Assertions.assertEquals(2, result.totalElements());
+        Assertions.assertEquals(1, result.totalPages());
+        Assertions.assertFalse(result.hasNext());
+
+        Assertions.assertTrue(result.items().stream().anyMatch(o -> o.id().equals(1L)));
+        Assertions.assertTrue(result.items().stream().anyMatch(o -> o.id().equals(2L)));
+        Assertions.assertTrue(result.items().stream()
+                .anyMatch(o -> o.totalAmount().compareTo(new BigDecimal("1500")) == 0));
+
+        Mockito.verify(orderRepository).findAll(pageable);
+        Mockito.verify(mapperService).orderToDTO(persistentOrderEntity);
+        Mockito.verify(mapperService).orderToDTO(persistentDistinctOrderEntity);
+        Mockito.verifyNoMoreInteractions(orderRepository, mapperService);
+    }
+
+    @Test
+    void getOrdersPage_emptyList() {
+        Pageable pageable = PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
+
+        Page<Order> emptyPage = new PageImpl<>(
+                Collections.emptyList(),
+                pageable,
+                0
+        );
+
+        Mockito.when(orderRepository.findAll(pageable))
+                .thenReturn(emptyPage);
+
+        OrdersPageDTO result = orderServiceImpl.getOrdersPage(0, 20);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.items().isEmpty());
+        Assertions.assertEquals(0, result.page());
+        Assertions.assertEquals(20, result.size());
+        Assertions.assertEquals(0, result.totalElements());
+        Assertions.assertEquals(0, result.totalPages());
+        Assertions.assertFalse(result.hasNext());
+
+        Mockito.verify(orderRepository).findAll(pageable);
+        Mockito.verifyNoInteractions(mapperService);
+    }
+
+    @Test
+    void getOrdersPageByClientId_returnOrdersPageDTOWithRelations() {
+        Long clientId = 1L;
+
+        Order persistentOrderEntity = OrderDataFactory.createPersistentOrderEntity();
+        Order persistentDistinctOrderEntity = OrderDataFactory.createDistinctPersistentOrderEntity();
+
+        OrderDTO persistentOrderDTO = OrderDataFactory.createPersistentOrderDTOWithId(clientId);
+        OrderDTO persistentDistinctOrderDTO = OrderDataFactory.createDistinctPersistentOrderDTOWithId(clientId);
+
+        Pageable pageable = PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
+
+        Page<Order> pageFromRepo = new PageImpl<>(
+                List.of(persistentOrderEntity, persistentDistinctOrderEntity),
+                pageable,
+                2
+        );
+
+        Mockito.when(orderRepository.findByClientId(clientId, pageable))
+                .thenReturn(pageFromRepo);
+        Mockito.when(mapperService.orderToDTO(persistentOrderEntity))
+                .thenReturn(persistentOrderDTO);
+        Mockito.when(mapperService.orderToDTO(persistentDistinctOrderEntity))
+                .thenReturn(persistentDistinctOrderDTO);
+
+        OrdersPageDTO result = orderServiceImpl.getOrdersPageByClientId(clientId, 0, 20);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(2, result.items().size());
+        Assertions.assertEquals(0, result.page());
+        Assertions.assertEquals(20, result.size());
+        Assertions.assertEquals(2, result.totalElements());
+        Assertions.assertEquals(1, result.totalPages());
+        Assertions.assertFalse(result.hasNext());
+
+        Assertions.assertTrue(result.items().stream().allMatch(o -> o.clientId().equals(clientId)));
+        Assertions.assertTrue(result.items().stream().anyMatch(o -> o.id().equals(1L)));
+        Assertions.assertTrue(result.items().stream().anyMatch(o -> o.id().equals(2L)));
+        Assertions.assertTrue(result.items().stream()
+                .anyMatch(o -> o.totalAmount().compareTo(new BigDecimal("1500")) == 0));
+
+        Mockito.verify(orderRepository).findByClientId(clientId, pageable);
+        Mockito.verify(mapperService).orderToDTO(persistentOrderEntity);
+        Mockito.verify(mapperService).orderToDTO(persistentDistinctOrderEntity);
+        Mockito.verifyNoMoreInteractions(orderRepository, mapperService);
+    }
+
+    @Test
+    void getOrdersPageByClientId_notFound_throwsException() {
+        Long clientId = 1L;
+
+        Pageable pageable = PageRequest.of(
+                0,
+                20,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
+
+        Page<Order> emptyPage = new PageImpl<>(
+                Collections.emptyList(),
+                pageable,
+                0
+        );
+
+        Mockito.when(orderRepository.findByClientId(clientId, pageable))
+                .thenReturn(emptyPage);
+
+        OrdersPageDTO result = orderServiceImpl.getOrdersPageByClientId(clientId, 0, 20);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.items().isEmpty());
+        Assertions.assertEquals(0, result.totalElements());
+        Assertions.assertEquals(0, result.totalPages());
+        Assertions.assertFalse(result.hasNext());
+
+        Mockito.verify(orderRepository).findByClientId(clientId, pageable);
+        Mockito.verifyNoInteractions(mapperService);
+    }
 
     @Test
     void updateOrderByOrderId_returnOrderDTOWithRelations() {

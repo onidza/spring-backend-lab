@@ -64,9 +64,6 @@ public class CouponServiceImpl implements CouponService {
     public CouponPageDTO getCouponsPageByClientId(Long id, int page, int size) {
         log.info("Called getCouponsPageByClientId with id: {}", id);
 
-        if (!couponRepository.existsById(id))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND);
-
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
