@@ -1,7 +1,8 @@
 package com.onidza.backend.service.profile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.model.dto.ProfileDTO;
+import com.onidza.backend.model.dto.profile.ProfileDTO;
+import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Profile;
 import com.onidza.backend.model.mapper.MapperService;
@@ -10,6 +11,7 @@ import com.onidza.backend.repository.ProfileRepository;
 import com.onidza.backend.service.TransactionAfterCommitExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -35,12 +36,13 @@ public class ManualProfileServiceImpl implements ProfileService {
     private static final String PROFILE_KEY_PREFIX = "profile:";
     private static final Duration PROFILE_TTL = Duration.ofMinutes(10);
 
-    private static final String ALL_PROFILES_KEY = "profile:all:v1";
-    private static final Duration ALL_PROFILES_TTL = Duration.ofMinutes(10);
+    private static final String PAGE_PROFILES_KEY = "profile:p=";
+    private static final Duration PAGE_PROFILES_TTL = Duration.ofMinutes(10);
 
     private static final String CLIENT_KEY_PREFIX = "client:";
     private static final String ALL_CLIENTS_KEY = "clients:all:v1";
 
+    @Override
     public ProfileDTO getProfileById(Long id) {
         log.info("Called getProfileById with id: {}", id);
 
@@ -61,32 +63,46 @@ public class ManualProfileServiceImpl implements ProfileService {
         return existing;
     }
 
-    public List<ProfileDTO> getAllProfiles() {
+    @Override
+    public ProfilesPageDTO getProfilesPage(int page, int size) {
         log.info("Called getAllProfiles");
 
-        Object objFromCache = redisTemplate.opsForValue().get(ALL_PROFILES_KEY);
-        if (objFromCache instanceof List<?> raw) {
-            List<ProfileDTO> dtoList = raw.stream()
-                    .map(p -> objectMapper.convertValue(p, ProfileDTO.class))
-                    .toList();
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
 
-            log.info("Returned profiles from cache with size: {}", dtoList.size());
-            return dtoList;
+        String key = PAGE_PROFILES_KEY + safePage + ":s=" + safeSize;
+
+        Object objFromCache = redisTemplate.opsForValue().get(key);
+        if (objFromCache != null) {
+            ProfilesPageDTO cached = objectMapper.convertValue(objFromCache, ProfilesPageDTO.class);
+
+            log.info("Returned page from cache with size={}", cached.items().size());
+            return cached;
         }
 
-        List<ProfileDTO> dtoList = profileRepository.findAll()
-                .stream()
-                .map(mapperService::profileToDTO)
-                .toList();
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by("id").ascending());
 
-        redisTemplate.opsForValue().set(ALL_PROFILES_KEY, dtoList, ALL_PROFILES_TTL);
-        log.info("getAllProfiles was cached...");
+        Slice<ProfileDTO> result = profileRepository.findBy(pageable)
+                .map(mapperService::profileToDTO);
 
-        log.info("Returned profiles from db with size: {}", dtoList.size());
-        return dtoList;
+        ProfilesPageDTO response = new ProfilesPageDTO(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.hasNext()
+        );
 
+        redisTemplate.opsForValue().set(key, response, PAGE_PROFILES_TTL);
+        log.info("getProfilesPage was cached...");
+
+        log.info("Returned page from db with size={}", response.items().size());
+        return response;
     }
 
+    @Override
     @Transactional
     public ProfileDTO updateProfile(Long clientId, ProfileDTO profileDTO) {
         log.info("Called updateProfile with clientId: {}", clientId);
@@ -108,9 +124,9 @@ public class ManualProfileServiceImpl implements ProfileService {
 
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(PROFILE_KEY_PREFIX + profileId);
-            redisTemplate.delete(ALL_PROFILES_KEY);
+            redisTemplate.delete(PAGE_PROFILES_KEY);
             log.info("Updated profile was invalidated in cache with key={}", PROFILE_KEY_PREFIX + profileId);
-            log.info("Updated profile was invalidated in cache with key={}", ALL_PROFILES_KEY);
+            log.info("Updated profile was invalidated in cache with key={}", PAGE_PROFILES_KEY);
 
             redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
             redisTemplate.delete(ALL_CLIENTS_KEY);

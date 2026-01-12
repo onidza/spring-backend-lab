@@ -12,7 +12,7 @@ public interface OrderService {
 
     OrdersPageDTO getOrdersPage(int page, int size);
 
-    List<OrderDTO> getAllOrdersByClientId(Long id);
+    OrdersPageDTO getOrdersPageByClientId(Long id, int page, int size);
 
     OrderDTO updateOrderByOrderId(Long id, OrderDTO orderDTO);
 

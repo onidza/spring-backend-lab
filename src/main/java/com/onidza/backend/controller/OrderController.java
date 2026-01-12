@@ -55,15 +55,16 @@ public class OrderController {
     }
 
     @GetMapping("/{id}/orders")
-    public ResponseEntity<List<OrderDTO>> getAllOrdersByClientId(
+    public ResponseEntity<OrdersPageDTO> getOrdersPageByClientId(
             @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         log.info("Called getAllOrdersByClientId with id: {}", id);
 
         OrderService service = resolveOrderService(cacheMode);
-        List<OrderDTO> orders = service.getAllOrdersByClientId(id);
-        return ResponseEntity.ok(orders);
+        return ResponseEntity.ok(service.getOrdersPageByClientId(id, page, size));
     }
 
     @PutMapping("/{id}/order")
@@ -75,8 +76,7 @@ public class OrderController {
         log.info("Called updateOrderByOrderId with id: {}", id);
 
         OrderService service = resolveOrderService(cacheMode);
-        OrderDTO order = service.updateOrderByOrderId(id, orderDTO);
-        return ResponseEntity.ok(order);
+        return ResponseEntity.ok(service.updateOrderByOrderId(id, orderDTO));
     }
 
     @PostMapping("/{id}/order")
@@ -129,8 +129,7 @@ public class OrderController {
                 maxAmount);
 
         OrderService service = resolveOrderService(cacheMode);
-        List<OrderDTO> orders = service.getOrdersByFilters(filter);
-        return ResponseEntity.ok(orders);
+        return ResponseEntity.ok(service.getOrdersByFilters(filter));
     }
 
     private OrderService resolveOrderService(CacheMode cacheMode) {

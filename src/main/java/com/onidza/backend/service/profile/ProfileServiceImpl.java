@@ -1,6 +1,7 @@
 package com.onidza.backend.service.profile;
 
-import com.onidza.backend.model.dto.ProfileDTO;
+import com.onidza.backend.model.dto.profile.ProfileDTO;
+import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Profile;
 import com.onidza.backend.model.mapper.MapperService;
@@ -8,12 +9,11 @@ import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -24,6 +24,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
 
+    @Override
     public ProfileDTO getProfileById(Long id) {
         log.info("Called getProfileById with id: {}", id);
 
@@ -32,15 +33,30 @@ public class ProfileServiceImpl implements ProfileService {
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found")));
     }
 
-    public List<ProfileDTO> getAllProfiles() {
-        log.info("Called getAllProfiles");
+    @Override
+    public ProfilesPageDTO getProfilesPage(int page, int size) {
+        log.info("Called getProfilesPage");
 
-        return profileRepository.findAll()
-                .stream()
-                .map(mapperService::profileToDTO)
-                .toList();
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
+
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by(Sort.Direction.ASC, "id"));
+
+        Slice<ProfileDTO> result =  profileRepository.findBy(pageable)
+                .map(mapperService::profileToDTO);
+
+        return new ProfilesPageDTO(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.hasNext()
+        );
     }
 
+    @Override
     @Transactional
     public ProfileDTO updateProfile(Long id, ProfileDTO profileDTO) {
         log.info("Called updateProfile with id: {}", id);

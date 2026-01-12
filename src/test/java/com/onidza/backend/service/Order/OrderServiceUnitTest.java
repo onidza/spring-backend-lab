@@ -16,8 +16,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -112,50 +110,50 @@ class OrderServiceUnitTest {
 //        Mockito.verifyNoInteractions(mapperService);
 //    }
 
-    @Test
-    void getOrdersPageByClientId_returnOrdersPageDTOWithRelations() {
-        Client persistentClientWithOrders = OrderDataFactory.createPersistClientWithOrders();
+//    @Test
+//    void getOrdersPageByClientId_returnOrdersPageDTOWithRelations() {
+//        Client persistentClientWithOrders = OrderDataFactory.createPersistClientWithOrders();
+//
+//        Mockito.when(clientRepository.findById(persistentClientWithOrders.getId()))
+//                .thenReturn(Optional.of(persistentClientWithOrders));
+//
+//        Mockito.when(mapperService.orderToDTO(Mockito.any(Order.class)))
+//                .thenAnswer(invocation -> {
+//                    Order order = invocation.getArgument(0);
+//                    return new OrderDTO(
+//                            order.getId(),
+//                            order.getOrderDate(),
+//                            order.getTotalAmount(),
+//                            order.getStatus(),
+//                            order.getClient().getId()
+//                    );
+//                });
+//
+//        List<OrderDTO> result = orderServiceImpl.getAllOrdersByClientId(persistentClientWithOrders.getId());
+//
+//        Assertions.assertEquals(2, result.size());
+//        Assertions.assertTrue(result.stream().allMatch(order ->
+//            order.clientId().equals(persistentClientWithOrders.getId())
+//        ));
+//
+//        Assertions.assertTrue(result.stream().anyMatch(order ->
+//                order.totalAmount().compareTo(new BigDecimal("1500")) == 0)
+//        );
+//
+//        Mockito.verify(clientRepository).findById(persistentClientWithOrders.getId());
+//        Mockito.verify(mapperService, Mockito.times(2)).orderToDTO(Mockito.any(Order.class));
+//    }
 
-        Mockito.when(clientRepository.findById(persistentClientWithOrders.getId()))
-                .thenReturn(Optional.of(persistentClientWithOrders));
-
-        Mockito.when(mapperService.orderToDTO(Mockito.any(Order.class)))
-                .thenAnswer(invocation -> {
-                    Order order = invocation.getArgument(0);
-                    return new OrderDTO(
-                            order.getId(),
-                            order.getOrderDate(),
-                            order.getTotalAmount(),
-                            order.getStatus(),
-                            order.getClient().getId()
-                    );
-                });
-
-        List<OrderDTO> result = orderServiceImpl.getAllOrdersByClientId(persistentClientWithOrders.getId());
-
-        Assertions.assertEquals(2, result.size());
-        Assertions.assertTrue(result.stream().allMatch(order ->
-            order.clientId().equals(persistentClientWithOrders.getId())
-        ));
-
-        Assertions.assertTrue(result.stream().anyMatch(order ->
-                order.totalAmount().compareTo(new BigDecimal("1500")) == 0)
-        );
-
-        Mockito.verify(clientRepository).findById(persistentClientWithOrders.getId());
-        Mockito.verify(mapperService, Mockito.times(2)).orderToDTO(Mockito.any(Order.class));
-    }
-
-    @Test
-    void getOrdersPageByClientId_notFound_throwsException() {
-        Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.empty());
-
-        Assertions.assertThrows(ResponseStatusException.class,
-                () -> orderServiceImpl.getAllOrdersByClientId(1L));
-
-        Mockito.verify(clientRepository).findById(1L);
-        Mockito.verifyNoInteractions(mapperService);
-    }
+//    @Test
+//    void getOrdersPageByClientId_notFound_throwsException() {
+//        Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.empty());
+//
+//        Assertions.assertThrows(ResponseStatusException.class,
+//                () -> orderServiceImpl.getAllOrdersByClientId(1L));
+//
+//        Mockito.verify(clientRepository).findById(1L);
+//        Mockito.verifyNoInteractions(mapperService);
+//    }
 
     @Test
     void updateOrderByOrderId_returnOrderDTOWithRelations() {

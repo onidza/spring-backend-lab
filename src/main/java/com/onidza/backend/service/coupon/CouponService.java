@@ -1,16 +1,15 @@
 package com.onidza.backend.service.coupon;
 
-import com.onidza.backend.model.dto.CouponDTO;
-
-import java.util.List;
+import com.onidza.backend.model.dto.coupon.CouponDTO;
+import com.onidza.backend.model.dto.coupon.CouponPageDTO;
 
 public interface CouponService {
 
     CouponDTO getCouponByCouponId(Long id);
 
-    List<CouponDTO> getAllCoupons();
+    CouponPageDTO getCouponsPage(int page, int size);
 
-    List<CouponDTO> getAllCouponsByClientId(Long id);
+    CouponPageDTO getCouponsPageByClientId(Long id, int page, int size);
 
     CouponDTO addCouponToClientByClientId(Long id, CouponDTO couponDTO);
 

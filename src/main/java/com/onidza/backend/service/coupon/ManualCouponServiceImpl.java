@@ -1,7 +1,8 @@
 package com.onidza.backend.service.coupon;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.model.dto.CouponDTO;
+import com.onidza.backend.model.dto.coupon.CouponDTO;
+import com.onidza.backend.model.dto.coupon.CouponPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Coupon;
 import com.onidza.backend.model.mapper.MapperService;
@@ -10,6 +11,7 @@ import com.onidza.backend.repository.CouponRepository;
 import com.onidza.backend.service.TransactionAfterCommitExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -38,11 +40,11 @@ public class ManualCouponServiceImpl implements CouponService {
     private static final String COUPON_KEY_PREFIX = "coupon:";
     private static final Duration COUPON_TTL = Duration.ofMinutes(10);
 
-    private static final String ALL_COUPONS_KEY = "coupons:all:v1";
-    private static final Duration ALL_COUPONS_TTL = Duration.ofMinutes(10);
+    private static final String PAGE_COUPONS_KEY = "coupons:all:p=";
+    private static final Duration PAGE_COUPONS_TTL = Duration.ofMinutes(10);
 
-    private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:v1:";
-    private static final Duration ALL_COUPONS_BY_CLIENT_ID_TTL = Duration.ofMinutes(10);
+    private static final String PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:p=";
+    private static final Duration PAGE_COUPONS_BY_CLIENT_ID_TTL = Duration.ofMinutes(10);
 
     private static final String CLIENT_KEY_PREFIX = "client:";
     private static final String ALL_CLIENTS_KEY = "clients:all:v1";
@@ -70,60 +72,86 @@ public class ManualCouponServiceImpl implements CouponService {
     }
 
     @Override
-    public List<CouponDTO> getAllCoupons() {
-        log.info("Called getAllCoupons");
+    public CouponPageDTO getCouponsPage(int page, int size) {
+        log.info("Called getCouponsPage");
 
-        Object objFromCache = redisTemplate.opsForValue().get(ALL_COUPONS_KEY);
-        if (objFromCache instanceof List<?> raw) {
-            List<CouponDTO> couponDtoList = raw.stream()
-                    .map(c -> objectMapper.convertValue(c, CouponDTO.class))
-                    .toList();
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
 
-            log.info("Returned couponDtoList from cache with size={}", couponDtoList.size());
-            return couponDtoList;
+        String key = PAGE_COUPONS_KEY + safePage + ":s=" + safeSize;
+
+
+        Object objFromCache = redisTemplate.opsForValue().get(key);
+        if (objFromCache != null) {
+            CouponPageDTO cached = objectMapper.convertValue(objFromCache, CouponPageDTO.class);
+
+            log.info("Returned page from cache with size={}", cached.items().size());
+            return cached;
         }
 
-        List<CouponDTO> couponDtoList = couponRepository.findAll()
-                .stream()
-                .map(mapperService::couponToDTO)
-                .toList();
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by("id").ascending());
 
-        redisTemplate.opsForValue().set(ALL_COUPONS_KEY, couponDtoList, ALL_COUPONS_TTL);
-        log.info("getAllCoupons was cached...");
+        Slice<CouponDTO> result = couponRepository.findAll(pageable)
+                .map(mapperService::couponToDTO);
 
-        log.info("Returned allCoupons from db with size: {}", couponDtoList.size());
-        return couponDtoList;
+        CouponPageDTO response = new CouponPageDTO(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.hasNext()
+        );
+
+        redisTemplate.opsForValue().set(key, response, PAGE_COUPONS_TTL);
+        log.info("getCouponsPage was cached...");
+
+        log.info("Returned page from db with size={}", response.items().size());
+        return response;
     }
 
     @Override
-    public List<CouponDTO> getAllCouponsByClientId(Long id) {
-        log.info("Called getAllCouponsByClientId with id: {}", id);
+    public CouponPageDTO getCouponsPageByClientId(Long id, int page, int size) {
+        log.info("Called getCouponsPageByClientId with id: {}", id);
 
-        Object objFromCache = redisTemplate.opsForValue().get(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
-        if (objFromCache instanceof List<?> raw) {
-            List<CouponDTO> couponDtoList = raw.stream()
-                    .map(c -> objectMapper.convertValue(c, CouponDTO.class))
-                    .toList();
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
 
-            log.info("Returned couponDtoListById from cache with size={}", couponDtoList.size());
-            return couponDtoList;
+        String key = PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX + safePage + ":s=" + safeSize;
+
+        Object objFromCache = redisTemplate.opsForValue().get(key);
+        if (objFromCache != null) {
+            CouponPageDTO cached = objectMapper.convertValue(objFromCache, CouponPageDTO.class);
+
+            log.info("Returned page from cache with size={}", cached.items().size());
+            return cached;
         }
 
+        if (!couponRepository.existsById(id))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND);
 
-        Client client = clientRepository.findById(id)
-                .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND));
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by("id").ascending());
 
-        List<CouponDTO> couponDtoList = client.getCoupons()
-                .stream()
-                .map(mapperService::couponToDTO)
-                .toList();
+        Slice<CouponDTO> result = couponRepository.findByClientsId(id, pageable)
+                .map(mapperService::couponToDTO);
 
-        redisTemplate.opsForValue().set(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id, couponDtoList, ALL_COUPONS_BY_CLIENT_ID_TTL);
-        log.info("getAllCouponsByClientId was cached...");
+        CouponPageDTO response = new CouponPageDTO(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.hasNext()
+        );
 
-        log.info("Returned couponsListByClientId: {} from db with size: {}", id, couponDtoList.size());
-        return couponDtoList;
+        redisTemplate.opsForValue().set(key, response, PAGE_COUPONS_BY_CLIENT_ID_TTL);
+        log.info("getCouponsPageByClientId was cached...");
+
+        log.info("Returned page: {} from db with size: {}", id, result.getContent().size());
+
+        return response;
     }
 
     @Override
@@ -142,14 +170,14 @@ public class ManualCouponServiceImpl implements CouponService {
         Coupon saved = couponRepository.save(coupon);
 
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(ALL_COUPONS_KEY);
-            redisTemplate.delete(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
+            redisTemplate.delete(PAGE_COUPONS_KEY);
+            redisTemplate.delete(PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
 
             redisTemplate.delete(CLIENT_KEY_PREFIX + id);
             redisTemplate.delete(ALL_CLIENTS_KEY);
 
-            log.info("Added a new coupon, getAllList was invalidated with key={}", ALL_COUPONS_KEY);
-            log.info("Added a new coupon, getAllCouponsByClientId was invalidated too with key={}", ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
+            log.info("Added a new coupon, getAllList was invalidated with key={}", PAGE_COUPONS_KEY);
+            log.info("Added a new coupon, getAllCouponsByClientId was invalidated too with key={}", PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
 
             log.info("Added a new coupon, getClientById was invalidated with key={}", CLIENT_KEY_PREFIX + id);
             log.info("Added a new coupon, getAllClients was invalidated with key={}", ALL_CLIENTS_KEY);
@@ -175,21 +203,21 @@ public class ManualCouponServiceImpl implements CouponService {
 
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(COUPON_KEY_PREFIX + id);
-            redisTemplate.delete(ALL_COUPONS_KEY);
+            redisTemplate.delete(PAGE_COUPONS_KEY);
 
             for (Long clientId : cacheKeyClientKeys) {
                 redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
-                redisTemplate.delete(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + clientId);
+                redisTemplate.delete(PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX + clientId);
             }
             redisTemplate.delete(ALL_CLIENTS_KEY);
 
             log.info("Updated coupon was invalidated in cache with key={}", COUPON_KEY_PREFIX + id);
-            log.info("Updated coupon in getAllList was invalidated too with key={}", ALL_COUPONS_KEY);
+            log.info("Updated coupon in getAllList was invalidated too with key={}", PAGE_COUPONS_KEY);
 
             log.info("Invalidated {} client caches due to coupon update: clientIds={}",
                     cacheKeyClientKeys.size(),
                     cacheKeyClientKeys);
-            log.info("Updated coupon in getAllCouponsByClientId was invalidated too with key={}", ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX);
+            log.info("Updated coupon in getAllCouponsByClientId was invalidated too with key={}", PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX);
             log.info("Updated coupon in getAllClients was invalidated with key={}", ALL_CLIENTS_KEY);
         });
 
@@ -215,21 +243,21 @@ public class ManualCouponServiceImpl implements CouponService {
 
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(COUPON_KEY_PREFIX + id);
-            redisTemplate.delete(ALL_COUPONS_KEY);
+            redisTemplate.delete(PAGE_COUPONS_KEY);
 
             for (Long clientId : cacheKeyClientKeys) {
                 redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
-                redisTemplate.delete(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + clientId);
+                redisTemplate.delete(PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX + clientId);
             }
             redisTemplate.delete(ALL_CLIENTS_KEY);
 
             log.info("Deleted coupon was invalidated in cache with key={}", COUPON_KEY_PREFIX + id);
-            log.info("Deleted coupon in getAllList was invalidated too with key={}", ALL_COUPONS_KEY);
+            log.info("Deleted coupon in getAllList was invalidated too with key={}", PAGE_COUPONS_KEY);
 
             log.info("Invalidated {} client caches due to coupon delete: clientIds={}",
                     cacheKeyClientKeys.size(),
                     cacheKeyClientKeys);
-            log.info("Deleted coupon in getAllCouponsByClientId was invalidated too with key={}", ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX);
+            log.info("Deleted coupon in getAllCouponsByClientId was invalidated too with key={}", PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX);
             log.info("Deleted coupon in getAllClients was invalidated with key={}", ALL_CLIENTS_KEY);
         });
     }

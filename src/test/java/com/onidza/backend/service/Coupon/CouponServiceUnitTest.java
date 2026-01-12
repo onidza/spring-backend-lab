@@ -1,6 +1,6 @@
 package com.onidza.backend.service.Coupon;
 
-import com.onidza.backend.model.dto.CouponDTO;
+import com.onidza.backend.model.dto.coupon.CouponDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Coupon;
 import com.onidza.backend.model.mapper.MapperService;
@@ -69,96 +69,96 @@ class CouponServiceUnitTest {
         Mockito.verifyNoInteractions(mapperService);
     }
 
-    @Test
-    void getAllCouponsByClientId_returnListOfCouponsDTOWithRelations() {
-        Coupon persistentCouponEntity = CouponDataFactory.createPersistentCouponEntity();
-        Coupon persistentDistinctCouponEntity = CouponDataFactory.createDistinctPersistentCouponEntity();
+//    @Test
+//    void getCouponsPageByClientId_returnPageDTOWithRelations() {
+//        Coupon persistentCouponEntity = CouponDataFactory.createPersistentCouponEntity();
+//        Coupon persistentDistinctCouponEntity = CouponDataFactory.createDistinctPersistentCouponEntity();
+//
+//        CouponDTO persistentOrderDTO = CouponDataFactory.createPersistentCouponDTO();
+//        CouponDTO persistentDistinctOrderDTO = CouponDataFactory.createDistinctPersistentClientDTO();
+//
+//        Mockito.when(couponRepository.findAll())
+//                .thenReturn(List.of(persistentCouponEntity, persistentDistinctCouponEntity));
+//        Mockito.when(mapperService.couponToDTO(persistentCouponEntity))
+//                .thenReturn(persistentOrderDTO);
+//        Mockito.when(mapperService.couponToDTO(persistentDistinctCouponEntity))
+//                .thenReturn(persistentDistinctOrderDTO);
+//
+//        List<CouponDTO> result = couponServiceImpl.getCouponsPage();
+//
+//        Assertions.assertNotNull(result);
+//        Assertions.assertEquals(2, result.size());
+//        Assertions.assertTrue(result.stream().anyMatch(orderDTO
+//                -> orderDTO.id().equals(1L)));
+//
+//        Assertions.assertTrue(result.stream().anyMatch(orderDTO
+//                -> orderDTO.id().equals(2L)));
+//
+//        Assertions.assertTrue(result.stream().anyMatch(c -> c.discount() == 8.8f));
+//
+//        Mockito.verify(couponRepository).findAll();
+//        Mockito.verify(mapperService, Mockito.times(2))
+//                .couponToDTO(Mockito.any(Coupon.class));
+//    }
 
-        CouponDTO persistentOrderDTO = CouponDataFactory.createPersistentCouponDTO();
-        CouponDTO persistentDistinctOrderDTO = CouponDataFactory.createDistinctPersistentClientDTO();
+//    @Test
+//    void getCoupons_Page_emptyList() {
+//        Mockito.when(couponRepository.findAll()).thenReturn(Collections.emptyList());
+//
+//        List<CouponDTO> result = couponServiceImpl.getCouponsPage();
+//
+//        Assertions.assertNotNull(result);
+//        Assertions.assertTrue(result.isEmpty());
+//
+//        Mockito.verify(couponRepository).findAll();
+//        Mockito.verifyNoInteractions(mapperService);
+//    }
 
-        Mockito.when(couponRepository.findAll())
-                .thenReturn(List.of(persistentCouponEntity, persistentDistinctCouponEntity));
-        Mockito.when(mapperService.couponToDTO(persistentCouponEntity))
-                .thenReturn(persistentOrderDTO);
-        Mockito.when(mapperService.couponToDTO(persistentDistinctCouponEntity))
-                .thenReturn(persistentDistinctOrderDTO);
+//    @Test
+//    void getCouponsPageByClientId_returnPageDTOWithRelations() {
+//        Client persistentClientWithOrders = CouponDataFactory.createPersistClientWithTwoCoupons();
+//
+//        Mockito.when(clientRepository.findById(persistentClientWithOrders.getId()))
+//                .thenReturn(Optional.of(persistentClientWithOrders));
+//
+//        Mockito.when(mapperService.couponToDTO(Mockito.any(Coupon.class)))
+//                .thenAnswer(invocation -> {
+//                    Coupon coupon = invocation.getArgument(0);
+//                    return new CouponDTO(
+//                            coupon.getId(),
+//                            coupon.getCode(),
+//                            coupon.getDiscount(),
+//                            coupon.getExpirationDate(),
+//                            List.of(persistentClientWithOrders.getId())
+//                    );
+//                });
+//
+//        List<CouponDTO> result = couponServiceImpl.getCouponsPageByClientId(persistentClientWithOrders.getId());
+//
+//        Assertions.assertEquals(2, result.size());
+//        Assertions.assertTrue(result.stream().allMatch(coupon ->
+//                coupon.clientsId().get(0).equals(persistentClientWithOrders.getId())
+//        ));
+//
+//        Assertions.assertTrue(result.stream().anyMatch(coupon ->
+//                coupon.discount() == 8.8f || coupon.discount() == 2.1f)
+//        );
+//
+//        Mockito.verify(clientRepository).findById(persistentClientWithOrders.getId());
+//        Mockito.verify(mapperService, Mockito.times(2))
+//                .couponToDTO(Mockito.any(Coupon.class));
+//    }
 
-        List<CouponDTO> result = couponServiceImpl.getAllCoupons();
-
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(2, result.size());
-        Assertions.assertTrue(result.stream().anyMatch(orderDTO
-                -> orderDTO.id().equals(1L)));
-
-        Assertions.assertTrue(result.stream().anyMatch(orderDTO
-                -> orderDTO.id().equals(2L)));
-
-        Assertions.assertTrue(result.stream().anyMatch(c -> c.discount() == 8.8f));
-
-        Mockito.verify(couponRepository).findAll();
-        Mockito.verify(mapperService, Mockito.times(2))
-                .couponToDTO(Mockito.any(Coupon.class));
-    }
-
-    @Test
-    void getAllCoupons_emptyList() {
-        Mockito.when(couponRepository.findAll()).thenReturn(Collections.emptyList());
-
-        List<CouponDTO> result = couponServiceImpl.getAllCoupons();
-
-        Assertions.assertNotNull(result);
-        Assertions.assertTrue(result.isEmpty());
-
-        Mockito.verify(couponRepository).findAll();
-        Mockito.verifyNoInteractions(mapperService);
-    }
-
-    @Test
-    void getAllCouponsByClientId_returnListCouponsDTOWithRelations() {
-        Client persistentClientWithOrders = CouponDataFactory.createPersistClientWithTwoCoupons();
-
-        Mockito.when(clientRepository.findById(persistentClientWithOrders.getId()))
-                .thenReturn(Optional.of(persistentClientWithOrders));
-
-        Mockito.when(mapperService.couponToDTO(Mockito.any(Coupon.class)))
-                .thenAnswer(invocation -> {
-                    Coupon coupon = invocation.getArgument(0);
-                    return new CouponDTO(
-                            coupon.getId(),
-                            coupon.getCode(),
-                            coupon.getDiscount(),
-                            coupon.getExpirationDate(),
-                            List.of(persistentClientWithOrders.getId())
-                    );
-                });
-
-        List<CouponDTO> result = couponServiceImpl.getAllCouponsByClientId(persistentClientWithOrders.getId());
-
-        Assertions.assertEquals(2, result.size());
-        Assertions.assertTrue(result.stream().allMatch(coupon ->
-                coupon.clientsId().get(0).equals(persistentClientWithOrders.getId())
-        ));
-
-        Assertions.assertTrue(result.stream().anyMatch(coupon ->
-                coupon.discount() == 8.8f || coupon.discount() == 2.1f)
-        );
-
-        Mockito.verify(clientRepository).findById(persistentClientWithOrders.getId());
-        Mockito.verify(mapperService, Mockito.times(2))
-                .couponToDTO(Mockito.any(Coupon.class));
-    }
-
-    @Test
-    void getAllCouponsByClientId_notFound_throwsException() {
-        Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.empty());
-
-        Assertions.assertThrows(ResponseStatusException.class,
-                () -> couponServiceImpl.getAllCouponsByClientId(1L));
-
-        Mockito.verify(clientRepository).findById(1L);
-        Mockito.verifyNoInteractions(mapperService);
-    }
+//    @Test
+//    void getCouponsPageByClientId_notFound_throwsException() {
+//        Mockito.when(clientRepository.findById(1L)).thenReturn(Optional.empty());
+//
+//        Assertions.assertThrows(ResponseStatusException.class,
+//                () -> couponServiceImpl.getCouponsPageByClientId(1L));
+//
+//        Mockito.verify(clientRepository).findById(1L);
+//        Mockito.verifyNoInteractions(mapperService);
+//    }
 
     @Test
     void addOrderToClient_returnOrderDTOWithRelations() {

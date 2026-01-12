@@ -1,4 +1,4 @@
-package com.onidza.backend.model.dto;
+package com.onidza.backend.model.dto.profile;
 
 import com.onidza.backend.model.entity.Profile;
 import jakarta.validation.constraints.NotNull;

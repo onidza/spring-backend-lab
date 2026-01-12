@@ -1,6 +1,7 @@
 package com.onidza.backend.controller;
 
-import com.onidza.backend.model.dto.ProfileDTO;
+import com.onidza.backend.model.dto.profile.ProfileDTO;
+import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 import com.onidza.backend.service.CacheMode;
 import com.onidza.backend.service.profile.ManualProfileServiceImpl;
 import com.onidza.backend.service.profile.ProfileService;
@@ -10,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -35,13 +34,15 @@ public class ProfileController {
     }
 
     @GetMapping("/profiles")
-    public ResponseEntity<List<ProfileDTO>> getAllProfiles(
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    public ResponseEntity<ProfilesPageDTO> getProfilesPage(
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
-        log.info("Called getAllProfiles");
+        log.info("Called getProfilesPage");
 
         ProfileService service = resolveProfileService(cacheMode);
-        List<ProfileDTO> profiles = service.getAllProfiles();
+        ProfilesPageDTO profiles = service.getProfilesPage(page, size);
         return ResponseEntity.ok(profiles);
     }
 

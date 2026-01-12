@@ -1,7 +1,7 @@
 package com.onidza.backend.model.mapper;
 
 import com.onidza.backend.model.dto.client.ClientDTO;
-import com.onidza.backend.model.dto.CouponDTO;
+import com.onidza.backend.model.dto.coupon.CouponDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Coupon;

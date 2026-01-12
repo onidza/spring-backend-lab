@@ -1,4 +1,4 @@
-package com.onidza.backend.model.dto;
+package com.onidza.backend.model.dto.coupon;
 
 import com.onidza.backend.model.entity.Coupon;
 import jakarta.validation.constraints.*;

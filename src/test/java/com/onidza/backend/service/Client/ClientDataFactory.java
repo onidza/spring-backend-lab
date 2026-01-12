@@ -2,8 +2,8 @@ package com.onidza.backend.service.Client;
 
 import com.onidza.backend.model.OrderStatus;
 import com.onidza.backend.model.dto.client.ClientDTO;
-import com.onidza.backend.model.dto.CouponDTO;
-import com.onidza.backend.model.dto.ProfileDTO;
+import com.onidza.backend.model.dto.coupon.CouponDTO;
+import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Profile;

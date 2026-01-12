@@ -1,6 +1,6 @@
 package com.onidza.backend.model.mapper;
 
-import com.onidza.backend.model.dto.ProfileDTO;
+import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.entity.Profile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

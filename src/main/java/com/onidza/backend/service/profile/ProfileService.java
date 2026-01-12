@@ -1,14 +1,13 @@
 package com.onidza.backend.service.profile;
 
-import com.onidza.backend.model.dto.ProfileDTO;
-
-import java.util.List;
+import com.onidza.backend.model.dto.profile.ProfileDTO;
+import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 
 public interface ProfileService {
 
     ProfileDTO getProfileById(Long id);
 
-    List<ProfileDTO> getAllProfiles();
+    ProfilesPageDTO getProfilesPage(int page, int size);
 
     ProfileDTO updateProfile(Long id, ProfileDTO profileDTO);
 }

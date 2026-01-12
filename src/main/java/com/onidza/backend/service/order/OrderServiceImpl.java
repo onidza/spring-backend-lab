@@ -1,5 +1,6 @@
 package com.onidza.backend.service.order;
 
+import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
@@ -35,6 +36,7 @@ public class OrderServiceImpl implements OrderService {
     private static final String ORDER_NOT_FOUND = "Order not found";
     private static final String CLIENT_NOT_FOUND = "Client not found";
 
+    @Override
     public OrderDTO getOrderById(Long id) {
         log.info("Called getOrderById with id: {}", id);
 
@@ -43,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND)));
     }
 
+    @Override
     public OrdersPageDTO getOrdersPage(int page, int size) {
         log.info("Called getOrdersPage");
 
@@ -67,19 +70,37 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 
-    public List<OrderDTO> getAllOrdersByClientId(Long id) {
-        log.info("Called getAllOrdersByClientId with id: {}", id);
+    @Override
+    public OrdersPageDTO getOrdersPageByClientId(Long id, int page, int size) {
+        log.info("Called getOrdersPageByClientId with id: {}", id);
 
-        Client client = clientRepository.findById(id)
-                .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND));
+        if (!clientRepository.existsById(id))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND);
 
-        return client.getOrders()
-                .stream()
-                .map(mapperService::orderToDTO)
-                .toList();
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
+
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
+
+        Page<OrderDTO> result = orderRepository
+                .findByClientId(id, pageable)
+                .map(mapperService::orderToDTO);
+
+        return new OrdersPageDTO(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
     }
 
+    @Override
     @Transactional
     public OrderDTO updateOrderByOrderId(Long id, OrderDTO orderDTO) {
         log.info("Called updateOrderByOrderId with id: {}", id);
@@ -95,6 +116,7 @@ public class OrderServiceImpl implements OrderService {
         return mapperService.orderToDTO(order);
     }
 
+    @Override
     @Transactional
     public OrderDTO addOrderToClient(Long id, OrderDTO orderDTO) {
         log.info("Called addOrderToClient with id: {}", id);
@@ -110,6 +132,7 @@ public class OrderServiceImpl implements OrderService {
         return mapperService.orderToDTO(orderRepository.save(order));
     }
 
+    @Override
     public void deleteOrderByOrderId(Long id) {
         log.info("Called deleteOrderById with id: {}", id);
 
@@ -124,6 +147,7 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.deleteById(id);
     }
 
+    @Override
     public List<OrderDTO> getOrdersByFilters(OrderFilterDTO filter) {
         log.info("Called getOrdersByFilters with filter: {}", filter);
 

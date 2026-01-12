@@ -48,7 +48,7 @@ public class ManualClientServiceImpl implements ClientService {
     private static final String ALL_COUPONS_KEY = "coupons:all:v1";
     private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:v1:";
 
-    //stringRedisTemplate
+    //this one made by stringRedisTemplate
     @Override
     public ClientDTO getClientById(Long id) {
         log.info("Called getClientById with id: {}", id);
@@ -107,7 +107,8 @@ public class ManualClientServiceImpl implements ClientService {
                 safeSize,
                 Sort.by("id").ascending());
 
-        Page<ClientDTO> result = clientRepository.findAll(pageable).map(mapperService::clientToDTO);
+        Page<ClientDTO> result = clientRepository.findAll(pageable)
+                .map(mapperService::clientToDTO);
 
         ClientsPageDTO response = new ClientsPageDTO(
                 result.getContent(),

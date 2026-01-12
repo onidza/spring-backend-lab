@@ -1,6 +1,7 @@
 package com.onidza.backend.controller;
 
-import com.onidza.backend.model.dto.CouponDTO;
+import com.onidza.backend.model.dto.coupon.CouponDTO;
+import com.onidza.backend.model.dto.coupon.CouponPageDTO;
 import com.onidza.backend.service.CacheMode;
 import com.onidza.backend.service.coupon.CouponService;
 import com.onidza.backend.service.coupon.CouponServiceImpl;
@@ -11,8 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @Slf4j
@@ -38,26 +37,30 @@ public class CouponController {
     }
 
     @GetMapping("/coupons")
-    public ResponseEntity<List<CouponDTO>> getAllCoupons(
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+    public ResponseEntity<CouponPageDTO> getCouponsPage(
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
-        log.info("Called getAllCoupons");
+        log.info("Called getCouponsPage");
 
         CouponService service = resolveCouponService(cacheMode);
-        List<CouponDTO> coupons = service.getAllCoupons();
+        CouponPageDTO coupons = service.getCouponsPage(page, size);
 
         return ResponseEntity.ok(coupons);
     }
 
     @GetMapping("/{id}/coupons")
-    public ResponseEntity<List<CouponDTO>> getAllCouponsByClientId(
+    public ResponseEntity<CouponPageDTO> getCouponsPageByClientId(
             @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
-        log.info("Called getAllCouponsByClientId with id: {}", id);
+        log.info("Called getCouponsPageByClientId with id: {}", id);
 
         CouponService service = resolveCouponService(cacheMode);
-        List<CouponDTO> coupons = service.getAllCouponsByClientId(id);
+        CouponPageDTO coupons = service.getCouponsPageByClientId(id, page, size);
 
         return ResponseEntity.ok(coupons);
     }
