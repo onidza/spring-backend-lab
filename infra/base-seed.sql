@@ -74,7 +74,7 @@ SELECT
 FROM generate_series(1, 1000000) AS gs
 ON CONFLICT DO NOTHING;
 
--- --------------------------- INSERTS (~100) -----------------
+-- ----------------------- INSERT TEST (~100) ------------------
 --
 -- -- 1) PROFILES (100)
 -- INSERT INTO profiles (address, phone)
