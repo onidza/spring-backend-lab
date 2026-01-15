@@ -29,7 +29,7 @@ export const options = {
 
 const popularIds = generateRandomIds(15, 1, 20_000);
 
-export default function () {
+export default function test () {
     const clientId =
         Math.random() < 0.8
             ? popularIds[randomInt(0, popularIds.length - 1)]
@@ -39,6 +39,3 @@ export default function () {
 
     check(res, { "status is 200": (r) => r.status === 200 });
 }
-
-//k6 run -e BASE_URL=http://localhost:8080 -e CACHE_MODE=NON_CACHE -e USE_STAGES=false k6/client/test-get-client.js
-//k6 run -e BASE_URL=http://localhost:8080 -e CACHE_MODE=NON_CACHE -e USE_STAGES=true k6/client/test-get-client.js
