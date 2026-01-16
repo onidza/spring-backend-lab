@@ -1,4 +1,4 @@
-import {generateRandomIds, randomInt} from "../k6_utils.js";
+import {generateRandomIds, randomInt} from "../utils.js";
 import {BASE_URL, CACHE_MODE, USE_STAGES} from "../config.js";
 import http from 'k6/http';
 import {check} from "k6";
@@ -27,9 +27,10 @@ export const options = {
     },
 };
 
-const popularIds = generateRandomIds(15, 1, 20_000);
+const popularIds = generateRandomIds(15, 1, 20_000); //hot ids
 
 export default function test () {
+
     const clientId =
         Math.random() < 0.8
             ? popularIds[randomInt(0, popularIds.length - 1)]
