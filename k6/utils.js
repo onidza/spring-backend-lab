@@ -9,3 +9,11 @@ export function generateRandomIds(count, minId, maxId) {
     }
     return ids;
 }
+
+export function generatePhone(base = '79') {
+    return `${base}${String(__VU).padStart(3,'0')}${String(__ITER).padStart(6,'0')}`;
+}
+
+export function generateUniqueClientId(base = 2_000_000, stride = 1_000_000) {
+    return base + (__VU * stride) + __ITER;
+}
