@@ -8,8 +8,8 @@ SCRIPT_GET_CLIENT_BY_ID ?= client/test-get-client-by-id.js
 SCRIPT_GET_CLIENT_PAGE ?= client/test-get-client-page.js
 
 SCRIPT_ADD_CLIENT ?= client/test-add-client.js
-SCRIPT_UPDATE_CLIENT_BY_ID ?= client/test-update-client-by-id.js
-SCRIPT_DELETE_CLIENT_BY_ID ?= client/test-delete-client-by-id.js
+SCRIPT_UPDATE_CLIENT_BY_ID ?= client/test-update-by-id-client.js
+SCRIPT_DELETE_CLIENT_BY_ID ?= client/test-delete-by-id-client.js
 
 .PHONY: help run \
         client-get-by-id client-get-page \
