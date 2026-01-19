@@ -38,24 +38,22 @@ export default function test() {
 
     const phone = generatePhone();
     const payload = JSON.stringify({
-        client: {
+        id: clientId,
+        name: `TestName${clientId}-${__ITER}`,
+        email: `test${clientId}-${__ITER}@example.com`,
+        profile: {
             id: clientId,
-            name: `TestName${clientId}-${__ITER}`,
-            email: `test${clientId}-${__ITER}@example.com`,
-            profile: {
-                id: clientId,
-                address: `TestAddress${clientId}-${__ITER}`,
-                phone: phone,
-                clientId: clientId
-            }
+            address: `TestAddress${clientId}-${__ITER}`,
+            phone: phone,
+            clientId: clientId
         }
     })
 
     const res = http.put(
         `${BASE_URL}/clients/${clientId}?cacheMode=${CACHE_MODE}`,
         payload, {
-        headers: { 'Content-Type': 'application/json'},
-    });
+            headers: {'Content-Type': 'application/json'},
+        });
 
     check(res, {"status is 200": (r) => r.status === 200});
 }
