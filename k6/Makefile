@@ -3,17 +3,27 @@ CACHE_MODE ?= NON_CACHE
 USE_STAGES ?= true
 
 K6 ?= k6
+
 SCRIPT_GET_CLIENT_BY_ID ?= client/test-get-client-by-id.js
 SCRIPT_GET_CLIENT_PAGE ?= client/test-get-client-page.js
 
+SCRIPT_ADD_CLIENT ?= client/test-add-client.js
+SCRIPT_UPDATE_CLIENT_BY_ID ?= client/test-update-by-id-client.js
+SCRIPT_DELETE_CLIENT_BY_ID ?= client/test-delete-by-id-client.js
+
 .PHONY: help run \
         client-get-by-id client-get-page \
-        cache-non cache-manual cache-spring
+        client-add, client-update, client-delete \
+        cache-non cache-manual cache-spring \
+
 
 help:
 	@echo "k6 targets:"
-	@echo "  make client-get-by-id        # run by-id scenario"
+	@echo "  make client-get-by-id        # run get-id scenario"
 	@echo "  make client-get-page         # run page scenario"
+	@echo "  make client-add         	  # run add scenario"
+	@echo "  make client-update-by-id     # run update scenario"
+	@echo "  make client-delete-by-id     # run delete scenario"
 	@echo ""
 	@echo "Examples (override vars):"
 	@echo "  make client-get-by-id USE_STAGES=false"
@@ -48,8 +58,16 @@ client-get-by-id:
 client-get-page:
 	@$(MAKE) run SCRIPT=$(SCRIPT_GET_CLIENT_PAGE)
 
+client-add:
+	@$(MAKE) run SCRIPT=$(SCRIPT_ADD_CLIENT)
+
+client-update:
+	@$(MAKE) run SCRIPT=$(SCRIPT_UPDATE_CLIENT_BY_ID)
+
+client-delete:
+	@$(MAKE) run SCRIPT=$(SCRIPT_DELETE_CLIENT_BY_ID)
+
 # --- optional shortcuts ---
-# Применяются к любому сценарию через TARGET=...
 TARGET ?= client-get-by-id
 
 cache-non:
