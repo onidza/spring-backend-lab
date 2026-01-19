@@ -36,14 +36,15 @@ public class ManualCouponServiceImpl implements CouponService {
     private final TransactionAfterCommitExecutor afterCommitExecutor;
 
     private static final String COUPON_NOT_FOUND = "Coupon not found";
+    private static final String CLIENT_NOT_FOUND = "Client not found";
 
-    private static final String COUPON_KEY_PREFIX = "coupon:";
+    private static final String COUPON_KEY_PREFIX = "coupon:id:";
     private static final Duration COUPON_TTL = Duration.ofMinutes(10);
 
-    private static final String PAGE_COUPONS_KEY = "coupons:all:p=";
+    private static final String PAGE_COUPONS_KEY = "coupons:all:";
     private static final Duration PAGE_COUPONS_TTL = Duration.ofMinutes(10);
 
-    private static final String PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:p=";
+    private static final String PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:";
     private static final Duration PAGE_COUPONS_BY_CLIENT_ID_TTL = Duration.ofMinutes(10);
 
     private static final String CLIENT_KEY_PREFIX = "client:";
@@ -80,7 +81,7 @@ public class ManualCouponServiceImpl implements CouponService {
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
-        String key = PAGE_COUPONS_KEY + safePage + ":s=" + safeSize;
+        String key = PAGE_COUPONS_KEY + "p=" + safePage + ":s=" + safeSize;
 
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
@@ -121,7 +122,7 @@ public class ManualCouponServiceImpl implements CouponService {
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
-        String key = PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX + safePage + ":s=" + safeSize;
+        String key = PAGE_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -131,8 +132,8 @@ public class ManualCouponServiceImpl implements CouponService {
             return cached;
         }
 
-        if (!couponRepository.existsById(id))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND);
+        if (!clientRepository.existsById(id))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND);
 
         Pageable pageable = PageRequest.of(
                 safePage,
@@ -164,7 +165,7 @@ public class ManualCouponServiceImpl implements CouponService {
 
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND));
 
         Coupon coupon = mapperService.couponDTOToEntity(couponDTO);
         coupon.getClients().add(client);

@@ -56,13 +56,13 @@ public class ManualOrderServiceImpl implements OrderService {
     private static final String ORDER_NOT_FOUND = "Order not found";
     private static final String CLIENT_NOT_FOUND = "Client not found";
 
-    private static final String ORDER_KEY_PREFIX = "order:";
+    private static final String ORDER_KEY_PREFIX = "order:id:";
     private static final Duration ORDER_TTL = Duration.ofMinutes(10);
 
-    private static final String PAGE_ORDERS_KEY = "orders:p=";
+    private static final String PAGE_ORDERS_KEY = "orders:";
     private static final Duration PAGE_ORDERS_TTL = Duration.ofMinutes(10);
 
-    private static final String PAGE_ORDERS_BY_CLIENT_ID_KEY_PREFIX = "orders:byClientId:p=:";
+    private static final String PAGE_ORDERS_BY_CLIENT_ID_KEY_PREFIX = "orders:byClientId:";
     private static final Duration PAGE_ORDERS_BY_CLIENT_ID_TTL = Duration.ofMinutes(10);
 
     private static final String ORDERS_FILTER_STATUS_KEY_PREFIX = "orders:filter:status:v1:";
@@ -125,7 +125,7 @@ public class ManualOrderServiceImpl implements OrderService {
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
-        String key = PAGE_ORDERS_KEY + safePage + ":s=" + safeSize;
+        String key = PAGE_ORDERS_KEY+ "p=" + safePage + ":s=" + safeSize;
 
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
@@ -168,7 +168,8 @@ public class ManualOrderServiceImpl implements OrderService {
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
-        String key = PAGE_ORDERS_BY_CLIENT_ID_KEY_PREFIX + safePage + ":s=" + safeSize;
+        String key = PAGE_ORDERS_BY_CLIENT_ID_KEY_PREFIX
+                + id + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
