@@ -36,6 +36,7 @@ public class OrderServiceImpl implements OrderService {
     private static final String CLIENT_NOT_FOUND = "Client not found";
 
     @Override
+    @Transactional(readOnly = true)
     public OrderDTO getOrderById(Long id) {
         log.info("Called getOrderById with id: {}", id);
 
@@ -45,6 +46,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OrdersPageDTO getOrdersPage(int page, int size) {
         log.info("Called getOrdersPage");
 
@@ -70,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OrdersPageDTO getOrdersPageByClientId(Long id, int page, int size) {
         log.info("Called getOrdersPageByClientId with id: {}", id);
 

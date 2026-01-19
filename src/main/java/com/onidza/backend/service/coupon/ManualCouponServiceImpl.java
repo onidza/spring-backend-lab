@@ -50,6 +50,7 @@ public class ManualCouponServiceImpl implements CouponService {
     private static final String ALL_CLIENTS_KEY = "clients:all:v1";
 
     @Override
+    @Transactional(readOnly = true)
     public CouponDTO getCouponByCouponId(Long id) {
         log.info("Called getCouponById with id: {}", id);
 
@@ -72,6 +73,7 @@ public class ManualCouponServiceImpl implements CouponService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CouponPageDTO getCouponsPage(int page, int size) {
         log.info("Called getCouponsPage");
 
@@ -112,6 +114,7 @@ public class ManualCouponServiceImpl implements CouponService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CouponPageDTO getCouponsPageByClientId(Long id, int page, int size) {
         log.info("Called getCouponsPageByClientId with id: {}", id);
 
