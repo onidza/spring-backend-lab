@@ -25,6 +25,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final MapperService mapperService;
 
     @Override
+    @Transactional(readOnly = true)
     public ProfileDTO getProfileById(Long id) {
         log.info("Called getProfileById with id: {}", id);
 
@@ -34,6 +35,7 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProfilesPageDTO getProfilesPage(int page, int size) {
         log.info("Called getProfilesPage");
 

@@ -1,7 +1,6 @@
 package com.onidza.backend.service.order;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
@@ -97,6 +96,7 @@ public class ManualOrderServiceImpl implements OrderService {
     }
 
     @Override
+
     public OrderDTO getOrderById(Long id) {
         log.info("Called getOrderById with id: {}", id);
 
@@ -118,6 +118,7 @@ public class ManualOrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OrdersPageDTO getOrdersPage(int page, int size) {
         log.info("Called getOrdersPage");
 
@@ -160,6 +161,7 @@ public class ManualOrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OrdersPageDTO getOrdersPageByClientId(Long id, int page, int size) {
         log.info("Called getOrdersPageByClientId with id: {}", id);
 

@@ -1,6 +1,5 @@
 package com.onidza.backend.service.client;
 
-
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.entity.Client;
@@ -9,6 +8,7 @@ import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,16 +17,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
 @Slf4j
-@Service
 @RequiredArgsConstructor
-public class ClientServiceImpl implements ClientService {
+@Service
+public class SpringCachingServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
 
     @Override
+    @Cacheable(
+            cacheNames = "client:",
+            key = "'id:' + #id",
+            condition = "#id > 0",
+            unless = "#result == 0"
+    )
     @Transactional(readOnly = true)
     public ClientDTO getClientById(Long id) {
         log.info("Called getClientById with id: {}", id);

@@ -43,6 +43,7 @@ public class ManualProfileServiceImpl implements ProfileService {
     private static final String ALL_CLIENTS_KEY = "clients:all:v1";
 
     @Override
+    @Transactional(readOnly = true)
     public ProfileDTO getProfileById(Long id) {
         log.info("Called getProfileById with id: {}", id);
 
@@ -64,6 +65,7 @@ public class ManualProfileServiceImpl implements ProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProfilesPageDTO getProfilesPage(int page, int size) {
         log.info("Called getAllProfiles");
 

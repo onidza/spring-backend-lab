@@ -50,6 +50,7 @@ public class ManualClientServiceImpl implements ClientService {
 
     //this one made by stringRedisTemplate
     @Override
+    @Transactional(readOnly = true)
     public ClientDTO getClientById(Long id) {
         log.info("Called getClientById with id: {}", id);
 
@@ -86,6 +87,7 @@ public class ManualClientServiceImpl implements ClientService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ClientsPageDTO getClientsPage(int page, int size) {
         log.info("Called getAllClients");
 
