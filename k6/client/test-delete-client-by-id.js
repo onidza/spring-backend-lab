@@ -1,4 +1,3 @@
-import {randomInt} from "../utils.js";
 import {BASE_URL, CACHE_MODE, USE_STAGES} from "../config.js";
 import http from 'k6/http';
 import {check} from "k6";
@@ -27,15 +26,52 @@ export const options = {
     },
 };
 
-export default function test() {
+//setup
+export function setup() {
+    const ids = [];
+    const count = 2000;
 
-    const clientId = randomInt(1, 2_000_000);
+    for (let i = 0; i < count; i++) {
+        const clientId = 2_000_000 + i;
+
+        const payload = JSON.stringify({
+            client: {
+                id: clientId,
+                name: `TestName${clientId}`,
+                email: `test${clientId}@example.com`,
+                profile: {id: clientId, address: `TestAddress${clientId}`, clientId},
+            },
+        });
+
+        const res = http.post(`${BASE_URL}/clients/`, payload, {
+            headers: {"Content-Type": "application/json"},
+        });
+
+        if (res.status === 200 || res.status === 201) ids.push(clientId);
+    }
+
+    return {ids};
+}
+
+export default function (data) {
+
+    const idx = (__VU * 1_000_000 + __ITER) % data.ids.length;
+    const clientId = data.ids[idx];
 
     const res = http.delete(
         `${BASE_URL}/clients/${clientId}?cacheMode=${CACHE_MODE}`
     );
 
-    check(res, { "status is ok":
-            (r) => r.status === 200 || r.status === 204}
+    check(res, {
+            "status is ok":
+                (r) => r.status === 200 || r.status === 204
+        }
     );
+}
+
+//clearing
+export function teardown(data) {
+    for (const id of data.ids) {
+        http.delete(`${BASE_URL}/clients/${id}?cacheMode=${CACHE_MODE}`);
+    }
 }
