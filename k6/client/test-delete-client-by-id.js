@@ -1,10 +1,11 @@
 import {BASE_URL, CACHE_MODE, USE_STAGES} from "../config.js";
 import http from 'k6/http';
 import {check} from "k6";
+import {generatePhoneForSetup} from "../utils.js";
 
 export const constantOptions = {
     vus: 20,
-    duration: "30s",
+    duration: "10s",
 };
 
 export const rampingOptions = {
@@ -26,40 +27,66 @@ export const options = {
     },
 };
 
-//setup
+//TRUNCATE TABLE
+//setup pool
 export function setup() {
     const ids = [];
-    const count = 2000;
+    const count = 5_000;
 
-    for (let i = 0; i < count; i++) {
-        const clientId = 2_000_000 + i;
+    for (let i = 1; i <= count; i++) {
+        const clientId = i;
 
+        const phone = generatePhoneForSetup(clientId)
         const payload = JSON.stringify({
-            client: {
-                id: clientId,
-                name: `TestName${clientId}`,
-                email: `test${clientId}@example.com`,
-                profile: {id: clientId, address: `TestAddress${clientId}`, clientId},
-            },
+            name: `TestName${clientId}`,
+            email: `test${clientId}@example.com`,
+            profile: {
+                address: `TestAddress${clientId}`,
+                phone: phone,
+            }
         });
 
-        const res = http.post(`${BASE_URL}/clients/`, payload, {
-            headers: {"Content-Type": "application/json"},
-        });
+        const res = http.post(
+            `${BASE_URL}/clients?cacheMode=${CACHE_MODE}`,
+            payload, {
+                headers: {"Content-Type": "application/json"},
+            });
 
-        if (res.status === 200 || res.status === 201) ids.push(clientId);
+        if (res.status === 201) ids.push(clientId);
     }
+
+    console.log(`created: ${ids.length}/${count}`);
 
     return {ids};
 }
 
-export default function (data) {
+export default function test(data) {
 
-    const idx = (__VU * 1_000_000 + __ITER) % data.ids.length;
-    const clientId = data.ids[idx];
+    if (!data.ids || data.ids.length === 0) {
+        throw new Error("No client ids created in setup()");
+    }
 
-    const res = http.delete(
+    const ids = data.ids;
+    const vus = __ENV.VUS_MAX ? Number.parseInt(__ENV.VUS_MAX, 10) : 20;
+    const perVu = Math.ceil(ids.length / vus);
+
+    const start = (__VU - 1) * perVu;
+    const idx = start + __ITER;
+
+    if (idx >= ids.length) return;
+
+    const clientId = ids[idx];
+
+    const res = http.del(
         `${BASE_URL}/clients/${clientId}?cacheMode=${CACHE_MODE}`
+    );
+
+    const body = typeof res.body === "string"
+        ? res.body
+        : JSON.stringify(res.body);
+
+    console.log(
+        `status=${res.status}, error=${res.error || "none"}, body=${body.slice(0, 500)}`
     );
 
     check(res, {
@@ -69,9 +96,9 @@ export default function (data) {
     );
 }
 
-//clearing
+//clearing the pool
 export function teardown(data) {
     for (const id of data.ids) {
-        http.delete(`${BASE_URL}/clients/${id}?cacheMode=${CACHE_MODE}`);
+        http.del(`${BASE_URL}/clients/${id}?cacheMode=${CACHE_MODE}`);
     }
 }

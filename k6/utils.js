@@ -10,7 +10,11 @@ export function generateRandomIds(count, minId, maxId) {
     return ids;
 }
 
-export function generatePhone(base = '79') {
+export function generatePhoneForSetup(i, base = "+79") {
+    return `${base}${String(i).padStart(9, "0")}`;
+}
+
+export function generatePhone(base = "+79") {
     return `${base}${String(__VU).padStart(3,'0')}${String(__ITER).padStart(6,'0')}`;
 }
 

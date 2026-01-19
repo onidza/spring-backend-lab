@@ -34,3 +34,4 @@ build/
 
 .env
 src/main/resources/db/changelog/sql-dump.sql
+node_modules
