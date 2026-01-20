@@ -45,8 +45,8 @@ public class ManualClientServiceImpl implements ClientService {
     private static final String CLIENTS_PAGE_VER_KEY = "clients:all:ver=";
     private static final Duration PAGE_CLIENTS_TTL = Duration.ofMinutes(1);
 
-    private static final String ALL_COUPONS_KEY = "coupons:all";
-    private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:";
+    private static final String COUPON_PAGE_VER_KEY = "coupons:all:ver=";
+    private static final String COUPONS_PAGE_BY_CLIENT_ID_VER_KEY = "coupons:byClientId:";
 
     private static final String CLIENT_NOT_FOUND = "Client not found";
 
@@ -146,11 +146,15 @@ public class ManualClientServiceImpl implements ClientService {
         boolean hasCoupons = client.getCoupons() != null && !client.getCoupons().isEmpty();
         afterCommitExecutor.run(() -> {
             bumpClientPageVer();
-            log.info("Added a new client, version of key was incremented");
+            log.info("Key {} was incremented", CLIENTS_PAGE_VER_KEY);
 
             if (hasCoupons) {
-                redisTemplate.delete(ALL_COUPONS_KEY);
-                log.info("Added a new client, getAllCoupons was invalidated too with key={}", ALL_COUPONS_KEY);
+                bumpCouponPageVer();
+                bumpCouponPageByClientIdVer();
+                log.info("Keys: {}, {} was incremented.",
+                        COUPON_PAGE_VER_KEY,
+                        COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
+                );
             }
         });
 
@@ -203,16 +207,19 @@ public class ManualClientServiceImpl implements ClientService {
             redisTemplate.delete(CLIENT_KEY_PREFIX + id);
             bumpClientPageVer();
 
-            log.info("Updated client was invalidated in cache with key={}", CLIENT_KEY_PREFIX + id);
-            log.info("Updated client, getClientsPage version of key was incremented");
+            log.info("Key {} was invalidated. Key {} was incremented.",
+                    CLIENT_KEY_PREFIX + id,
+                    COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
+            );
 
             if (couponsTouched) {
-                redisTemplate.delete(ALL_COUPONS_KEY);
-                redisTemplate.delete(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
+                bumpCouponPageVer();
+                bumpCouponPageByClientIdVer();
 
-                log.info("Updated client, getAllCoupons was invalidated too with key={}", ALL_COUPONS_KEY);
-                log.info("Updated client, getAllCouponsByClientId was invalidated too with key={}",
-                        ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
+                log.info("Keys: {}, {} was incremented.",
+                        COUPON_PAGE_VER_KEY,
+                        COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
+                );
             }
         });
 
@@ -234,15 +241,21 @@ public class ManualClientServiceImpl implements ClientService {
             redisTemplate.delete(CLIENT_KEY_PREFIX + id);
             bumpClientPageVer();
 
-            redisTemplate.delete(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
+            bumpCouponPageVer();
+            bumpCouponPageByClientIdVer();
 
-            log.info("Deleted client was invalidated in cache with key={}", CLIENT_KEY_PREFIX + id);
-            log.info("Deleted client, getClientsPage version of key was incremented");
-            log.info("Deleted client was invalidated in getAllCouponsByClientId with key={}",
-                    ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
+            log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated",
+                    CLIENT_KEY_PREFIX + id,
+                    CLIENTS_PAGE_VER_KEY,
+
+                    COUPON_PAGE_VER_KEY,
+                    COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
+            );
         });
     }
 
+
+    //TODO
     private long clientPageVersion() {
         Long ver = stringRedisTemplate.opsForValue()
                 .increment(CLIENTS_PAGE_VER_KEY, 0);
@@ -253,5 +266,15 @@ public class ManualClientServiceImpl implements ClientService {
     private void bumpClientPageVer() {
         stringRedisTemplate.opsForValue()
                 .increment(CLIENTS_PAGE_VER_KEY);
+    }
+
+    private void bumpCouponPageVer() {
+        stringRedisTemplate.opsForValue()
+                .increment(COUPON_PAGE_VER_KEY);
+    }
+
+    private void bumpCouponPageByClientIdVer() {
+        stringRedisTemplate.opsForValue()
+                .increment(COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
     }
 }

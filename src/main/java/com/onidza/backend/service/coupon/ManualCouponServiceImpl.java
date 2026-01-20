@@ -180,20 +180,22 @@ public class ManualCouponServiceImpl implements CouponService {
             bumpCouponPageVer();
             bumpCouponPageByClientIdVer();
 
-            redisTemplate.delete(CLIENT_KEY_PREFIX + id);
             bumpClientPageVer();
+            redisTemplate.delete(CLIENT_KEY_PREFIX + id);
 
-            log.info("Version of key={} was incremented", COUPON_PAGE_VER_KEY);
-            log.info("Version of key={} was incremented", COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+            log.info("Keys: {}, {}, {}, {} was incremented.",
+                    COUPON_PAGE_VER_KEY,
+                    COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
 
-            log.info("Added a new coupon, getClientById was invalidated with key={}", CLIENT_KEY_PREFIX + id);
-            log.info("Version of key={} was incremented", CLIENTS_PAGE_VER_KEY);
+                    CLIENTS_PAGE_VER_KEY,
+                    CLIENT_KEY_PREFIX + id
+            );
         });
 
         return mapperService.couponToDTO(saved);
     }
 
-    @Override //TODO
+    @Override
     @Transactional
     public CouponDTO updateCouponByCouponId(Long id, CouponDTO couponDTO) {
         log.info("Service called updateCouponByCouponId with id: {}", id);
@@ -210,22 +212,21 @@ public class ManualCouponServiceImpl implements CouponService {
 
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(COUPON_KEY_PREFIX + id);
-            redisTemplate.delete(COUPON_PAGE_VER_KEY);
+            bumpCouponPageVer();
+            bumpCouponPageByClientIdVer();
 
-            for (Long clientId : cacheKeyClientKeys) {
+            bumpClientPageVer();
+            for (Long clientId : cacheKeyClientKeys)
                 redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
-                redisTemplate.delete(COUPONS_PAGE_BY_CLIENT_ID_VER_KEY + clientId);
-            }
-            redisTemplate.delete(CLIENTS_PAGE_VER_KEY);
 
-            log.info("Updated coupon was invalidated in cache with key={}", COUPON_KEY_PREFIX + id);
-            log.info("Updated coupon in getAllList was invalidated too with key={}", COUPON_PAGE_VER_KEY);
+            log.info("Keys: {}, {}, {}, {} was incremented. Client with keys (size={}) was invalidated.",
+                    COUPON_KEY_PREFIX + id,
+                    COUPON_PAGE_VER_KEY,
+                    COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
 
-            log.info("Invalidated {} client caches due to coupon update: clientIds={}",
-                    cacheKeyClientKeys.size(),
-                    cacheKeyClientKeys);
-            log.info("Updated coupon in getAllCouponsByClientId was invalidated too with key={}", COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
-            log.info("Updated coupon in getAllClients was invalidated with key={}", CLIENTS_PAGE_VER_KEY);
+                    CLIENTS_PAGE_VER_KEY,
+                    cacheKeyClientKeys.size()
+            );
         });
 
         return mapperService.couponToDTO(coupon);
@@ -250,25 +251,25 @@ public class ManualCouponServiceImpl implements CouponService {
 
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(COUPON_KEY_PREFIX + id);
-            redisTemplate.delete(COUPON_PAGE_VER_KEY);
+            bumpCouponPageVer();
+            bumpCouponPageByClientIdVer();
 
-            for (Long clientId : cacheKeyClientKeys) {
+            bumpClientPageVer();
+            for (Long clientId : cacheKeyClientKeys)
                 redisTemplate.delete(CLIENT_KEY_PREFIX + clientId);
-                redisTemplate.delete(COUPONS_PAGE_BY_CLIENT_ID_VER_KEY + clientId);
-            }
-            redisTemplate.delete(CLIENTS_PAGE_VER_KEY);
 
-            log.info("Deleted coupon was invalidated in cache with key={}", COUPON_KEY_PREFIX + id);
-            log.info("Deleted coupon in getAllList was invalidated too with key={}", COUPON_PAGE_VER_KEY);
+            log.info("Keys: {}, {}, {}, {} was incremented. Client with keys (size={}) was invalidated.",
+                    COUPON_KEY_PREFIX + id,
+                    COUPON_PAGE_VER_KEY,
+                    COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
 
-            log.info("Invalidated {} client caches due to coupon delete: clientIds={}",
-                    cacheKeyClientKeys.size(),
-                    cacheKeyClientKeys);
-            log.info("Deleted coupon in getAllCouponsByClientId was invalidated too with key={}", COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
-            log.info("Deleted coupon in getAllClients was invalidated with key={}", CLIENTS_PAGE_VER_KEY);
+                    CLIENTS_PAGE_VER_KEY,
+                    cacheKeyClientKeys.size()
+            );
         });
     }
 
+    //TODO
     private long couponPageVersion() {
         Long ver = stringRedisTemplate.opsForValue()
                 .increment(COUPON_PAGE_VER_KEY, 0);
@@ -291,13 +292,6 @@ public class ManualCouponServiceImpl implements CouponService {
     private void bumpCouponPageByClientIdVer() {
         stringRedisTemplate.opsForValue()
                 .increment(COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
-    }
-
-    private long clientPageVersion() {
-        Long ver = stringRedisTemplate.opsForValue()
-                .increment(CLIENTS_PAGE_VER_KEY, 0);
-
-        return ver == null ? 0 : ver;
     }
 
     private void bumpClientPageVer() {
