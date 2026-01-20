@@ -37,7 +37,7 @@ public class SpringCachingServiceImpl implements ClientService {
     )
     @Transactional(readOnly = true)
     public ClientDTO getClientById(Long id) {
-        log.info("Called getClientById with id: {}", id);
+        log.info("Service called getClientById with id: {}", id);
 
         return mapperService
                 .clientToDTO(clientRepository.findById(id)
@@ -52,7 +52,7 @@ public class SpringCachingServiceImpl implements ClientService {
     )
     @Transactional(readOnly = true)
     public ClientsPageDTO getClientsPage(int page, int size) {
-        log.info("Called getClientsPage");
+        log.info("Service called getClientsPage");
 
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
@@ -78,7 +78,7 @@ public class SpringCachingServiceImpl implements ClientService {
     @CacheEvict(cacheNames = "clientsPage", allEntries = true)
     @Transactional
     public ClientDTO addClient(ClientDTO clientDTO) {
-        log.info("Called addClient with name: {}", clientDTO.name());
+        log.info("Service called addClient with name: {}", clientDTO.name());
 
         Client client = mapperService.clientDTOToEntity(clientDTO);
 
@@ -101,7 +101,7 @@ public class SpringCachingServiceImpl implements ClientService {
     )
     @Transactional
     public ClientDTO updateClient(Long id, ClientDTO clientDTO) {
-        log.info("Called updateClient with id: {}", id);
+        log.info("Service called updateClient with id: {}", id);
 
         Client existing = clientRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
@@ -147,7 +147,7 @@ public class SpringCachingServiceImpl implements ClientService {
     @Override
     @Transactional
     public void deleteClient(Long id) {
-        log.info("Called deleteClient with id: {}", id);
+        log.info("Service called deleteClient with id: {}", id);
         clientRepository.deleteById(id);
     }
 }

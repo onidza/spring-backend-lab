@@ -28,10 +28,10 @@ public class CouponController {
             @PathVariable Long id,
             @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
     ) {
-        log.info("Called getCouponById with id: {}", id);
+        log.info("Controller called getCouponById with id: {}", id);
 
         CouponService service = resolveCouponService(cacheMode);
-        CouponDTO couponDTO = service.getCouponByCouponId(id);
+        CouponDTO couponDTO = service.getCouponById(id);
 
         return ResponseEntity.ok(couponDTO);
     }
@@ -42,7 +42,7 @@ public class CouponController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        log.info("Called getCouponsPage");
+        log.info("Controller called getCouponsPage, page={}, size={}", page, size);
 
         CouponService service = resolveCouponService(cacheMode);
         CouponPageDTO coupons = service.getCouponsPage(page, size);
@@ -57,7 +57,7 @@ public class CouponController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        log.info("Called getCouponsPageByClientId with id: {}", id);
+        log.info("Controller called getCouponsPageByClientId with id: {}", id);
 
         CouponService service = resolveCouponService(cacheMode);
         CouponPageDTO coupons = service.getCouponsPageByClientId(id, page, size);
@@ -71,7 +71,7 @@ public class CouponController {
             @Valid @RequestBody CouponDTO couponDTO,
             @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
     ) {
-        log.info("Called addCouponToClientById with id: {}", id);
+        log.info("Controller called addCouponToClientById with id: {}", id);
 
         CouponService service = resolveCouponService(cacheMode);
         CouponDTO coupon = service.addCouponToClientByClientId(id, couponDTO);
@@ -85,7 +85,7 @@ public class CouponController {
             @Valid @RequestBody CouponDTO couponDTO,
             @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
     ) {
-        log.info("Called updateCouponByCouponId with id: {}", id);
+        log.info("Controller called updateCouponByCouponId with id: {}", id);
 
         CouponService service = resolveCouponService(cacheMode);
         CouponDTO coupon = service.updateCouponByCouponId(id, couponDTO);
@@ -98,7 +98,7 @@ public class CouponController {
             @PathVariable Long id,
             @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
     ) {
-        log.info("Called deleteCouponById with id: {}", id);
+        log.info("Controller called deleteCouponById with id: {}", id);
 
         CouponService service = resolveCouponService(cacheMode);
         service.deleteCouponByCouponId(id);
@@ -110,7 +110,7 @@ public class CouponController {
         return switch (cacheMode) {
             case NON_CACHE -> couponServiceImpl;
             case MANUAL -> manualCouponService;
-            case SPRING -> throw new UnsupportedOperationException("Have no such a service");
+            case SPRING -> throw new UnsupportedOperationException("Have no such a service"); //TODO
         };
     }
 }

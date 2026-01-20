@@ -26,11 +26,11 @@ class CouponServiceIntegrationIT extends AbstractITConfiguration {
     private ClientServiceImpl clientServiceImpl;
 
     @Test
-    void getCouponByCouponId_returnCouponDTOWithRelations() {
+    void getCouponById_returnCouponByDTOWithRelations() {
         ClientDTO inputClientDTO = CouponDataFactory.createClientDTOWithOneCoupon();
 
         ClientDTO saved = clientServiceImpl.addClient(inputClientDTO);
-        CouponDTO result = couponServiceImpl.getCouponByCouponId(saved.coupons().get(0).id());
+        CouponDTO result = couponServiceImpl.getCouponById(saved.coupons().get(0).id());
 
         Assertions.assertEquals(saved.coupons().get(0).expirationDate(), result.expirationDate());
         Assertions.assertEquals(saved.coupons().get(0).code(), result.code());
@@ -73,7 +73,7 @@ class CouponServiceIntegrationIT extends AbstractITConfiguration {
         Assertions.assertNotEquals(saved.coupons().get(0).discount(), result.discount());
         Assertions.assertTrue(result.expirationDate().isAfter(saved.coupons().get(0).expirationDate()));
 
-        CouponDTO fetched = couponServiceImpl.getCouponByCouponId(result.id());
+        CouponDTO fetched = couponServiceImpl.getCouponById(result.id());
         Assertions.assertEquals("NEW CODE111111", fetched.code());
         Assertions.assertEquals(2.1f, fetched.discount());
     }
@@ -103,7 +103,7 @@ class CouponServiceIntegrationIT extends AbstractITConfiguration {
         ClientDTO saved = clientServiceImpl.addClient(inputCouponDTO);
         couponServiceImpl.deleteCouponByCouponId(saved.coupons().get(0).id());
 
-        Executable exec = () -> couponServiceImpl.getCouponByCouponId(saved.coupons().get(0).id());
+        Executable exec = () -> couponServiceImpl.getCouponById(saved.coupons().get(0).id());
         Assertions.assertThrows(ResponseStatusException.class, exec);
 
         CouponPageDTO page = couponServiceImpl.getCouponsPage(0, 20);

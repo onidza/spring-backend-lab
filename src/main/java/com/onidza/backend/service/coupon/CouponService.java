@@ -5,7 +5,7 @@ import com.onidza.backend.model.dto.coupon.CouponPageDTO;
 
 public interface CouponService {
 
-    CouponDTO getCouponByCouponId(Long id);
+    CouponDTO getCouponById(Long id);
 
     CouponPageDTO getCouponsPage(int page, int size);
 

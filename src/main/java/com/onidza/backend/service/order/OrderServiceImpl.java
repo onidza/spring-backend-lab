@@ -147,6 +147,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<OrderDTO> getOrdersByFilters(OrderFilterDTO filter) {
         log.info("Called getOrdersByFilters with filter: {}", filter);
 

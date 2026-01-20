@@ -6,6 +6,7 @@ import com.onidza.backend.service.CacheMode;
 import com.onidza.backend.service.client.ClientService;
 import com.onidza.backend.service.client.ClientServiceImpl;
 import com.onidza.backend.service.client.ManualClientServiceImpl;
+import com.onidza.backend.service.client.SpringCachingServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +22,14 @@ public class ClientController {
 
     private final ClientServiceImpl clientServiceImpl;
     private final ManualClientServiceImpl manualClientServiceImpl;
+    private final SpringCachingServiceImpl springCachingService;
 
     @GetMapping("/{id}")
     public ResponseEntity<ClientDTO> getClient(
             @PathVariable Long id,
             @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
     ) {
-        log.info("Called getClient with id: {}", id);
+        log.info("Controller called getClient with id: {}", id);
 
         ClientService service = resolveClientService(cacheMode);
         ClientDTO client = service.getClientById(id);
@@ -41,7 +43,7 @@ public class ClientController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        log.info("Called getClientsPage");
+        log.info("Controller called getClientsPage, page={}, size={}", page, size);
 
         ClientService service = resolveClientService(cacheMode);
         return ResponseEntity.ok(service.getClientsPage(page, size));
@@ -52,7 +54,7 @@ public class ClientController {
             @Valid @RequestBody ClientDTO clientDTO,
             @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
     ) {
-        log.info("Called addClient with name: {}", clientDTO.name());
+        log.info("Controller called addClient");
 
         ClientService service = resolveClientService(cacheMode);
         ClientDTO savedClient = service.addClient(clientDTO);
@@ -66,7 +68,7 @@ public class ClientController {
             @RequestBody ClientDTO clientDTO,
             @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
     ) {
-        log.info("Called updateClient with name: {}", clientDTO.name());
+        log.info("Controller called updateClient");
 
         ClientService service = resolveClientService(cacheMode);
         ClientDTO updatedClient = service.updateClient(id, clientDTO);
@@ -79,7 +81,7 @@ public class ClientController {
             @PathVariable Long id,
             @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
     ) {
-        log.info("Called deleteClientById with id: {}", id);
+        log.info("Controller called deleteClientById with id: {}", id);
 
         ClientService service = resolveClientService(cacheMode);
         service.deleteClient(id);
@@ -91,7 +93,7 @@ public class ClientController {
         return switch (cacheMode) {
             case NON_CACHE -> clientServiceImpl;
             case MANUAL -> manualClientServiceImpl;
-            case SPRING -> throw new UnsupportedOperationException("Have no such a service");
+            case SPRING -> springCachingService;
         };
     }
 }

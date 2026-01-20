@@ -28,8 +28,8 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     @Transactional(readOnly = true)
-    public CouponDTO getCouponByCouponId(Long id) {
-        log.info("Called getCouponById with id: {}", id);
+    public CouponDTO getCouponById(Long id) {
+        log.info("Service called getCouponByCouponId with id: {}", id);
 
         return mapperService.couponToDTO(couponRepository.findById(id)
                 .orElseThrow(()
@@ -40,7 +40,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional(readOnly = true)
     public CouponPageDTO getCouponsPage(int page, int size) {
-        log.info("Called getCouponsPage");
+        log.info("Service called getCouponsPage");
 
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
@@ -65,7 +65,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional(readOnly = true)
     public CouponPageDTO getCouponsPageByClientId(Long id, int page, int size) {
-        log.info("Called getCouponsPageByClientId with id: {}", id);
+        log.info("Service called getCouponsPageByClientId with id: {}", id);
 
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
@@ -90,7 +90,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional
     public CouponDTO addCouponToClientByClientId(Long id, CouponDTO couponDTO) {
-        log.info("Called addCouponToClientById with id: {}", id);
+        log.info("Service called addCouponToClientById with id: {}", id);
 
         Client client = clientRepository.findById(id)
                 .orElseThrow(()
@@ -106,7 +106,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional
     public CouponDTO updateCouponByCouponId(Long id, CouponDTO couponDTO) {
-        log.info("Called updateCouponByCouponId with id: {}", id);
+        log.info("Service called updateCouponByCouponId with id: {}", id);
 
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(()
@@ -120,9 +120,8 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Override
-    @Transactional
     public void deleteCouponByCouponId(Long id) {
-        log.info("Called deleteCouponById with id: {}", id);
+        log.info("Service called deleteCouponById with id: {}", id);
 
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(()

@@ -39,35 +39,36 @@ public class ManualClientServiceImpl implements ClientService {
 
     private final TransactionAfterCommitExecutor afterCommitExecutor;
 
-    private static final String CLIENT_KEY_PREFIX = "client:";
+    private static final String CLIENT_KEY_PREFIX = "client:id:";
     private static final long CLIENT_TTL_MINUTES = 1;
 
-    private static final String PAGE_CLIENTS_KEY = "clients:";
+    private static final String CLIENTS_PAGE_VER_KEY = "clients:all:ver=";
     private static final Duration PAGE_CLIENTS_TTL = Duration.ofMinutes(1);
 
-    private static final String ALL_COUPONS_KEY = "coupons:all:v1";
-    private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:v1:";
+    private static final String ALL_COUPONS_KEY = "coupons:all";
+    private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:";
 
-    //this one made by stringRedisTemplate
+    private static final String CLIENT_NOT_FOUND = "Client not found";
+
     @Override
     @Transactional(readOnly = true)
     public ClientDTO getClientById(Long id) {
-        log.info("Called getClientById with id: {}", id);
+        log.info("Service called getClientById with id: {}", id);
 
         String objFromCache = stringRedisTemplate.opsForValue().get(CLIENT_KEY_PREFIX + id);
 
         try {
             if (objFromCache != null) {
-                log.info("Returned client from cash with id: {}", id);
+                log.info("Returned client from cache with id: {}", id);
                 return objectMapper.readValue(objFromCache, ClientDTO.class);
             }
         } catch (JsonProcessingException e) {
-            log.warn("Failed to read client from cache for key {}", CLIENT_KEY_PREFIX + id, e);
+            log.warn("Failed to read client from cache with key {}", CLIENT_KEY_PREFIX + id, e);
         }
 
         Client clientFromDb = clientRepository.findById(id)
                 .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND));
 
         try {
             stringRedisTemplate.opsForValue().set(
@@ -79,7 +80,7 @@ public class ManualClientServiceImpl implements ClientService {
             log.info("getClientById was cached...");
 
         } catch (JsonProcessingException e) {
-            log.warn("Failed to write client to cache for key {}", CLIENT_KEY_PREFIX + id, e);
+            log.warn("Failed to write client to cache with key {}", CLIENT_KEY_PREFIX + id, e);
         }
 
         log.info("Returned client from db with id: {}", id);
@@ -89,12 +90,13 @@ public class ManualClientServiceImpl implements ClientService {
     @Override
     @Transactional(readOnly = true)
     public ClientsPageDTO getClientsPage(int page, int size) {
-        log.info("Called getAllClients");
+        log.info("Service called getClientsPage");
 
-        int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 20);
 
-        String key = PAGE_CLIENTS_KEY + ":p=" + safePage + ":s=" + safeSize;
+        long ver = clientPageVersion();
+        String key = CLIENTS_PAGE_VER_KEY + ver + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -122,7 +124,7 @@ public class ManualClientServiceImpl implements ClientService {
         );
 
         redisTemplate.opsForValue().set(key, response, PAGE_CLIENTS_TTL);
-        log.info("getAllClients was cached...");
+        log.info("getClientsPage was cached...");
 
         log.info("Returned page from db with size={}", response.items().size());
         return response;
@@ -131,7 +133,7 @@ public class ManualClientServiceImpl implements ClientService {
     @Override
     @Transactional
     public ClientDTO addClient(ClientDTO clientDTO) {
-        log.info("Called addClient with name: {}", clientDTO.name());
+        log.info("Service called addClient");
 
         Client client = mapperService.clientDTOToEntity(clientDTO);
 
@@ -143,12 +145,12 @@ public class ManualClientServiceImpl implements ClientService {
 
         boolean hasCoupons = client.getCoupons() != null && !client.getCoupons().isEmpty();
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(PAGE_CLIENTS_KEY);
-            log.info("Added a new client, getAllList was invalidated too with key={}", PAGE_CLIENTS_KEY);
+            bumpClientPageVer();
+            log.info("Added a new client, version of key was incremented");
 
             if (hasCoupons) {
                 redisTemplate.delete(ALL_COUPONS_KEY);
-                log.info("Added a new client, getAllCoupons was invalidated too with key={}", PAGE_CLIENTS_KEY);
+                log.info("Added a new client, getAllCoupons was invalidated too with key={}", ALL_COUPONS_KEY);
             }
         });
 
@@ -158,10 +160,10 @@ public class ManualClientServiceImpl implements ClientService {
     @Override
     @Transactional
     public ClientDTO updateClient(Long id, ClientDTO clientDTO) {
-        log.info("Called updateClient with id: {}", id);
+        log.info("Service called updateClient with id: {}", id);
 
         Client existing = clientRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND));
 
         existing.setName(clientDTO.name());
         existing.setEmail(clientDTO.email());
@@ -199,10 +201,10 @@ public class ManualClientServiceImpl implements ClientService {
         boolean couponsTouched = clientDTO.coupons() != null;
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(CLIENT_KEY_PREFIX + id);
-            redisTemplate.delete(PAGE_CLIENTS_KEY);
+            bumpClientPageVer();
 
             log.info("Updated client was invalidated in cache with key={}", CLIENT_KEY_PREFIX + id);
-            log.info("Updated client in getAllList was invalidated too with key={}", PAGE_CLIENTS_KEY);
+            log.info("Updated client, getClientsPage version of key was incremented");
 
             if (couponsTouched) {
                 redisTemplate.delete(ALL_COUPONS_KEY);
@@ -220,23 +222,36 @@ public class ManualClientServiceImpl implements ClientService {
     @Override
     @Transactional
     public void deleteClient(Long id) {
-        log.info("Called deleteClient with id: {}", id);
+        log.info("Service called deleteClient with id: {}", id);
 
         if (!clientRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND);
         }
 
         clientRepository.deleteById(id);
 
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(CLIENT_KEY_PREFIX + id);
-            redisTemplate.delete(PAGE_CLIENTS_KEY);
+            bumpClientPageVer();
 
             redisTemplate.delete(ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
 
             log.info("Deleted client was invalidated in cache with key={}", CLIENT_KEY_PREFIX + id);
-            log.info("Deleted client in getAllList was invalidated too with key={}", PAGE_CLIENTS_KEY);
-            log.info("Deleted client was invalidated in getAllCouponsByClientId with key={}", ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
+            log.info("Deleted client, getClientsPage version of key was incremented");
+            log.info("Deleted client was invalidated in getAllCouponsByClientId with key={}",
+                    ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX + id);
         });
+    }
+
+    private long clientPageVersion() {
+        Long ver = stringRedisTemplate.opsForValue()
+                .increment(CLIENTS_PAGE_VER_KEY, 0);
+
+        return ver == null ? 0 : ver;
+    }
+
+    private void bumpClientPageVer() {
+        stringRedisTemplate.opsForValue()
+                .increment(CLIENTS_PAGE_VER_KEY);
     }
 }
