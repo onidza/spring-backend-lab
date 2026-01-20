@@ -3,6 +3,7 @@ package com.onidza.backend.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -51,5 +52,18 @@ public class CashConfiguration {
                 .cacheDefaults(config)
                 .transactionAware()
                 .build();
+    }
+
+    @Bean
+    public KeyGenerator clientPageKeyGen() {
+        return (target, method, params) -> {
+            int page = (int) params[0];
+            int size = (int) params[1];
+
+            int safeSize = Math.min(Math.max(size, 1), 20);
+            int safePage = Math.max(page, 0);
+
+            return "p=" + safePage + ":s=" + safeSize;
+        };
     }
 }

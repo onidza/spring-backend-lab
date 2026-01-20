@@ -8,7 +8,10 @@ import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -27,10 +31,9 @@ public class SpringCachingServiceImpl implements ClientService {
 
     @Override
     @Cacheable(
-            cacheNames = "client:",
+            cacheNames = "client",
             key = "'id:' + #id",
-            condition = "#id > 0",
-            unless = "#result == 0"
+            condition = "#id > 0"
     )
     @Transactional(readOnly = true)
     public ClientDTO getClientById(Long id) {
@@ -43,6 +46,10 @@ public class SpringCachingServiceImpl implements ClientService {
     }
 
     @Override
+    @Cacheable(
+            cacheNames = "clientsPage",
+            keyGenerator = "clientPageKeyGen"
+    )
     @Transactional(readOnly = true)
     public ClientsPageDTO getClientsPage(int page, int size) {
         log.info("Called getClientsPage");
@@ -68,6 +75,7 @@ public class SpringCachingServiceImpl implements ClientService {
     }
 
     @Override
+    @CacheEvict(cacheNames = "clientsPage", allEntries = true)
     @Transactional
     public ClientDTO addClient(ClientDTO clientDTO) {
         log.info("Called addClient with name: {}", clientDTO.name());
@@ -83,6 +91,17 @@ public class SpringCachingServiceImpl implements ClientService {
     }
 
     @Override
+    @Caching(
+            put = {
+                    @CachePut(
+                            cacheNames = "client",
+                            key = "'id:' + #result.id()"
+                    )
+            },
+            evict = {
+                    @CacheEvict(cacheNames = "clientsPage", allEntries = true)
+            }
+    )
     @Transactional
     public ClientDTO updateClient(Long id, ClientDTO clientDTO) {
         log.info("Called updateClient with id: {}", id);
@@ -124,7 +143,12 @@ public class SpringCachingServiceImpl implements ClientService {
         return mapperService.clientToDTO(clientRepository.save(existing));
     }
 
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "clientsPage", allEntries = true),
+            @CacheEvict(cacheNames = "client", key = "'id:' +  #id")
+    })
     @Override
+    @Transactional
     public void deleteClient(Long id) {
         log.info("Called deleteClient with id: {}", id);
         clientRepository.deleteById(id);

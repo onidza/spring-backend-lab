@@ -42,7 +42,7 @@ public class ManualClientServiceImpl implements ClientService {
     private static final String CLIENT_KEY_PREFIX = "client:";
     private static final long CLIENT_TTL_MINUTES = 10;
 
-    private static final String PAGE_CLIENTS_KEY = "clients:p=";
+    private static final String PAGE_CLIENTS_KEY = "clients:";
     private static final Duration PAGE_CLIENTS_TTL = Duration.ofMinutes(10);
 
     private static final String ALL_COUPONS_KEY = "coupons:all:v1";
@@ -94,7 +94,7 @@ public class ManualClientServiceImpl implements ClientService {
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
-        String key = PAGE_CLIENTS_KEY + safePage + ":s=" + safeSize;
+        String key = PAGE_CLIENTS_KEY + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
