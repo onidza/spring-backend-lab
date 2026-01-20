@@ -93,10 +93,7 @@ public class SpringCachingServiceImpl implements ClientService {
     @Override
     @Caching(
             put = {
-                    @CachePut(
-                            cacheNames = "client",
-                            key = "'id:' + #result.id()"
-                    )
+                    @CachePut(cacheNames = "client", key = "'id:' + #result.id()")
             },
             evict = {
                     @CacheEvict(cacheNames = "clientsPage", allEntries = true)

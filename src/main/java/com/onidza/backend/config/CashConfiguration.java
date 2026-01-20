@@ -3,6 +3,7 @@ package com.onidza.backend.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +16,10 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
+@EnableCaching
 @Configuration
 public class CashConfiguration {
 
@@ -43,13 +47,20 @@ public class CashConfiguration {
             RedisConnectionFactory redisConnectionFactory,
             ObjectMapper objectMapper
     ) {
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(10))
+        RedisCacheConfiguration base = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(objectMapper)));
 
+        var defaultConf = base.entryTtl(Duration.ofMinutes(1));
+
+        Map<String, RedisCacheConfiguration> perCache = new HashMap<>();
+        perCache.put("client", base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put("clientPage", base.entryTtl(Duration.ofSeconds(30)));
+
         return RedisCacheManager.builder(redisConnectionFactory)
-                .cacheDefaults(config)
+                .cacheDefaults(defaultConf)
+                .withInitialCacheConfigurations(perCache)
+                .disableCreateOnMissingCache()
                 .transactionAware()
                 .build();
     }

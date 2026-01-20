@@ -40,10 +40,10 @@ public class ManualClientServiceImpl implements ClientService {
     private final TransactionAfterCommitExecutor afterCommitExecutor;
 
     private static final String CLIENT_KEY_PREFIX = "client:";
-    private static final long CLIENT_TTL_MINUTES = 10;
+    private static final long CLIENT_TTL_MINUTES = 1;
 
     private static final String PAGE_CLIENTS_KEY = "clients:";
-    private static final Duration PAGE_CLIENTS_TTL = Duration.ofMinutes(10);
+    private static final Duration PAGE_CLIENTS_TTL = Duration.ofMinutes(1);
 
     private static final String ALL_COUPONS_KEY = "coupons:all:v1";
     private static final String ALL_COUPONS_BY_CLIENT_ID_KEY_PREFIX = "coupons:byClientId:v1:";
