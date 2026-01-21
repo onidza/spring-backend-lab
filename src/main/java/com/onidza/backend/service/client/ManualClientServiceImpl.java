@@ -48,7 +48,7 @@ public class ManualClientServiceImpl implements ClientService {
     public ClientDTO getClientById(Long id) {
         log.info("Service called getClientById with id: {}", id);
 
-        String objFromCache = stringRedisTemplate.opsForValue().get( + id);
+        String objFromCache = stringRedisTemplate.opsForValue().get(CacheKeys.CLIENT_KEY_PREFIX+ id);
 
         try {
             if (objFromCache != null) {
