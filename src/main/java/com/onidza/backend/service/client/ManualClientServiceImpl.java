@@ -2,6 +2,9 @@ package com.onidza.backend.service.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.onidza.backend.config.manual.CacheKeys;
+import com.onidza.backend.config.manual.CacheTtlProps;
+import com.onidza.backend.config.manual.CacheVersionService;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.entity.Client;
@@ -22,9 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
-
 @Slf4j
 @AllArgsConstructor
 @Service
@@ -33,20 +33,13 @@ public class ManualClientServiceImpl implements ClientService {
     private final MapperService mapperService;
     private final ClientRepository clientRepository;
 
+    private final RedisTemplate<String, Object> redisTemplate;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
-    private final RedisTemplate<String, Object> redisTemplate;
 
+    private final CacheTtlProps ttlProps;
+    private final CacheVersionService versionService;
     private final TransactionAfterCommitExecutor afterCommitExecutor;
-
-    private static final String CLIENT_KEY_PREFIX = "client:id:";
-    private static final long CLIENT_TTL_MINUTES = 1;
-
-    private static final String CLIENTS_PAGE_VER_KEY = "clients:all:ver=";
-    private static final Duration PAGE_CLIENTS_TTL = Duration.ofMinutes(1);
-
-    private static final String COUPON_PAGE_VER_KEY = "coupons:all:ver=";
-    private static final String COUPONS_PAGE_BY_CLIENT_ID_VER_KEY = "coupons:byClientId:";
 
     private static final String CLIENT_NOT_FOUND = "Client not found";
 
@@ -55,7 +48,7 @@ public class ManualClientServiceImpl implements ClientService {
     public ClientDTO getClientById(Long id) {
         log.info("Service called getClientById with id: {}", id);
 
-        String objFromCache = stringRedisTemplate.opsForValue().get(CLIENT_KEY_PREFIX + id);
+        String objFromCache = stringRedisTemplate.opsForValue().get( + id);
 
         try {
             if (objFromCache != null) {
@@ -63,7 +56,7 @@ public class ManualClientServiceImpl implements ClientService {
                 return objectMapper.readValue(objFromCache, ClientDTO.class);
             }
         } catch (JsonProcessingException e) {
-            log.warn("Failed to read client from cache with key {}", CLIENT_KEY_PREFIX + id, e);
+            log.warn("Failed to read client from cache with key {}", CacheKeys.CLIENT_KEY_PREFIX + id, e);
         }
 
         Client clientFromDb = clientRepository.findById(id)
@@ -72,15 +65,14 @@ public class ManualClientServiceImpl implements ClientService {
 
         try {
             stringRedisTemplate.opsForValue().set(
-                    CLIENT_KEY_PREFIX + id,
+                    CacheKeys.CLIENT_KEY_PREFIX + id,
                     objectMapper.writeValueAsString(mapperService.clientToDTO(clientFromDb)),
-                    CLIENT_TTL_MINUTES,
-                    TimeUnit.MINUTES
+                    ttlProps.clientById()
             );
             log.info("getClientById was cached...");
 
         } catch (JsonProcessingException e) {
-            log.warn("Failed to write client to cache with key {}", CLIENT_KEY_PREFIX + id, e);
+            log.warn("Failed to write client to cache with key {}", CacheKeys.CLIENT_KEY_PREFIX + id, e);
         }
 
         log.info("Returned client from db with id: {}", id);
@@ -95,8 +87,8 @@ public class ManualClientServiceImpl implements ClientService {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 20);
 
-        long ver = clientPageVersion();
-        String key = CLIENTS_PAGE_VER_KEY + ver + ":p=" + safePage + ":s=" + safeSize;
+        long ver = versionService.getKeyVersion(CacheKeys.CLIENTS_PAGE_VER_KEY);
+        String key = CacheKeys.CLIENTS_PAGE_VER_KEY + ver + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -123,7 +115,7 @@ public class ManualClientServiceImpl implements ClientService {
                 result.hasNext()
         );
 
-        redisTemplate.opsForValue().set(key, response, PAGE_CLIENTS_TTL);
+        redisTemplate.opsForValue().set(key, response, ttlProps.getClientsPage());
         log.info("getClientsPage was cached...");
 
         log.info("Returned page from db with size={}", response.items().size());
@@ -145,15 +137,15 @@ public class ManualClientServiceImpl implements ClientService {
 
         boolean hasCoupons = client.getCoupons() != null && !client.getCoupons().isEmpty();
         afterCommitExecutor.run(() -> {
-            bumpClientPageVer();
-            log.info("Key {} was incremented", CLIENTS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY);
+            log.info("Key {} was incremented", CacheKeys.CLIENTS_PAGE_VER_KEY);
 
             if (hasCoupons) {
-                bumpCouponPageVer();
-                bumpCouponPageByClientIdVer();
+                versionService.bumpVersion(CacheKeys.COUPON_PAGE_VER_KEY);
+                versionService.bumpVersion(CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
                 log.info("Keys: {}, {} was incremented.",
-                        COUPON_PAGE_VER_KEY,
-                        COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
+                        CacheKeys.COUPON_PAGE_VER_KEY,
+                        CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
                 );
             }
         });
@@ -204,21 +196,21 @@ public class ManualClientServiceImpl implements ClientService {
 
         boolean couponsTouched = clientDTO.coupons() != null;
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CLIENT_KEY_PREFIX + id);
-            bumpClientPageVer();
+            redisTemplate.delete(CacheKeys.CLIENT_KEY_PREFIX + id);
+            versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY);
 
             log.info("Key {} was invalidated. Key {} was incremented.",
-                    CLIENT_KEY_PREFIX + id,
-                    COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
+                    CacheKeys.CLIENT_KEY_PREFIX + id,
+                    CacheKeys.CLIENTS_PAGE_VER_KEY
             );
 
             if (couponsTouched) {
-                bumpCouponPageVer();
-                bumpCouponPageByClientIdVer();
+                versionService.bumpVersion(CacheKeys.COUPON_PAGE_VER_KEY);
+                versionService.bumpVersion(CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
                 log.info("Keys: {}, {} was incremented.",
-                        COUPON_PAGE_VER_KEY,
-                        COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
+                        CacheKeys.COUPON_PAGE_VER_KEY,
+                        CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
                 );
             }
         });
@@ -238,43 +230,19 @@ public class ManualClientServiceImpl implements ClientService {
         clientRepository.deleteById(id);
 
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CLIENT_KEY_PREFIX + id);
-            bumpClientPageVer();
+            redisTemplate.delete(CacheKeys.CLIENT_KEY_PREFIX + id);
+            versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY);
 
-            bumpCouponPageVer();
-            bumpCouponPageByClientIdVer();
+            versionService.bumpVersion(CacheKeys.COUPON_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
             log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated",
-                    CLIENT_KEY_PREFIX + id,
-                    CLIENTS_PAGE_VER_KEY,
+                    CacheKeys.CLIENT_KEY_PREFIX + id,
+                    CacheKeys.CLIENTS_PAGE_VER_KEY,
 
-                    COUPON_PAGE_VER_KEY,
-                    COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
+                    CacheKeys.COUPON_PAGE_VER_KEY,
+                    CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
             );
         });
-    }
-
-
-    //TODO
-    private long clientPageVersion() {
-        Long ver = stringRedisTemplate.opsForValue()
-                .increment(CLIENTS_PAGE_VER_KEY, 0);
-
-        return ver == null ? 0 : ver;
-    }
-
-    private void bumpClientPageVer() {
-        stringRedisTemplate.opsForValue()
-                .increment(CLIENTS_PAGE_VER_KEY);
-    }
-
-    private void bumpCouponPageVer() {
-        stringRedisTemplate.opsForValue()
-                .increment(COUPON_PAGE_VER_KEY);
-    }
-
-    private void bumpCouponPageByClientIdVer() {
-        stringRedisTemplate.opsForValue()
-                .increment(COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
     }
 }

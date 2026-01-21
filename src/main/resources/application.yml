@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: spring-backend-lab
+
+  datasource:
+    # in this case spring would be connected to local db
+    # url: jdbc:postgresql://localhost:5432/postgres
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        default_batch_fetch_size: 20
+
+  jackson:
+    mapper:
+      accept-case-insensitive-enums: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST}
+      port: ${SPRING_REDIS_PORT}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, info, prometheus
+
+app:
+  cache:
+    client-by-id: 1m
+    get-clients-page: 1m
+
+    getCouponById: 1m
+    get-coupons-page: 1m
+    get-coupons-page-by-client-id: 1m
+
+    get-order-by-id: 1m
+    get-orders-page: 1m
+    get-orders-page-by-client-id: 1m
+    get-orders-by-filters: 30s
+
+    get-profile-by-id: 1m
+    get-profiles-page: 1m
