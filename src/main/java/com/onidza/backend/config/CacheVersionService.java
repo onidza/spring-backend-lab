@@ -1,4 +1,4 @@
-package com.onidza.backend.config.manual;
+package com.onidza.backend.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

@@ -2,9 +2,9 @@ package com.onidza.backend.service.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.config.manual.CacheKeys;
-import com.onidza.backend.config.manual.CacheTtlProps;
-import com.onidza.backend.config.manual.CacheVersionService;
+import com.onidza.backend.config.CacheKeys;
+import com.onidza.backend.config.CacheTtlProps;
+import com.onidza.backend.config.CacheVersionService;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.entity.Client;
@@ -143,6 +143,7 @@ public class ManualClientServiceImpl implements ClientService {
             if (hasCoupons) {
                 versionService.bumpVersion(CacheKeys.COUPON_PAGE_VER_KEY);
                 versionService.bumpVersion(CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+
                 log.info("Keys: {}, {} was incremented.",
                         CacheKeys.COUPON_PAGE_VER_KEY,
                         CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY

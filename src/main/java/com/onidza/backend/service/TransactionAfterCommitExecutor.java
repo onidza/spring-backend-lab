@@ -8,7 +8,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class TransactionAfterCommitExecutor {
 
     public void run(Runnable action) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()
+                && !TransactionSynchronizationManager.isActualTransactionActive()) {
             action.run();
             return;
         }

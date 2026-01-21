@@ -1,4 +1,4 @@
-package com.onidza.backend.config.manual;
+package com.onidza.backend.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

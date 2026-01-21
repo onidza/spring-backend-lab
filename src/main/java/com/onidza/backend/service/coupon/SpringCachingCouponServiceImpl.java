@@ -1,5 +1,7 @@
 package com.onidza.backend.service.coupon;
 
+import com.onidza.backend.config.CacheKeys;
+import com.onidza.backend.config.CacheVersionService;
 import com.onidza.backend.model.dto.coupon.CouponDTO;
 import com.onidza.backend.model.dto.coupon.CouponPageDTO;
 import com.onidza.backend.model.entity.Client;
@@ -7,12 +9,14 @@ import com.onidza.backend.model.entity.Coupon;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.repository.CouponRepository;
+import com.onidza.backend.service.TransactionAfterCommitExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -21,6 +25,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -31,7 +37,11 @@ public class SpringCachingCouponServiceImpl implements CouponService {
     private final CouponRepository couponRepository;
     private final ClientRepository clientRepository;
 
+    private final TransactionAfterCommitExecutor afterCommitExecutor;
+    private final CacheVersionService versionService;
+
     private static final String COUPON_NOT_FOUND = "Coupon not found";
+    private final CacheManager cacheManager;
 
     @Override
     @Transactional(readOnly = true)
@@ -53,7 +63,7 @@ public class SpringCachingCouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames = "couponsPage",
-            keyGenerator = "clientPageKeyGen"
+            keyGenerator = "couponPageKeyGen"
     )
     public CouponPageDTO getCouponsPage(int page, int size) {
         log.info("Service called getCouponsPage");
@@ -82,7 +92,7 @@ public class SpringCachingCouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames = "couponsPage:byClientId",
-            keyGenerator = "clientPageByClientIdKeyGen",
+            keyGenerator = "couponPageByClientIdKeyGen",
             condition = "#id > 0"
     )
     public CouponPageDTO getCouponsPageByClientId(Long id, int page, int size) {
@@ -110,15 +120,7 @@ public class SpringCachingCouponServiceImpl implements CouponService {
 
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                    @CacheEvict(cacheNames = "couponsPage", allEntries = true), //TODO
-                    @CacheEvict(cacheNames = "couponsPage:byClientId", allEntries = true), //TODO
-
-                    @CacheEvict(cacheNames = "client", key = "'id:' + #id"),
-                    @CacheEvict(cacheNames = "clientsPage", allEntries = true) //TODO
-            }
-    )
+    @CacheEvict(cacheNames = "client", key = "'id:' + #id")
     public CouponDTO addCouponToClientByClientId(Long id, CouponDTO couponDTO) {
         log.info("Service called addCouponToClientById with id: {}", id);
 
@@ -130,23 +132,19 @@ public class SpringCachingCouponServiceImpl implements CouponService {
         coupon.getClients().add(client);
         client.getCoupons().add(coupon);
 
+        afterCommitExecutor.run(() -> {
+            versionService.bumpVersion(CacheKeys.COUPON_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+
+            versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY);
+        });
+
         return mapperService.couponToDTO(couponRepository.save(coupon));
     }
 
     @Override
     @Transactional
-    @Caching(
-            put = {
-                    @CachePut(cacheNames = "coupon", key = "#result.id()")
-            },
-            evict = {
-                    @CacheEvict(cacheNames = "couponsPage", allEntries = true), //TODO
-                    @CacheEvict(cacheNames = "couponsPage:byClientId", allEntries = true), //TODO
-
-                    @CacheEvict(cacheNames = "client", allEntries = true), //TODO - afterCommit
-                    @CacheEvict(cacheNames = "clientsPage", allEntries = true) //TODO
-            }
-    )
+    @CachePut(cacheNames = "coupon", key = "#result.id()")
     public CouponDTO updateCouponByCouponId(Long id, CouponDTO couponDTO) {
         log.info("Service called updateCouponByCouponId with id: {}", id);
 
@@ -158,21 +156,28 @@ public class SpringCachingCouponServiceImpl implements CouponService {
         coupon.setDiscount(couponDTO.discount());
         coupon.setExpirationDate(couponDTO.expirationDate());
 
-        return mapperService.couponToDTO(coupon);
+        CouponDTO result = mapperService.couponToDTO(coupon);
+        List<Long> ids = result.clientsId();
+
+        afterCommitExecutor.run(() -> {
+            versionService.bumpVersion(CacheKeys.COUPON_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+
+            Cache cache = cacheManager.getCache("client");
+            if (cache != null) {
+                for (Long clientId : ids) {
+                    cache.evict("id:" + clientId);
+                }
+            }
+            versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY);
+        });
+
+        return result;
     }
 
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                    @CacheEvict(cacheNames = "coupon", key = "#id"),
-                    @CacheEvict(cacheNames = "couponsPage", allEntries = true), //TODO
-                    @CacheEvict(cacheNames = "couponsPage:byClientId", allEntries = true), //TODO
-
-                    @CacheEvict(cacheNames = "client", allEntries = true), //TODO - afterCommit
-                    @CacheEvict(cacheNames = "clientsPage", allEntries = true) //TODO
-            }
-    )
+    @CacheEvict(cacheNames = "coupon", key = "#id")
     public void deleteCouponByCouponId(Long id) {
         log.info("Service called deleteCouponById with id: {}", id);
 
@@ -180,10 +185,29 @@ public class SpringCachingCouponServiceImpl implements CouponService {
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND));
 
-        coupon.getClients()
-                .forEach(client -> client.getCoupons().remove(coupon));
+        List<Client> clients = coupon.getClients();
 
-        coupon.getClients().clear();
+        List<Long> ids = clients
+                .stream()
+                .map(Client::getId)
+                .toList();
+
+        clients.forEach(client -> client.getCoupons().remove(coupon));
+        clients.clear();
+
         couponRepository.deleteById(id);
+
+        afterCommitExecutor.run(() -> {
+            versionService.bumpVersion(CacheKeys.COUPON_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+
+            Cache cache = cacheManager.getCache("client");
+            if (cache != null) {
+                for (Long clientId : ids) {
+                    cache.evict("id:" + clientId);
+                }
+            }
+            versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY);
+        });
     }
 }

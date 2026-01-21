@@ -1,17 +1,19 @@
 package com.onidza.backend.service.client;
 
+import com.onidza.backend.config.CacheKeys;
+import com.onidza.backend.config.CacheVersionService;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Profile;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
+import com.onidza.backend.service.TransactionAfterCommitExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +31,9 @@ public class SpringCachingClientServiceImpl implements ClientService {
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
 
+    private final TransactionAfterCommitExecutor afterCommitExecutor;
+    private final CacheVersionService versionService;
+
     @Override
     @Cacheable(
             cacheNames = "client",
@@ -42,7 +47,8 @@ public class SpringCachingClientServiceImpl implements ClientService {
         return mapperService
                 .clientToDTO(clientRepository.findById(id)
                         .orElseThrow(()
-                                -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found")));
+                                -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                "Client not found")));
     }
 
     @Override
@@ -62,7 +68,8 @@ public class SpringCachingClientServiceImpl implements ClientService {
                 safeSize,
                 Sort.by(Sort.Direction.ASC, "id"));
 
-        Page<ClientDTO> result = clientRepository.findAll(pageable).map(mapperService::clientToDTO);
+        Page<ClientDTO> result = clientRepository.findAll(pageable)
+                .map(mapperService::clientToDTO);
 
         return new ClientsPageDTO(
                 result.getContent(),
@@ -75,7 +82,6 @@ public class SpringCachingClientServiceImpl implements ClientService {
     }
 
     @Override
-    @CacheEvict(cacheNames = "clientsPage", allEntries = true) //TODO
     @Transactional
     public ClientDTO addClient(ClientDTO clientDTO) {
         log.info("Service called addClient with name: {}", clientDTO.name());
@@ -87,24 +93,23 @@ public class SpringCachingClientServiceImpl implements ClientService {
         }
 
         Client saved = clientRepository.save(client);
+
+
+        afterCommitExecutor.run(() ->
+                versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY));
+
         return mapperService.clientToDTO(saved);
     }
 
     @Override
-    @Caching(
-            put = {
-                    @CachePut(cacheNames = "client", key = "'id:' + #result.id()")
-            },
-            evict = {
-                    @CacheEvict(cacheNames = "clientsPage", allEntries = true) //TODO
-            }
-    )
+    @CachePut(cacheNames = "client", key = "'id:' + #result.id()")
     @Transactional
     public ClientDTO updateClient(Long id, ClientDTO clientDTO) {
         log.info("Service called updateClient with id: {}", id);
 
         Client existing = clientRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Client not found"));
 
         existing.setName(clientDTO.name());
         existing.setEmail(clientDTO.email());
@@ -137,19 +142,20 @@ public class SpringCachingClientServiceImpl implements ClientService {
                     });
         }
 
+        afterCommitExecutor.run(() ->
+                versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY));
+
         return mapperService.clientToDTO(clientRepository.save(existing));
     }
 
-    @Caching(
-            evict = {
-                    @CacheEvict(cacheNames = "clientsPage", allEntries = true), //TODO
-                    @CacheEvict(cacheNames = "client", key = "'id:' +  #id")
-            }
-    )
+    @CacheEvict(cacheNames = "client", key = "'id:' +  #id")
     @Override
     @Transactional
     public void deleteClient(Long id) {
         log.info("Service called deleteClient with id: {}", id);
         clientRepository.deleteById(id);
+
+        afterCommitExecutor.run(() ->
+                versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY));
     }
 }

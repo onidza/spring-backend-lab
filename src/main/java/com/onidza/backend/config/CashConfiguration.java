@@ -4,7 +4,6 @@ package com.onidza.backend.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -55,7 +54,7 @@ public class CashConfiguration {
 
         Map<String, RedisCacheConfiguration> perCache = new HashMap<>();
         perCache.put("client", base.entryTtl(Duration.ofMinutes(1)));
-        perCache.put("clientPage", base.entryTtl(Duration.ofSeconds(30)));
+        perCache.put("clientPage", base.entryTtl(Duration.ofSeconds(30))); //TODO
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defaultConf)
@@ -63,32 +62,5 @@ public class CashConfiguration {
                 .disableCreateOnMissingCache()
                 .transactionAware()
                 .build();
-    }
-
-    @Bean
-    public KeyGenerator clientPageKeyGen() {
-        return (target, method, params) -> {
-            int page = (int) params[0];
-            int size = (int) params[1];
-
-            int safeSize = Math.min(Math.max(size, 1), 20);
-            int safePage = Math.max(page, 0);
-
-            return "p=" + safePage + ":s=" + safeSize;
-        };
-    }
-
-    @Bean
-    public KeyGenerator clientPageByClientIdKeyGen() {
-        return (target, method, params) -> {
-            long clientId = (long) params[0];
-            int page = (int) params[1];
-            int size = (int) params[2];
-
-            int safeSize = Math.min(Math.max(size, 1), 20);
-            int safePage = Math.max(page, 0);
-
-            return clientId + ":p=" + safePage + ":s=" + safeSize;
-        };
     }
 }

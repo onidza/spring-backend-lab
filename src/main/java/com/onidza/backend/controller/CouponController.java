@@ -6,6 +6,7 @@ import com.onidza.backend.service.CacheMode;
 import com.onidza.backend.service.coupon.CouponService;
 import com.onidza.backend.service.coupon.CouponServiceImpl;
 import com.onidza.backend.service.coupon.ManualCouponServiceImpl;
+import com.onidza.backend.service.coupon.SpringCachingCouponServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ public class CouponController {
 
     private final CouponServiceImpl couponServiceImpl;
     private final ManualCouponServiceImpl manualCouponService;
+    private final SpringCachingCouponServiceImpl springCachingCouponService;
 
     @GetMapping("/coupon/{id}")
     public ResponseEntity<CouponDTO> getCouponById(
@@ -110,7 +112,7 @@ public class CouponController {
         return switch (cacheMode) {
             case NON_CACHE -> couponServiceImpl;
             case MANUAL -> manualCouponService;
-            case SPRING -> throw new UnsupportedOperationException("Have no such a service"); //TODO
+            case SPRING -> springCachingCouponService;
         };
     }
 }
