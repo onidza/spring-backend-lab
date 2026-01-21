@@ -6,7 +6,7 @@ import com.onidza.backend.service.CacheMode;
 import com.onidza.backend.service.client.ClientService;
 import com.onidza.backend.service.client.ClientServiceImpl;
 import com.onidza.backend.service.client.ManualClientServiceImpl;
-import com.onidza.backend.service.client.SpringCachingServiceImpl;
+import com.onidza.backend.service.client.SpringCachingClientServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class ClientController {
 
     private final ClientServiceImpl clientServiceImpl;
     private final ManualClientServiceImpl manualClientServiceImpl;
-    private final SpringCachingServiceImpl springCachingService;
+    private final SpringCachingClientServiceImpl springCachingService;
 
     @GetMapping("/{id}")
     public ResponseEntity<ClientDTO> getClient(

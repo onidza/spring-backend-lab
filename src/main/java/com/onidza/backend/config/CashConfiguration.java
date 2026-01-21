@@ -77,4 +77,18 @@ public class CashConfiguration {
             return "p=" + safePage + ":s=" + safeSize;
         };
     }
+
+    @Bean
+    public KeyGenerator clientPageByClientIdKeyGen() {
+        return (target, method, params) -> {
+            long clientId = (long) params[0];
+            int page = (int) params[1];
+            int size = (int) params[2];
+
+            int safeSize = Math.min(Math.max(size, 1), 20);
+            int safePage = Math.max(page, 0);
+
+            return clientId + ":p=" + safePage + ":s=" + safeSize;
+        };
+    }
 }

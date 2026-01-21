@@ -24,7 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class SpringCachingServiceImpl implements ClientService {
+public class SpringCachingClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
@@ -75,7 +75,7 @@ public class SpringCachingServiceImpl implements ClientService {
     }
 
     @Override
-    @CacheEvict(cacheNames = "clientsPage", allEntries = true)
+    @CacheEvict(cacheNames = "clientsPage", allEntries = true) //TODO
     @Transactional
     public ClientDTO addClient(ClientDTO clientDTO) {
         log.info("Service called addClient with name: {}", clientDTO.name());
@@ -96,7 +96,7 @@ public class SpringCachingServiceImpl implements ClientService {
                     @CachePut(cacheNames = "client", key = "'id:' + #result.id()")
             },
             evict = {
-                    @CacheEvict(cacheNames = "clientsPage", allEntries = true)
+                    @CacheEvict(cacheNames = "clientsPage", allEntries = true) //TODO
             }
     )
     @Transactional
@@ -140,10 +140,12 @@ public class SpringCachingServiceImpl implements ClientService {
         return mapperService.clientToDTO(clientRepository.save(existing));
     }
 
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "clientsPage", allEntries = true),
-            @CacheEvict(cacheNames = "client", key = "'id:' +  #id")
-    })
+    @Caching(
+            evict = {
+                    @CacheEvict(cacheNames = "clientsPage", allEntries = true), //TODO
+                    @CacheEvict(cacheNames = "client", key = "'id:' +  #id")
+            }
+    )
     @Override
     @Transactional
     public void deleteClient(Long id) {
