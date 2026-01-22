@@ -27,7 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class SpringCachingClientServiceImpl implements ClientService {
+public class SpringCachingClientServiceImpl implements ClientService { //TODO need ! invalidation between others spring cache classes
 
     private final ClientRepository clientRepository;
     private final MapperService mapperService;

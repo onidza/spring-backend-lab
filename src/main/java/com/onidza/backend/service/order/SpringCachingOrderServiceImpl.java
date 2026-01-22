@@ -145,14 +145,13 @@ public class SpringCachingOrderServiceImpl implements OrderService {
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
             versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX);
+            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
             log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated.",
                     CacheVersionKeys.ORDERS_PAGE_VER_KEY,
                     CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
                     CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX,
-                    CacheVersionKeys.CLIENT_KEY_PREFIX
+                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER
             );
         });
 
@@ -189,13 +188,13 @@ public class SpringCachingOrderServiceImpl implements OrderService {
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
             versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX);
+            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
             log.info("Keys: {}, {}, {}, {} was incremented. Keys: {}, {} was invalidated.",
                     CacheVersionKeys.ORDERS_PAGE_VER_KEY,
                     CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
                     CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX,
+                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
                     CacheVersionKeys.CLIENT_KEY_PREFIX,
                     CacheVersionKeys.ORDER_KEY_PREFIX
             );
@@ -234,13 +233,13 @@ public class SpringCachingOrderServiceImpl implements OrderService {
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
             versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX);
+            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
             log.info("Keys: {}, {}, {}, {} was incremented. Keys: {}, {} was invalidated.",
                     CacheVersionKeys.ORDERS_PAGE_VER_KEY,
                     CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
                     CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX,
+                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
                     CacheVersionKeys.CLIENT_KEY_PREFIX,
                     CacheVersionKeys.ORDER_KEY_PREFIX
             );

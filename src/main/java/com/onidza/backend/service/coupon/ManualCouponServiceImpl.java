@@ -78,7 +78,7 @@ public class ManualCouponServiceImpl implements CouponService {
         int safePage = Math.max(page, 0);
 
         long ver = versionService.getKeyVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY );
-        String key = CacheVersionKeys.COUPON_PAGE_VER_KEY + ver + "p=" + safePage + ":s=" + safeSize;
+        String key = CacheVersionKeys.COUPON_PAGE_PREFIX + ver + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -119,7 +119,7 @@ public class ManualCouponServiceImpl implements CouponService {
         int safePage = Math.max(page, 0);
 
         long ver = versionService.getKeyVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
-        String key = CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY + id + ":ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
+        String key = CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_PREFIX + id + ":ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -203,12 +203,15 @@ public class ManualCouponServiceImpl implements CouponService {
         coupon.setDiscount(couponDTO.discount());
         coupon.setExpirationDate(couponDTO.expirationDate());
 
+        Coupon saved = couponRepository.save(coupon);
+
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(CacheVersionKeys.COUPON_KEY_PREFIX + id);
             versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
             versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
             versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+
             for (Long clientId : cacheKeyClientKeys)
                 redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
 
@@ -221,7 +224,7 @@ public class ManualCouponServiceImpl implements CouponService {
             );
         });
 
-        return mapperService.couponToDTO(coupon);
+        return mapperService.couponToDTO(saved);
     }
 
     @Override
@@ -247,6 +250,7 @@ public class ManualCouponServiceImpl implements CouponService {
             versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
             versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+
             for (Long clientId : cacheKeyClientKeys)
                 redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
 

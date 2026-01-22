@@ -84,6 +84,7 @@ public class ManualOrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OrderDTO getOrderById(Long id) {
         log.info("Called getOrderById with id: {}", id);
 
@@ -114,7 +115,7 @@ public class ManualOrderServiceImpl implements OrderService {
         int safePage = Math.max(page, 0);
 
         long ver = versionService.getKeyVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-        String key = CacheVersionKeys.ORDERS_PAGE_VER_KEY + ver + ":p=" + safePage + ":s=" + safeSize;
+        String key = CacheVersionKeys.ORDERS_PAGE_PREFIX + ver + ":p=" + safePage + ":s=" + safeSize;
 
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
@@ -158,8 +159,8 @@ public class ManualOrderServiceImpl implements OrderService {
         int safePage = Math.max(page, 0);
 
         long ver = versionService.getKeyVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-        String key = CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY
-                 + id + ":ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
+        String key = CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_PREFIX
+                + id + ":ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -198,50 +199,6 @@ public class ManualOrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderDTO updateOrderByOrderId(Long id, OrderDTO orderDTO) {
-        log.info("Called updateOrderByOrderId with id: {}", id);
-
-        Order order = orderRepository.findById(id)
-                .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
-
-        Long clientId = order.getClient().getId();
-        String oldStatus = order.getStatus().name();
-        String newStatus = orderDTO.status().name();
-
-        order.setTotalAmount(orderDTO.totalAmount());
-        order.setStatus(orderDTO.status());
-        order.setOrderDate(orderDTO.orderDate());
-
-        afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CacheVersionKeys.ORDER_KEY_PREFIX + id);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-
-            redisTemplate.delete(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX + newStatus);
-            redisTemplate.delete(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX + oldStatus);
-
-            redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-
-            log.info("Keys: {}, {}, {} was incremented. Keys {}, {} and {} or {} was invalidated.",
-                    CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-
-                    CacheVersionKeys.ORDER_KEY_PREFIX + id,
-                    CacheVersionKeys.CLIENT_KEY_PREFIX + clientId,
-
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX + newStatus,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX + oldStatus
-            );
-        });
-
-        return mapperService.orderToDTO(order);
-    }
-
-    @Override
-    @Transactional
     public OrderDTO addOrderToClient(Long id, OrderDTO orderDTO) {
         log.info("Called addOrderToClient with id: {}", id);
 
@@ -254,28 +211,66 @@ public class ManualOrderServiceImpl implements OrderService {
         client.getOrders().add(order);
 
         Long clientId = client.getId();
-        String status = order.getStatus().name();
 
         afterCommitExecutor.run(() -> {
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-
-            redisTemplate.delete(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX + status);
+            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
             redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
             versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
 
-            log.info("Keys: {}, {}, {} was incremented. Keys {}, {} was invalidated.",
+            log.info("Keys: {}, {}, {}, {} was incremented. Key {} was invalidated.",
                     CacheVersionKeys.ORDERS_PAGE_VER_KEY,
                     CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
                     CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
 
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX + status,
                     CacheVersionKeys.CLIENT_KEY_PREFIX + clientId
             );
         });
 
         return mapperService.orderToDTO(orderRepository.save(order));
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO updateOrderByOrderId(Long id, OrderDTO orderDTO) {
+        log.info("Called updateOrderByOrderId with id: {}", id);
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(()
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
+
+        Long clientId = order.getClient().getId();
+
+        order.setTotalAmount(orderDTO.totalAmount());
+        order.setStatus(orderDTO.status());
+        order.setOrderDate(orderDTO.orderDate());
+
+        Order saved = orderRepository.save(order);
+
+        afterCommitExecutor.run(() -> {
+            redisTemplate.delete(CacheVersionKeys.ORDER_KEY_PREFIX + id);
+            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+
+            redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
+            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+
+            log.info("Keys: {}, {}, {}, {} was incremented. Keys {}, {} was invalidated.",
+                    CacheVersionKeys.ORDERS_PAGE_VER_KEY,
+                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
+                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
+
+                    CacheVersionKeys.ORDER_KEY_PREFIX + id,
+                    CacheVersionKeys.CLIENT_KEY_PREFIX + clientId
+            );
+        });
+
+        return mapperService.orderToDTO(saved);
     }
 
     @Override
@@ -293,25 +288,23 @@ public class ManualOrderServiceImpl implements OrderService {
         client.getOrders().remove(order);
 
         Long clientId = client.getId();
-        String status = order.getStatus().name();
 
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(CacheVersionKeys.ORDER_KEY_PREFIX + id);
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-
-            redisTemplate.delete(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX + status);
+            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
             redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
             versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
 
-            log.info("Keys: {}, {}, {} was incremented. Keys {}, {}, {} was invalidated.",
+            log.info("Keys: {}, {}, {}, {} was incremented. Keys {}, {} was invalidated.",
                     CacheVersionKeys.ORDERS_PAGE_VER_KEY,
                     CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
                     CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
 
                     CacheVersionKeys.ORDER_KEY_PREFIX + id,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX + status,
                     CacheVersionKeys.CLIENT_KEY_PREFIX + clientId
             );
         });
@@ -328,7 +321,9 @@ public class ManualOrderServiceImpl implements OrderService {
 
         boolean cacheable = isCacheableStatusOnly(filter);
         if (cacheable) {
-            var key = CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX + filter.status().name();
+            long ver = versionService.getKeyVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+            var key = CacheVersionKeys.ORDERS_FILTER_STATUS_PREFIX
+                    + filter.status().name() + ":ver=" + ver;
 
             Object objFromCache = redisTemplate.opsForValue().get(key);
 
@@ -366,7 +361,9 @@ public class ManualOrderServiceImpl implements OrderService {
             List<Order> orders = orderRepository.findAll((root, query, cb) -> {
                 List<Predicate> predicates = new ArrayList<>();
 
-                predicates.add(cb.equal((root.get("status")), filter.status())); //WHERE status = 'PAID'
+                if (filter.status() != null) {
+                    predicates.add(cb.equal((root.get("status")), filter.status()));
+                }
 
                 if (filter.fromDate() != null) {
                     predicates.add(cb.greaterThanOrEqualTo(root.get("orderDate"), filter.fromDate()));

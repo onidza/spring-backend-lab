@@ -93,7 +93,7 @@ public class CacheKeyGenerators {
             OrderFilterDTO filter = (OrderFilterDTO) params[0];
             OrderStatus status = filter.status();
 
-            long ver = versionService.getKeyVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_PREFIX);
+            long ver = versionService.getKeyVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
             return status + ":ver=" + ver;
         };

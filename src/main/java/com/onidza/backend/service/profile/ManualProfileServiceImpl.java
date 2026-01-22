@@ -62,13 +62,13 @@ public class ManualProfileServiceImpl implements ProfileService {
     @Override
     @Transactional(readOnly = true)
     public ProfilesPageDTO getProfilesPage(int page, int size) {
-        log.info("Called getAllProfiles");
+        log.info("Called getProfilesPage");
 
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
         long ver = versionService.getKeyVersion(CacheVersionKeys.PROFILES_PAGE_VER_KEY);
-        String key = CacheVersionKeys.PROFILES_PAGE_VER_KEY + ver + ":p=" + safePage + ":s=" + safeSize;
+        String key = CacheVersionKeys.PROFILES_PAGE_PREFIX + ver + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -118,7 +118,8 @@ public class ManualProfileServiceImpl implements ProfileService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client hasn't a profile");
         }
 
-        Long profileId = profile.getId();
+        Profile saved = profileRepository.save(profile);
+        Long profileId = saved.getId();
 
         afterCommitExecutor.run(() -> {
             redisTemplate.delete(CacheVersionKeys.PROFILE_KEY_PREFIX + profileId);
@@ -136,6 +137,6 @@ public class ManualProfileServiceImpl implements ProfileService {
             );
         });
 
-        return mapperService.profileToDTO(profile);
+        return mapperService.profileToDTO(saved);
     }
 }
