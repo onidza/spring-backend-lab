@@ -1,6 +1,7 @@
 package com.onidza.backend.service.coupon;
 
 import com.onidza.backend.config.CacheKeys;
+import com.onidza.backend.config.CacheVersionKeys;
 import com.onidza.backend.config.CacheVersionService;
 import com.onidza.backend.model.dto.coupon.CouponDTO;
 import com.onidza.backend.model.dto.coupon.CouponPageDTO;
@@ -39,14 +40,14 @@ public class SpringCachingCouponServiceImpl implements CouponService {
 
     private final TransactionAfterCommitExecutor afterCommitExecutor;
     private final CacheVersionService versionService;
+    private final CacheManager cacheManager;
 
     private static final String COUPON_NOT_FOUND = "Coupon not found";
-    private final CacheManager cacheManager;
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(
-            cacheNames = "coupon",
+            cacheNames = CacheKeys.COUPON_KEY_PREFIX,
             key = "'id:' + #id",
             condition = "#id > 0"
     )
@@ -62,7 +63,7 @@ public class SpringCachingCouponServiceImpl implements CouponService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(
-            cacheNames = "couponsPage",
+            cacheNames = CacheKeys.COUPON_PAGE_VER_KEY,
             keyGenerator = "couponPageKeyGen"
     )
     public CouponPageDTO getCouponsPage(int page, int size) {
@@ -91,7 +92,7 @@ public class SpringCachingCouponServiceImpl implements CouponService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(
-            cacheNames = "couponsPage:byClientId",
+            cacheNames = CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
             keyGenerator = "couponPageByClientIdKeyGen",
             condition = "#id > 0"
     )
@@ -120,7 +121,11 @@ public class SpringCachingCouponServiceImpl implements CouponService {
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "client", key = "'id:' + #id")
+    @CacheEvict(
+            cacheNames = CacheKeys.CLIENT_KEY_PREFIX,
+            key = "'id:' + #id",
+            condition = "#id > 0"
+    )
     public CouponDTO addCouponToClientByClientId(Long id, CouponDTO couponDTO) {
         log.info("Service called addCouponToClientById with id: {}", id);
 
@@ -133,10 +138,16 @@ public class SpringCachingCouponServiceImpl implements CouponService {
         client.getCoupons().add(coupon);
 
         afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheKeys.COUPON_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
-            versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+
+            log.info("Keys: {}, {}, {} was incremented.",
+                    CacheVersionKeys.COUPON_PAGE_VER_KEY,
+                    CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY
+            );
         });
 
         return mapperService.couponToDTO(couponRepository.save(coupon));
@@ -144,7 +155,11 @@ public class SpringCachingCouponServiceImpl implements CouponService {
 
     @Override
     @Transactional
-    @CachePut(cacheNames = "coupon", key = "#result.id()")
+    @CachePut(
+            cacheNames = CacheKeys.COUPON_KEY_PREFIX,
+            key = "#result.id()",
+            condition = "#id > 0"
+    )
     public CouponDTO updateCouponByCouponId(Long id, CouponDTO couponDTO) {
         log.info("Service called updateCouponByCouponId with id: {}", id);
 
@@ -160,8 +175,8 @@ public class SpringCachingCouponServiceImpl implements CouponService {
         List<Long> ids = result.clientsId();
 
         afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheKeys.COUPON_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
             Cache cache = cacheManager.getCache("client");
             if (cache != null) {
@@ -169,7 +184,14 @@ public class SpringCachingCouponServiceImpl implements CouponService {
                     cache.evict("id:" + clientId);
                 }
             }
-            versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+
+            log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated.",
+                    CacheVersionKeys.COUPON_PAGE_VER_KEY,
+                    CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheVersionKeys.CLIENT_KEY_PREFIX
+            );
         });
 
         return result;
@@ -177,7 +199,11 @@ public class SpringCachingCouponServiceImpl implements CouponService {
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "coupon", key = "#id")
+    @CacheEvict(
+            cacheNames = CacheKeys.COUPON_KEY_PREFIX,
+            key = "#id",
+            condition = "#id > 0"
+    )
     public void deleteCouponByCouponId(Long id) {
         log.info("Service called deleteCouponById with id: {}", id);
 
@@ -198,8 +224,8 @@ public class SpringCachingCouponServiceImpl implements CouponService {
         couponRepository.deleteById(id);
 
         afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheKeys.COUPON_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
             Cache cache = cacheManager.getCache("client");
             if (cache != null) {
@@ -207,7 +233,14 @@ public class SpringCachingCouponServiceImpl implements CouponService {
                     cache.evict("id:" + clientId);
                 }
             }
-            versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+
+            log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated.",
+                    CacheVersionKeys.COUPON_PAGE_VER_KEY,
+                    CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheVersionKeys.CLIENT_KEY_PREFIX
+            );
         });
     }
 }

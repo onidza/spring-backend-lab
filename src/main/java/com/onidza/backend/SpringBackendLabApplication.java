@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @Generated
 @SpringBootApplication
 public class SpringBackendLabApplication {
-
+    //TODO need to clean logs
     public static void main(String[] args) {
         SpringApplication.run(SpringBackendLabApplication.class, args);
     }

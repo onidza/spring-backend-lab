@@ -53,8 +53,20 @@ public class CashConfiguration {
         var defaultConf = base.entryTtl(Duration.ofMinutes(1));
 
         Map<String, RedisCacheConfiguration> perCache = new HashMap<>();
-        perCache.put("client", base.entryTtl(Duration.ofMinutes(1)));
-        perCache.put("clientPage", base.entryTtl(Duration.ofSeconds(30))); //TODO
+        perCache.put(CacheKeys.CLIENT_KEY_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheKeys.CLIENTS_PAGE_VER_KEY, base.entryTtl(Duration.ofSeconds(30)));
+
+        perCache.put(CacheKeys.COUPON_KEY_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheKeys.COUPON_PAGE_VER_KEY, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY, base.entryTtl(Duration.ofMinutes(1)));
+
+        perCache.put(CacheKeys.ORDER_KEY_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheKeys.ORDERS_PAGE_VER_KEY, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheKeys.ORDERS_FILTER_STATUS_KEY_PREFIX, base.entryTtl(Duration.ofSeconds(30)));
+
+        perCache.put(CacheKeys.PROFILE_KEY_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheKeys.PROFILES_PAGE_VER_KEY, base.entryTtl(Duration.ofMinutes(1)));
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defaultConf)

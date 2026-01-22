@@ -1,6 +1,7 @@
 package com.onidza.backend.service.client;
 
 import com.onidza.backend.config.CacheKeys;
+import com.onidza.backend.config.CacheVersionKeys;
 import com.onidza.backend.config.CacheVersionService;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
@@ -36,7 +37,7 @@ public class SpringCachingClientServiceImpl implements ClientService {
 
     @Override
     @Cacheable(
-            cacheNames = "client",
+            cacheNames = CacheKeys.CLIENT_KEY_PREFIX,
             key = "'id:' + #id",
             condition = "#id > 0"
     )
@@ -53,7 +54,7 @@ public class SpringCachingClientServiceImpl implements ClientService {
 
     @Override
     @Cacheable(
-            cacheNames = "clientsPage",
+            cacheNames = CacheKeys.CLIENTS_PAGE_VER_KEY,
             keyGenerator = "clientPageKeyGen"
     )
     @Transactional(readOnly = true)
@@ -95,14 +96,21 @@ public class SpringCachingClientServiceImpl implements ClientService {
         Client saved = clientRepository.save(client);
 
 
-        afterCommitExecutor.run(() ->
-                versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY));
+        afterCommitExecutor.run(() -> {
+            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            log.info("Key {} was incremented.", CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+        });
+
 
         return mapperService.clientToDTO(saved);
     }
 
     @Override
-    @CachePut(cacheNames = "client", key = "'id:' + #result.id()")
+    @CachePut(
+            cacheNames = CacheKeys.CLIENT_KEY_PREFIX,
+            key = "'id:' + #result.id()",
+            condition = "#id > 0"
+    )
     @Transactional
     public ClientDTO updateClient(Long id, ClientDTO clientDTO) {
         log.info("Service called updateClient with id: {}", id);
@@ -142,20 +150,28 @@ public class SpringCachingClientServiceImpl implements ClientService {
                     });
         }
 
-        afterCommitExecutor.run(() ->
-                versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY));
+        afterCommitExecutor.run(() -> {
+            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            log.info("Key {} was incremented.", CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+        });
 
         return mapperService.clientToDTO(clientRepository.save(existing));
     }
 
-    @CacheEvict(cacheNames = "client", key = "'id:' +  #id")
+    @CacheEvict(
+            cacheNames = CacheKeys.CLIENT_KEY_PREFIX,
+            key = "'id:' +  #id",
+            condition = "#id > 0"
+    )
     @Override
     @Transactional
     public void deleteClient(Long id) {
         log.info("Service called deleteClient with id: {}", id);
         clientRepository.deleteById(id);
 
-        afterCommitExecutor.run(() ->
-                versionService.bumpVersion(CacheKeys.CLIENTS_PAGE_VER_KEY));
+        afterCommitExecutor.run(() -> {
+            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            log.info("Key {} was incremented.", CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+        });
     }
 }
