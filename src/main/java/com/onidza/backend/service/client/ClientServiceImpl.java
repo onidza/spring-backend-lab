@@ -69,9 +69,7 @@ public class ClientServiceImpl implements ClientService {
 
         Client client = mapperService.clientDTOToEntity(clientDTO);
 
-        if (client.getProfile() != null) {
-            client.getProfile().setClient(client);
-        }
+        client.getProfile().setClient(client);
 
         Client saved = clientRepository.save(client);
         return mapperService.clientToDTO(saved);

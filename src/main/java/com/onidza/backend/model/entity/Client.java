@@ -7,15 +7,6 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-//@NamedEntityGraph(
-//        name = "client-full",
-//        attributeNodes = {
-//                @NamedAttributeNode("profile"),
-//                @NamedAttributeNode("orders"),
-//                @NamedAttributeNode("coupons")
-//        }
-//)
-
 @Generated
 @Getter
 @Setter

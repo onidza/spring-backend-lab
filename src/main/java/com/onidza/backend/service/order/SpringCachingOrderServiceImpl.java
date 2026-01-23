@@ -1,8 +1,8 @@
 package com.onidza.backend.service.order;
 
-import com.onidza.backend.config.CacheKeys;
-import com.onidza.backend.config.CacheVersionKeys;
-import com.onidza.backend.config.CacheVersionService;
+import com.onidza.backend.cache.config.CacheVersionService;
+import com.onidza.backend.cache.config.spring.CacheSpringKeys;
+import com.onidza.backend.cache.config.spring.CacheSpringVersionKeys;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
@@ -49,7 +49,7 @@ public class SpringCachingOrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(
-            cacheNames = CacheKeys.ORDER_KEY_PREFIX,
+            cacheNames = CacheSpringKeys.ORDER_KEY_PREFIX,
             key = "'id:' + #id",
             condition = "#id > 0"
     )
@@ -64,7 +64,7 @@ public class SpringCachingOrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(
-            cacheNames = CacheKeys.ORDERS_PAGE_VER_KEY,
+            cacheNames = CacheSpringKeys.ORDERS_PAGE_PREFIX,
             keyGenerator = "orderPageKeyGen"
     )
     public OrdersPageDTO getOrdersPage(int page, int size) {
@@ -94,7 +94,7 @@ public class SpringCachingOrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(
-            cacheNames = CacheKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+            cacheNames = CacheSpringKeys.ORDERS_PAGE_BY_CLIENT_ID_PREFIX,
             keyGenerator = "orderPageByClientIdKeyGen"
     )
     public OrdersPageDTO getOrdersPageByClientId(Long id, int page, int size) {
@@ -126,7 +126,7 @@ public class SpringCachingOrderServiceImpl implements OrderService {
     @Override
     @Transactional
     @CacheEvict(
-            cacheNames = CacheKeys.CLIENT_KEY_PREFIX,
+            cacheNames = CacheSpringKeys.CLIENT_KEY_PREFIX,
             key = "'id:' + #id",
             condition = "#id > 0"
     )
@@ -142,16 +142,16 @@ public class SpringCachingOrderServiceImpl implements OrderService {
         client.getOrders().add(order);
 
         afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+            versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
             log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated.",
-                    CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER
+                    CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY,
+                    CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER
             );
         });
 
@@ -163,12 +163,12 @@ public class SpringCachingOrderServiceImpl implements OrderService {
     @Caching(
             put = {
                     @CachePut(
-                            cacheNames = CacheKeys.ORDER_KEY_PREFIX,
+                            cacheNames = CacheSpringKeys.ORDER_KEY_PREFIX,
                             key = "'id:' + #result.id()",
                             condition = "#id > 0"
                     ),
                     @CachePut(
-                            cacheNames = CacheKeys.CLIENT_KEY_PREFIX,
+                            cacheNames = CacheSpringKeys.CLIENT_KEY_PREFIX,
                             key = "'id:' + #result.clientId()"
                     )
             }
@@ -185,18 +185,18 @@ public class SpringCachingOrderServiceImpl implements OrderService {
         order.setOrderDate(orderDTO.orderDate());
 
         afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+            versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
             log.info("Keys: {}, {}, {}, {} was incremented. Keys: {}, {} was invalidated.",
-                    CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
-                    CacheVersionKeys.CLIENT_KEY_PREFIX,
-                    CacheVersionKeys.ORDER_KEY_PREFIX
+                    CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY,
+                    CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
+                    CacheSpringKeys.CLIENT_KEY_PREFIX,
+                    CacheSpringKeys.ORDER_KEY_PREFIX
             );
         });
 
@@ -208,12 +208,12 @@ public class SpringCachingOrderServiceImpl implements OrderService {
     @Caching(
             put = {
                     @CachePut(
-                            cacheNames = CacheKeys.ORDER_KEY_PREFIX,
+                            cacheNames = CacheSpringKeys.ORDER_KEY_PREFIX,
                             key = "'id:' + #result.id()",
                             condition = "#id > 0"
                     ),
                     @CachePut(
-                            cacheNames = CacheKeys.CLIENT_KEY_PREFIX,
+                            cacheNames = CacheSpringKeys.CLIENT_KEY_PREFIX,
                             key = "'id:' + #result.clientId()"
                     )
             }
@@ -230,18 +230,18 @@ public class SpringCachingOrderServiceImpl implements OrderService {
         }
 
         afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+            versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
             log.info("Keys: {}, {}, {}, {} was incremented. Keys: {}, {} was invalidated.",
-                    CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
-                    CacheVersionKeys.CLIENT_KEY_PREFIX,
-                    CacheVersionKeys.ORDER_KEY_PREFIX
+                    CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY,
+                    CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
+                    CacheSpringKeys.CLIENT_KEY_PREFIX,
+                    CacheSpringKeys.ORDER_KEY_PREFIX
             );
         });
 
@@ -251,7 +251,7 @@ public class SpringCachingOrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(
-            cacheNames = CacheKeys.ORDERS_FILTER_STATUS_KEY_PREFIX,
+            cacheNames = CacheSpringKeys.ORDERS_FILTER_STATUS_KEY_PREFIX,
             keyGenerator = "filterStatusKeyGen",
             condition = "#filter.status() != null && #filter.fromDate() == null" +
                     "&& #filter.toDate() == null && #filter.minAmount() == null" +

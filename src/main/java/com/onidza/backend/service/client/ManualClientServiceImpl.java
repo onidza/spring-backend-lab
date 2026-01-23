@@ -2,12 +2,15 @@ package com.onidza.backend.service.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.config.CacheVersionKeys;
-import com.onidza.backend.config.CacheTtlProps;
-import com.onidza.backend.config.CacheVersionService;
+import com.onidza.backend.cache.config.manual.CacheManualKeys;
+import com.onidza.backend.cache.config.manual.CacheManualVersionKeys;
+import com.onidza.backend.cache.config.manual.CacheTtlProps;
+import com.onidza.backend.cache.config.CacheVersionService;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.entity.Client;
+import com.onidza.backend.model.entity.Coupon;
+import com.onidza.backend.model.entity.Order;
 import com.onidza.backend.model.entity.Profile;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
@@ -24,6 +27,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Slf4j
 @AllArgsConstructor
@@ -48,7 +53,7 @@ public class ManualClientServiceImpl implements ClientService {
     public ClientDTO getClientById(Long id) {
         log.info("Service called getClientById with id: {}", id);
 
-        String objFromCache = stringRedisTemplate.opsForValue().get(CacheVersionKeys.CLIENT_KEY_PREFIX+ id);
+        String objFromCache = stringRedisTemplate.opsForValue().get(CacheManualKeys.CLIENT_KEY_PREFIX + id);
 
         try {
             if (objFromCache != null) {
@@ -56,7 +61,7 @@ public class ManualClientServiceImpl implements ClientService {
                 return objectMapper.readValue(objFromCache, ClientDTO.class);
             }
         } catch (JsonProcessingException e) {
-            log.warn("Failed to read client from cache with key {}", CacheVersionKeys.CLIENT_KEY_PREFIX + id, e);
+            log.warn("Failed to read client from cache with key {}", CacheManualKeys.CLIENT_KEY_PREFIX + id, e);
         }
 
         Client clientFromDb = clientRepository.findById(id)
@@ -65,14 +70,14 @@ public class ManualClientServiceImpl implements ClientService {
 
         try {
             stringRedisTemplate.opsForValue().set(
-                    CacheVersionKeys.CLIENT_KEY_PREFIX + id,
+                    CacheManualKeys.CLIENT_KEY_PREFIX + id,
                     objectMapper.writeValueAsString(mapperService.clientToDTO(clientFromDb)),
                     ttlProps.clientById()
             );
             log.info("getClientById was cached...");
 
         } catch (JsonProcessingException e) {
-            log.warn("Failed to write client to cache with key {}", CacheVersionKeys.CLIENT_KEY_PREFIX + id, e);
+            log.warn("Failed to write client to cache with key {}", CacheManualKeys.CLIENT_KEY_PREFIX + id, e);
         }
 
         log.info("Returned client from db with id: {}", id);
@@ -87,8 +92,8 @@ public class ManualClientServiceImpl implements ClientService {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 20);
 
-        long ver = versionService.getKeyVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-        String key = CacheVersionKeys.CLIENTS_PAGE_PREFIX + ver + ":p=" + safePage + ":s=" + safeSize;
+        long ver = versionService.getKeyVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
+        String key = CacheManualKeys.CLIENTS_PAGE_PREFIX + ver + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -139,33 +144,33 @@ public class ManualClientServiceImpl implements ClientService {
         boolean hasOrders = client.getOrders() != null && !client.getOrders().isEmpty();
 
         afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.PROFILES_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.PROFILES_PAGE_VER_KEY);
 
             log.info("Keys: {}, {} was incremented",
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheVersionKeys.PROFILES_PAGE_VER_KEY
+                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheManualVersionKeys.PROFILES_PAGE_VER_KEY
             );
 
             if (hasCoupons) {
-                versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
-                versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+                versionService.bumpVersion(CacheManualVersionKeys.COUPON_PAGE_VER_KEY);
+                versionService.bumpVersion(CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
                 log.info("Keys: {}, {} was incremented.",
-                        CacheVersionKeys.COUPON_PAGE_VER_KEY,
-                        CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
+                        CacheManualVersionKeys.COUPON_PAGE_VER_KEY,
+                        CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
                 );
             }
 
             if (hasOrders) {
-                versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-                versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-                versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+                versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_VER_KEY);
+                versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+                versionService.bumpVersion(CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
                 log.info("Keys: {}, {}, {} was incremented.",
-                        CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                        CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                        CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER
+                        CacheManualVersionKeys.ORDERS_PAGE_VER_KEY,
+                        CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                        CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER
                 );
             }
         });
@@ -214,56 +219,61 @@ public class ManualClientServiceImpl implements ClientService {
 
         ClientDTO saved = mapperService.clientToDTO(clientRepository.save(existing));
 
+        List<Long> orderIds = existing.getOrders().stream().map(Order::getId).toList();
+        List<Long> couponIds = existing.getCoupons().stream().map(Coupon::getId).toList();
+
         boolean profileTouched = clientDTO.profile() != null;
         boolean couponsTouched = clientDTO.coupons() != null;
         boolean ordersTouched = clientDTO.orders() != null;
 
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + id);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            redisTemplate.delete(CacheManualKeys.CLIENT_KEY_PREFIX + id);
+            versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
 
             log.info("Key {} was invalidated. Key {} was incremented.",
-                    CacheVersionKeys.CLIENT_KEY_PREFIX + id,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY
+                    CacheManualKeys.CLIENT_KEY_PREFIX + id,
+                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY
             );
 
-            if(profileTouched) {
-                redisTemplate.delete(CacheVersionKeys.PROFILE_KEY_PREFIX + id);
-                versionService.bumpVersion(CacheVersionKeys.PROFILES_PAGE_VER_KEY);
+            if (profileTouched) {
+                redisTemplate.delete(CacheManualKeys.PROFILE_KEY_PREFIX + id);
+                versionService.bumpVersion(CacheManualVersionKeys.PROFILES_PAGE_VER_KEY);
 
                 log.info("Key {} was incremented. Key {} was invalidated",
-                        CacheVersionKeys.PROFILES_PAGE_VER_KEY,
-                        CacheVersionKeys.PROFILE_KEY_PREFIX + id
+                        CacheManualVersionKeys.PROFILES_PAGE_VER_KEY,
+                        CacheManualKeys.PROFILE_KEY_PREFIX + id
                 );
             }
 
             if (couponsTouched) {
-                versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
-                versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+                versionService.bumpVersion(CacheManualVersionKeys.COUPON_PAGE_VER_KEY);
+                versionService.bumpVersion(CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
-//                CacheVersionKeys.COUPON_KEY_PREFIX
-//            for (Long clientId : cacheKeyClientKeys)
-//                redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId); // TODO
+                for (Long couponId : couponIds)
+                    redisTemplate.delete(CacheManualKeys.COUPON_KEY_PREFIX + couponId);
 
-                log.info("Keys: {}, {} was incremented.",
-                        CacheVersionKeys.COUPON_PAGE_VER_KEY,
-                        CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
+                log.info("Keys: {}, {} was incremented. Key {} was invalidated.",
+                        CacheManualVersionKeys.COUPON_PAGE_VER_KEY,
+                        CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
+
+                        CacheManualKeys.COUPON_KEY_PREFIX
                 );
             }
 
             if (ordersTouched) {
-                versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-                versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-                versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+                versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_VER_KEY);
+                versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+                versionService.bumpVersion(CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
-//                CacheVersionKeys.ORDER_KEY_PREFIX
-                //            for (Long clientId : cacheKeyClientKeys)
-//                redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId); // TODO
+                for (Long orderId : orderIds)
+                    redisTemplate.delete(CacheManualKeys.ORDER_KEY_PREFIX + orderId);
 
-                log.info("Keys: {}, {}, {} was incremented.",
-                        CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                        CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                        CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER
+                log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated.",
+                        CacheManualVersionKeys.ORDERS_PAGE_VER_KEY,
+                        CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                        CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
+
+                        CacheManualKeys.ORDER_KEY_PREFIX
                 );
             }
         });
@@ -280,49 +290,56 @@ public class ManualClientServiceImpl implements ClientService {
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND));
 
+        List<Long> orderIds = clientFromDb.getOrders().stream().map(Order::getId).toList();
+        List<Long> couponIds = clientFromDb.getCoupons().stream().map(Coupon::getId).toList();
+
         boolean couponsTouched = clientFromDb.getCoupons() != null;
         boolean ordersTouched = clientFromDb.getOrders() != null;
 
         clientRepository.deleteById(id);
 
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + id);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            redisTemplate.delete(CacheManualKeys.CLIENT_KEY_PREFIX + id);
+            versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
 
-            redisTemplate.delete(CacheVersionKeys.PROFILE_KEY_PREFIX + id);
-            versionService.bumpVersion(CacheVersionKeys.PROFILES_PAGE_VER_KEY);
+            redisTemplate.delete(CacheManualKeys.PROFILE_KEY_PREFIX + id);
+            versionService.bumpVersion(CacheManualVersionKeys.PROFILES_PAGE_VER_KEY);
 
             log.info("Keys: {}, {} was incremented. Keys: {}, {} was invalidated",
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheVersionKeys.PROFILES_PAGE_VER_KEY,
+                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheManualVersionKeys.PROFILES_PAGE_VER_KEY,
 
-                    CacheVersionKeys.CLIENT_KEY_PREFIX + id,
-                    CacheVersionKeys.PROFILE_KEY_PREFIX + id
+                    CacheManualKeys.CLIENT_KEY_PREFIX + id,
+                    CacheManualKeys.PROFILE_KEY_PREFIX + id
 
             );
 
             if (couponsTouched)
-                versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+                versionService.bumpVersion(CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
-//            for (Long clientId : cacheKeyClientKeys)
-//                redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId); // TODO
+            for (Long couponId : couponIds)
+                redisTemplate.delete(CacheManualKeys.COUPON_KEY_PREFIX + couponId);
 
-            log.info("Key {} was incremented.", CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+            log.info("Key {} was incremented. Key {} was invalidated.",
+                    CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheManualKeys.COUPON_KEY_PREFIX
+            );
 
             if (ordersTouched) {
-                versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-                versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-                versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+                versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_VER_KEY);
+                versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+                versionService.bumpVersion(CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
-//                CacheVersionKeys.ORDER_KEY_PREFIX
-                //            for (Long clientId : cacheKeyClientKeys)
-//                redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId); // TODO
+                for (Long orderId : orderIds)
+                    redisTemplate.delete(CacheManualKeys.ORDER_KEY_PREFIX + orderId);
             }
 
-            log.info("Keys: {}, {}, {} was incremented.",
-                    CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER
+            log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated.",
+                    CacheManualVersionKeys.ORDERS_PAGE_VER_KEY,
+                    CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
+
+                    CacheManualKeys.ORDER_KEY_PREFIX
             );
         });
     }

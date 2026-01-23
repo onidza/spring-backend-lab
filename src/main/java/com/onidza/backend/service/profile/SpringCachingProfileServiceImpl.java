@@ -1,8 +1,8 @@
 package com.onidza.backend.service.profile;
 
-import com.onidza.backend.config.CacheKeys;
-import com.onidza.backend.config.CacheVersionKeys;
-import com.onidza.backend.config.CacheVersionService;
+import com.onidza.backend.cache.config.CacheVersionService;
+import com.onidza.backend.cache.config.spring.CacheSpringKeys;
+import com.onidza.backend.cache.config.spring.CacheSpringVersionKeys;
 import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 import com.onidza.backend.model.entity.Client;
@@ -39,7 +39,7 @@ public class SpringCachingProfileServiceImpl implements ProfileService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(
-            cacheNames = CacheKeys.PROFILE_KEY_PREFIX,
+            cacheNames = CacheSpringKeys.PROFILE_KEY_PREFIX,
             key = "'id:' + #id",
             condition = "#id > 0"
     )
@@ -54,7 +54,7 @@ public class SpringCachingProfileServiceImpl implements ProfileService {
     @Override
     @Transactional(readOnly = true)
     @Cacheable(
-            cacheNames = CacheKeys.PROFILES_PAGE_VER_KEY,
+            cacheNames = CacheSpringKeys.PROFILES_PAGE_PREFIX,
             keyGenerator = "profilePageKeyGen"
     )
     public ProfilesPageDTO getProfilesPage(int page, int size) {
@@ -82,7 +82,7 @@ public class SpringCachingProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     @CachePut(
-            cacheNames = CacheKeys.PROFILE_KEY_PREFIX,
+            cacheNames = CacheSpringKeys.PROFILE_KEY_PREFIX,
             key = "'if:' + #id",
             condition = "#id > 0"
     )
@@ -103,8 +103,8 @@ public class SpringCachingProfileServiceImpl implements ProfileService {
         }
 
         afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.PROFILES_PAGE_VER_KEY);
-            log.info("Key {} was incremented.", CacheVersionKeys.PROFILES_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheSpringVersionKeys.PROFILES_PAGE_VER_KEY);
+            log.info("Key {} was incremented.", CacheSpringVersionKeys.PROFILES_PAGE_VER_KEY);
         });
 
         return mapperService.profileToDTO(profile);

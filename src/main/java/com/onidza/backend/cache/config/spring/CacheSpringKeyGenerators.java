@@ -1,5 +1,6 @@
-package com.onidza.backend.config;
+package com.onidza.backend.cache.config.spring;
 
+import com.onidza.backend.cache.config.CacheVersionService;
 import com.onidza.backend.model.OrderStatus;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import org.springframework.cache.interceptor.KeyGenerator;
@@ -8,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @SuppressWarnings("java:S2094")
-public class CacheKeyGenerators {
+public class CacheSpringKeyGenerators {
 
     @Bean
     public KeyGenerator clientPageKeyGen(CacheVersionService versionService) {
@@ -19,7 +20,7 @@ public class CacheKeyGenerators {
             int safeSize = Math.min(Math.max(size, 1), 20);
             int safePage = Math.max(page, 0);
 
-            long ver = versionService.getKeyVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            long ver = versionService.getKeyVersion(CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY);
 
             return "ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
         };
@@ -34,7 +35,7 @@ public class CacheKeyGenerators {
             int safeSize = Math.min(Math.max(size, 1), 20);
             int safePage = Math.max(page, 0);
 
-            long ver = versionService.getKeyVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
+            long ver = versionService.getKeyVersion(CacheSpringVersionKeys.COUPON_PAGE_VER_KEY);
 
             return "ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
         };
@@ -50,7 +51,7 @@ public class CacheKeyGenerators {
             int safeSize = Math.min(Math.max(size, 1), 20);
             int safePage = Math.max(page, 0);
 
-            long ver = versionService.getKeyVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+            long ver = versionService.getKeyVersion(CacheSpringVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
             return clientId + ":ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
         };
@@ -65,7 +66,7 @@ public class CacheKeyGenerators {
             int safeSize = Math.min(Math.max(size, 1), 20);
             int safePage = Math.max(page, 0);
 
-            long ver = versionService.getKeyVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
+            long ver = versionService.getKeyVersion(CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY);
 
             return "ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
         };
@@ -81,7 +82,7 @@ public class CacheKeyGenerators {
             int safeSize = Math.min(Math.max(size, 1), 20);
             int safePage = Math.max(page, 0);
 
-            long ver = versionService.getKeyVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+            long ver = versionService.getKeyVersion(CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
 
             return clientId + ":ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
         };
@@ -93,7 +94,7 @@ public class CacheKeyGenerators {
             OrderFilterDTO filter = (OrderFilterDTO) params[0];
             OrderStatus status = filter.status();
 
-            long ver = versionService.getKeyVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+            long ver = versionService.getKeyVersion(CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
             return status + ":ver=" + ver;
         };
@@ -108,7 +109,7 @@ public class CacheKeyGenerators {
             int safeSize = Math.min(Math.max(size, 1), 20);
             int safePage = Math.max(page, 0);
 
-            long ver = versionService.getKeyVersion(CacheVersionKeys.PROFILES_PAGE_VER_KEY);
+            long ver = versionService.getKeyVersion(CacheSpringVersionKeys.PROFILES_PAGE_VER_KEY);
 
             return ver + ":p=" + safePage + ":s=" + safeSize;
         };

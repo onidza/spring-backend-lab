@@ -1,9 +1,10 @@
 package com.onidza.backend.service.order;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.config.CacheVersionKeys;
-import com.onidza.backend.config.CacheTtlProps;
-import com.onidza.backend.config.CacheVersionService;
+import com.onidza.backend.cache.config.manual.CacheManualKeys;
+import com.onidza.backend.cache.config.manual.CacheManualVersionKeys;
+import com.onidza.backend.cache.config.manual.CacheTtlProps;
+import com.onidza.backend.cache.config.CacheVersionService;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
@@ -88,7 +89,7 @@ public class ManualOrderServiceImpl implements OrderService {
     public OrderDTO getOrderById(Long id) {
         log.info("Called getOrderById with id: {}", id);
 
-        Object objFromCache = redisTemplate.opsForValue().get(CacheVersionKeys.ORDER_KEY_PREFIX + id);
+        Object objFromCache = redisTemplate.opsForValue().get(CacheManualKeys.ORDER_KEY_PREFIX + id);
         if (objFromCache != null) {
             log.info("Returned order from cache with id: {}", id);
             return objectMapper.convertValue(objFromCache, OrderDTO.class);
@@ -98,7 +99,7 @@ public class ManualOrderServiceImpl implements OrderService {
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND)));
 
-        redisTemplate.opsForValue().set(CacheVersionKeys.ORDER_KEY_PREFIX + id, existing,
+        redisTemplate.opsForValue().set(CacheManualKeys.ORDER_KEY_PREFIX + id, existing,
                 ttlProps.getOrderById());
         log.info("getOrderById was cached...");
 
@@ -114,8 +115,8 @@ public class ManualOrderServiceImpl implements OrderService {
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
-        long ver = versionService.getKeyVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-        String key = CacheVersionKeys.ORDERS_PAGE_PREFIX + ver + ":p=" + safePage + ":s=" + safeSize;
+        long ver = versionService.getKeyVersion(CacheManualVersionKeys.ORDERS_PAGE_VER_KEY);
+        String key = CacheManualKeys.ORDERS_PAGE_PREFIX + ver + ":p=" + safePage + ":s=" + safeSize;
 
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
@@ -158,8 +159,8 @@ public class ManualOrderServiceImpl implements OrderService {
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
-        long ver = versionService.getKeyVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-        String key = CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_PREFIX
+        long ver = versionService.getKeyVersion(CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+        String key = CacheManualKeys.ORDERS_PAGE_BY_CLIENT_ID_PREFIX
                 + id + ":ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
@@ -213,20 +214,20 @@ public class ManualOrderServiceImpl implements OrderService {
         Long clientId = client.getId();
 
         afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+            versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
-            redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            redisTemplate.delete(CacheManualKeys.CLIENT_KEY_PREFIX + clientId);
+            versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
 
             log.info("Keys: {}, {}, {}, {} was incremented. Key {} was invalidated.",
-                    CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheManualVersionKeys.ORDERS_PAGE_VER_KEY,
+                    CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
+                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
 
-                    CacheVersionKeys.CLIENT_KEY_PREFIX + clientId
+                    CacheManualKeys.CLIENT_KEY_PREFIX + clientId
             );
         });
 
@@ -251,22 +252,22 @@ public class ManualOrderServiceImpl implements OrderService {
         Order saved = orderRepository.save(order);
 
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CacheVersionKeys.ORDER_KEY_PREFIX + id);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+            redisTemplate.delete(CacheManualKeys.ORDER_KEY_PREFIX + id);
+            versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
-            redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            redisTemplate.delete(CacheManualKeys.CLIENT_KEY_PREFIX + clientId);
+            versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
 
             log.info("Keys: {}, {}, {}, {} was incremented. Keys {}, {} was invalidated.",
-                    CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheManualVersionKeys.ORDERS_PAGE_VER_KEY,
+                    CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
+                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
 
-                    CacheVersionKeys.ORDER_KEY_PREFIX + id,
-                    CacheVersionKeys.CLIENT_KEY_PREFIX + clientId
+                    CacheManualKeys.ORDER_KEY_PREFIX + id,
+                    CacheManualKeys.CLIENT_KEY_PREFIX + clientId
             );
         });
 
@@ -290,22 +291,22 @@ public class ManualOrderServiceImpl implements OrderService {
         Long clientId = client.getId();
 
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CacheVersionKeys.ORDER_KEY_PREFIX + id);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+            redisTemplate.delete(CacheManualKeys.ORDER_KEY_PREFIX + id);
+            versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
 
-            redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            redisTemplate.delete(CacheManualKeys.CLIENT_KEY_PREFIX + clientId);
+            versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
 
             log.info("Keys: {}, {}, {}, {} was incremented. Keys {}, {} was invalidated.",
-                    CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheManualVersionKeys.ORDERS_PAGE_VER_KEY,
+                    CacheManualVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
+                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
 
-                    CacheVersionKeys.ORDER_KEY_PREFIX + id,
-                    CacheVersionKeys.CLIENT_KEY_PREFIX + clientId
+                    CacheManualKeys.ORDER_KEY_PREFIX + id,
+                    CacheManualKeys.CLIENT_KEY_PREFIX + clientId
             );
         });
 
@@ -321,8 +322,8 @@ public class ManualOrderServiceImpl implements OrderService {
 
         boolean cacheable = isCacheableStatusOnly(filter);
         if (cacheable) {
-            long ver = versionService.getKeyVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
-            var key = CacheVersionKeys.ORDERS_FILTER_STATUS_PREFIX
+            long ver = versionService.getKeyVersion(CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+            var key = CacheManualKeys.ORDERS_FILTER_STATUS_PREFIX
                     + filter.status().name() + ":ver=" + ver;
 
             Object objFromCache = redisTemplate.opsForValue().get(key);

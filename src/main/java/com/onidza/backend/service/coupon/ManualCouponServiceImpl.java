@@ -1,9 +1,10 @@
 package com.onidza.backend.service.coupon;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.config.CacheVersionKeys;
-import com.onidza.backend.config.CacheTtlProps;
-import com.onidza.backend.config.CacheVersionService;
+import com.onidza.backend.cache.config.manual.CacheManualKeys;
+import com.onidza.backend.cache.config.manual.CacheManualVersionKeys;
+import com.onidza.backend.cache.config.manual.CacheTtlProps;
+import com.onidza.backend.cache.config.CacheVersionService;
 import com.onidza.backend.model.dto.coupon.CouponDTO;
 import com.onidza.backend.model.dto.coupon.CouponPageDTO;
 import com.onidza.backend.model.entity.Client;
@@ -50,7 +51,7 @@ public class ManualCouponServiceImpl implements CouponService {
     public CouponDTO getCouponById(Long id) {
         log.info("Service called getCouponById with id: {}", id);
 
-        Object objFromCache = redisTemplate.opsForValue().get(CacheVersionKeys.COUPON_KEY_PREFIX + id);
+        Object objFromCache = redisTemplate.opsForValue().get(CacheManualKeys.COUPON_KEY_PREFIX + id);
 
         if (objFromCache != null) {
             log.info("Returned coupon from cache with id: {}", id);
@@ -61,7 +62,7 @@ public class ManualCouponServiceImpl implements CouponService {
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND)));
 
-        redisTemplate.opsForValue().set(CacheVersionKeys.COUPON_KEY_PREFIX + id,
+        redisTemplate.opsForValue().set(CacheManualKeys.COUPON_KEY_PREFIX + id,
                 couponDTO, ttlProps.getCouponById());
         log.info("getCouponById was cached...");
 
@@ -77,8 +78,8 @@ public class ManualCouponServiceImpl implements CouponService {
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
-        long ver = versionService.getKeyVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY );
-        String key = CacheVersionKeys.COUPON_PAGE_PREFIX + ver + ":p=" + safePage + ":s=" + safeSize;
+        long ver = versionService.getKeyVersion(CacheManualVersionKeys.COUPON_PAGE_VER_KEY );
+        String key = CacheManualKeys.COUPON_PAGE_PREFIX + ver + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -118,8 +119,8 @@ public class ManualCouponServiceImpl implements CouponService {
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
-        long ver = versionService.getKeyVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
-        String key = CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_PREFIX + id + ":ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
+        long ver = versionService.getKeyVersion(CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+        String key = CacheManualKeys.COUPONS_PAGE_BY_CLIENT_ID_PREFIX + id + ":ver=" + ver + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -171,17 +172,17 @@ public class ManualCouponServiceImpl implements CouponService {
         Coupon saved = couponRepository.save(coupon);
 
         afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.COUPON_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-            redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + id);
+            versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
+            redisTemplate.delete(CacheManualKeys.CLIENT_KEY_PREFIX + id);
 
             log.info("Keys: {}, {}, {}, {} was incremented.",
-                    CacheVersionKeys.COUPON_PAGE_VER_KEY,
-                    CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheVersionKeys.CLIENT_KEY_PREFIX + id
+                    CacheManualVersionKeys.COUPON_PAGE_VER_KEY,
+                    CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheManualKeys.CLIENT_KEY_PREFIX + id
             );
         });
 
@@ -206,20 +207,20 @@ public class ManualCouponServiceImpl implements CouponService {
         Coupon saved = couponRepository.save(coupon);
 
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CacheVersionKeys.COUPON_KEY_PREFIX + id);
-            versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+            redisTemplate.delete(CacheManualKeys.COUPON_KEY_PREFIX + id);
+            versionService.bumpVersion(CacheManualVersionKeys.COUPON_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
 
             for (Long clientId : cacheKeyClientKeys)
-                redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
+                redisTemplate.delete(CacheManualKeys.CLIENT_KEY_PREFIX + clientId);
 
             log.info("Keys: {}, {}, {}, {} was incremented. Client with keys (size={}) was invalidated.",
-                    CacheVersionKeys.COUPON_KEY_PREFIX + id,
-                    CacheVersionKeys.COUPON_PAGE_VER_KEY,
-                    CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheManualKeys.COUPON_KEY_PREFIX + id,
+                    CacheManualVersionKeys.COUPON_PAGE_VER_KEY,
+                    CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
                     cacheKeyClientKeys.size()
             );
         });
@@ -245,20 +246,20 @@ public class ManualCouponServiceImpl implements CouponService {
         couponRepository.deleteById(id);
 
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CacheVersionKeys.COUPON_KEY_PREFIX + id);
-            versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+            redisTemplate.delete(CacheManualKeys.COUPON_KEY_PREFIX + id);
+            versionService.bumpVersion(CacheManualVersionKeys.COUPON_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
 
             for (Long clientId : cacheKeyClientKeys)
-                redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
+                redisTemplate.delete(CacheManualKeys.CLIENT_KEY_PREFIX + clientId);
 
             log.info("Keys: {}, {}, {}, {} was incremented. Client with keys (size={}) was invalidated.",
-                    CacheVersionKeys.COUPON_KEY_PREFIX + id,
-                    CacheVersionKeys.COUPON_PAGE_VER_KEY,
-                    CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheManualKeys.COUPON_KEY_PREFIX + id,
+                    CacheManualVersionKeys.COUPON_PAGE_VER_KEY,
+                    CacheManualVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
+                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
                     cacheKeyClientKeys.size()
             );
         });

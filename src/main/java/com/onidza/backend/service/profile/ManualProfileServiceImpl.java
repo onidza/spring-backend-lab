@@ -1,9 +1,10 @@
 package com.onidza.backend.service.profile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.config.CacheVersionKeys;
-import com.onidza.backend.config.CacheTtlProps;
-import com.onidza.backend.config.CacheVersionService;
+import com.onidza.backend.cache.config.manual.CacheManualKeys;
+import com.onidza.backend.cache.config.manual.CacheManualVersionKeys;
+import com.onidza.backend.cache.config.manual.CacheTtlProps;
+import com.onidza.backend.cache.config.CacheVersionService;
 import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 import com.onidza.backend.model.entity.Client;
@@ -42,7 +43,7 @@ public class ManualProfileServiceImpl implements ProfileService {
     public ProfileDTO getProfileById(Long id) {
         log.info("Called getProfileById with id: {}", id);
 
-        Object objFromCache = redisTemplate.opsForValue().get(CacheVersionKeys.PROFILE_KEY_PREFIX + id);
+        Object objFromCache = redisTemplate.opsForValue().get(CacheManualKeys.PROFILE_KEY_PREFIX + id);
         if (objFromCache != null) {
             log.info("Returned profile from cache with id: {}", id);
             return objectMapper.convertValue(objFromCache, ProfileDTO.class);
@@ -52,7 +53,7 @@ public class ManualProfileServiceImpl implements ProfileService {
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found")));
 
-        redisTemplate.opsForValue().set(CacheVersionKeys.PROFILE_KEY_PREFIX + id, existing, ttlProps.getProfileById());
+        redisTemplate.opsForValue().set(CacheManualKeys.PROFILE_KEY_PREFIX + id, existing, ttlProps.getProfileById());
         log.info("getProfileById was cached...");
 
         log.info("Returned profile from db with id: {}", id);
@@ -67,8 +68,8 @@ public class ManualProfileServiceImpl implements ProfileService {
         int safeSize = Math.min(Math.max(size, 1), 20);
         int safePage = Math.max(page, 0);
 
-        long ver = versionService.getKeyVersion(CacheVersionKeys.PROFILES_PAGE_VER_KEY);
-        String key = CacheVersionKeys.PROFILES_PAGE_PREFIX + ver + ":p=" + safePage + ":s=" + safeSize;
+        long ver = versionService.getKeyVersion(CacheManualVersionKeys.PROFILES_PAGE_VER_KEY);
+        String key = CacheManualKeys.PROFILES_PAGE_PREFIX + ver + ":p=" + safePage + ":s=" + safeSize;
 
         Object objFromCache = redisTemplate.opsForValue().get(key);
         if (objFromCache != null) {
@@ -122,18 +123,18 @@ public class ManualProfileServiceImpl implements ProfileService {
         Long profileId = saved.getId();
 
         afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CacheVersionKeys.PROFILE_KEY_PREFIX + profileId);
-            versionService.bumpVersion(CacheVersionKeys.PROFILES_PAGE_VER_KEY);
+            redisTemplate.delete(CacheManualKeys.PROFILE_KEY_PREFIX + profileId);
+            versionService.bumpVersion(CacheManualVersionKeys.PROFILES_PAGE_VER_KEY);
 
-            redisTemplate.delete(CacheVersionKeys.CLIENT_KEY_PREFIX + clientId);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+            redisTemplate.delete(CacheManualKeys.CLIENT_KEY_PREFIX + clientId);
+            versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
 
             log.info("Keys: {}, {} was incremented. Keys {}, {} was invalidated.",
-                    CacheVersionKeys.PROFILES_PAGE_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
+                    CacheManualVersionKeys.PROFILES_PAGE_VER_KEY,
+                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
 
-                    CacheVersionKeys.PROFILE_KEY_PREFIX + profileId,
-                    CacheVersionKeys.CLIENT_KEY_PREFIX + clientId
+                    CacheManualKeys.PROFILE_KEY_PREFIX + profileId,
+                    CacheManualKeys.CLIENT_KEY_PREFIX + clientId
             );
         });
 
