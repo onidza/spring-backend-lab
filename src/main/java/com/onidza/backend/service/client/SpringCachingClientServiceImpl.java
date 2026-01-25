@@ -244,12 +244,14 @@ public class SpringCachingClientServiceImpl implements ClientService {
         clientRepository.deleteById(id);
 
         afterCommitExecutor.run(() -> {
+            redisTemplate.delete(CacheSpringKeys.CLIENT_KEY_PREFIX + id);
             versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
             redisTemplate.delete(CacheSpringKeys.PROFILE_KEY_PREFIX + id);
 
-            log.info("Key {} was incremented. Key {} was invalidated.",
+            log.info("Key {} was incremented. Key {}, {} was invalidated.",
                     CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheSpringKeys.PROFILE_KEY_PREFIX + id
+                    CacheSpringKeys.PROFILE_KEY_PREFIX + id,
+                    CacheSpringKeys.CLIENT_KEY_PREFIX + id
             );
 
             if (couponsDeleted) {
