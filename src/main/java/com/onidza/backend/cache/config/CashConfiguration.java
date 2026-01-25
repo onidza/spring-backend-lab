@@ -56,19 +56,30 @@ public class CashConfiguration {
 
         Map<String, RedisCacheConfiguration> perCache = new HashMap<>();
         perCache.put(CacheSpringKeys.CLIENT_KEY_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
-        perCache.put(CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY, base.entryTtl(Duration.ofSeconds(30)));
+        perCache.put(CacheSpringKeys.CLIENTS_PAGE_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
 
         perCache.put(CacheSpringKeys.COUPON_KEY_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
-        perCache.put(CacheSpringVersionKeys.COUPON_PAGE_VER_KEY, base.entryTtl(Duration.ofMinutes(1)));
-        perCache.put(CacheSpringVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheSpringKeys.COUPON_PAGE_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheSpringKeys.COUPONS_PAGE_BY_CLIENT_ID_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
 
         perCache.put(CacheSpringKeys.ORDER_KEY_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
-        perCache.put(CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY, base.entryTtl(Duration.ofMinutes(1)));
-        perCache.put(CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheSpringKeys.ORDERS_PAGE_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheSpringKeys.ORDERS_PAGE_BY_CLIENT_ID_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
         perCache.put(CacheSpringKeys.ORDERS_FILTER_STATUS_KEY_PREFIX, base.entryTtl(Duration.ofSeconds(30)));
 
         perCache.put(CacheSpringKeys.PROFILE_KEY_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
-        perCache.put(CacheSpringVersionKeys.PROFILES_PAGE_VER_KEY, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheSpringKeys.PROFILES_PAGE_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
+
+        perCache.put(CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY, base.entryTtl(Duration.ofMinutes(15)));
+
+        perCache.put(CacheSpringVersionKeys.COUPON_PAGE_VER_KEY, base.entryTtl(Duration.ofMinutes(15)));
+        perCache.put(CacheSpringVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY, base.entryTtl(Duration.ofMinutes(15)));
+
+        perCache.put(CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY, base.entryTtl(Duration.ofMinutes(15)));
+        perCache.put(CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY, base.entryTtl(Duration.ofMinutes(15)));
+        perCache.put(CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER, base.entryTtl(Duration.ofMinutes(15)));
+
+        perCache.put(CacheSpringVersionKeys.PROFILES_PAGE_VER_KEY, base.entryTtl(Duration.ofMinutes(15)));
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defaultConf)

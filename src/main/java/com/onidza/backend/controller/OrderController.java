@@ -9,6 +9,7 @@ import com.onidza.backend.service.CacheMode;
 import com.onidza.backend.service.order.ManualOrderServiceImpl;
 import com.onidza.backend.service.order.OrderService;
 import com.onidza.backend.service.order.OrderServiceImpl;
+import com.onidza.backend.service.order.SpringCachingOrderServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class OrderController {
 
     private final OrderServiceImpl orderServiceImpl;
     private final ManualOrderServiceImpl manualOrderService;
+    private final SpringCachingOrderServiceImpl springCachingOrderService;
 
     @GetMapping("/order/{id}")
     public ResponseEntity<OrderDTO> getOrderById(
@@ -136,7 +138,7 @@ public class OrderController {
         return switch (cacheMode) {
             case NON_CACHE -> orderServiceImpl;
             case MANUAL -> manualOrderService;
-            case SPRING -> throw new UnsupportedOperationException("Have no such a service");
+            case SPRING -> springCachingOrderService;
         };
     }
 }

@@ -6,6 +6,7 @@ import com.onidza.backend.service.CacheMode;
 import com.onidza.backend.service.profile.ManualProfileServiceImpl;
 import com.onidza.backend.service.profile.ProfileService;
 import com.onidza.backend.service.profile.ProfileServiceImpl;
+import com.onidza.backend.service.profile.SpringCachingProfileServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ public class ProfileController {
 
     private final ProfileServiceImpl profileServiceImpl;
     private final ManualProfileServiceImpl manualProfileService;
+    private final SpringCachingProfileServiceImpl springCachingProfileService;
 
     @GetMapping("/{id}/profile")
     public ResponseEntity<ProfileDTO> getProfile(
@@ -63,7 +65,7 @@ public class ProfileController {
         return switch (cacheMode) {
             case NON_CACHE -> profileServiceImpl;
             case MANUAL -> manualProfileService;
-            case SPRING -> throw new UnsupportedOperationException("Have no such a service");
+            case SPRING -> springCachingProfileService;
         };
     }
 }
