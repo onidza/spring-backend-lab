@@ -1,6 +1,6 @@
 package com.onidza.backend.service.Order;
 
-import com.onidza.backend.model.OrderStatus;
+import com.onidza.backend.model.dto.order.OrderStatus;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
@@ -16,7 +16,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 

@@ -1,7 +1,7 @@
 package com.onidza.backend.controller;
 
 
-import com.onidza.backend.model.OrderStatus;
+import com.onidza.backend.model.dto.order.OrderStatus;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Slf4j
 @RestController

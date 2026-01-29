@@ -1,6 +1,6 @@
 package com.onidza.backend.model.entity;
 
-import com.onidza.backend.model.OrderStatus;
+import com.onidza.backend.model.dto.order.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,6 +1,5 @@
 package com.onidza.backend.model.dto.order;
 
-import com.onidza.backend.model.OrderStatus;
 import com.onidza.backend.model.entity.Order;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.PositiveOrZero;

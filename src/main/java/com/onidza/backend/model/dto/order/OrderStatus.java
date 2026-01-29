@@ -1,4 +1,4 @@
-package com.onidza.backend.model;
+package com.onidza.backend.model.dto.order;
 
 import lombok.Generated;
 

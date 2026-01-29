@@ -4,19 +4,28 @@ import com.onidza.backend.cache.config.spring.CacheSpringKeys;
 import com.onidza.backend.cache.config.manual.CacheManualVersionKeys;
 import com.onidza.backend.cache.config.spring.CacheSpringVersionKeys;
 import com.onidza.backend.cache.config.CacheVersionService;
+import com.onidza.backend.model.dto.client.events.ClientAddEvent;
+import com.onidza.backend.model.dto.client.ClientActionPart;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
+import com.onidza.backend.model.dto.client.events.ClientDeletedEvent;
+import com.onidza.backend.model.dto.client.events.ClientUpdateEvent;
+import com.onidza.backend.model.dto.coupon.CouponDTO;
+import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.entity.Client;
+import com.onidza.backend.model.entity.Coupon;
 import com.onidza.backend.model.entity.Order;
 import com.onidza.backend.model.entity.Profile;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
+import com.onidza.backend.service.CacheInvalidationListener;
 import com.onidza.backend.service.TransactionAfterCommitExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +36,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -36,10 +46,7 @@ public class SpringCachingClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
-
-    private final TransactionAfterCommitExecutor afterCommitExecutor;
-    private final CacheVersionService versionService;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final ApplicationEventPublisher publisher;
 
     private static final String CLIENT_NOT_FOUND = "Client not found";
 
@@ -96,38 +103,18 @@ public class SpringCachingClientServiceImpl implements ClientService {
         log.info("Service called addClient with name: {}", clientDTO.name());
 
         Client client = mapperService.clientDTOToEntity(clientDTO);
-
         client.getProfile().setClient(client);
-
         Client saved = clientRepository.save(client);
 
-        boolean hasCoupons = clientDTO.coupons() != null && !clientDTO.coupons().isEmpty();
-        boolean hasOrders = clientDTO.orders() != null && !clientDTO.orders().isEmpty();
+        EnumSet<ClientActionPart> parts = EnumSet.noneOf(ClientActionPart.class);
 
-        afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheSpringVersionKeys.PROFILES_PAGE_VER_KEY);
+        if (clientDTO.coupons() != null && !clientDTO.coupons().isEmpty())
+            parts.add(ClientActionPart.COUPONS);
 
-            log.info("Key {}, {} was incremented.",
-                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheSpringVersionKeys.PROFILES_PAGE_VER_KEY
-            );
+        if (clientDTO.orders() != null && !clientDTO.orders().isEmpty())
+            parts.add(ClientActionPart.ORDERS);
 
-            if (hasCoupons) {
-                versionService.bumpVersion(CacheSpringVersionKeys.COUPON_PAGE_VER_KEY);
-                log.info("Keys: {} was incremented.", CacheSpringVersionKeys.COUPON_PAGE_VER_KEY);
-            }
-
-            if (hasOrders) {
-                versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY);
-                versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
-
-                log.info("Keys: {}, {} was incremented.",
-                        CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY,
-                        CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER
-                );
-            }
-        });
+        publisher.publishEvent(new ClientAddEvent(parts));
 
         return mapperService.clientToDTO(saved);
     }
@@ -149,16 +136,27 @@ public class SpringCachingClientServiceImpl implements ClientService {
         existing.setName(clientDTO.name());
         existing.setEmail(clientDTO.email());
 
+        Set<Long> orderIdsToEvict = new HashSet<>();
+        Set<Long> couponIdsToEvict = new HashSet<>();
+        Long profileId = existing.getProfile().getId();
+
+        EnumSet<ClientActionPart> parts = EnumSet.noneOf(ClientActionPart.class);
+
         boolean couponsTouched = clientDTO.coupons() != null && !clientDTO.coupons().isEmpty();
         boolean orderTouched = clientDTO.orders() != null && !clientDTO.orders().isEmpty();
 
         Profile existingProfile = existing.getProfile();
         if (existing.getProfile() != null && clientDTO.profile() != null) {
+            parts.add(ClientActionPart.PROFILE);
+
             existingProfile.setAddress(clientDTO.profile().address());
             existingProfile.setPhone(clientDTO.profile().phone());
         }
 
         if (couponsTouched) {
+            parts.add(ClientActionPart.COUPONS);
+            couponIdsToEvict = getCouponsIdsForEvict(existing.getCoupons(), clientDTO.coupons());
+
             existing.getCoupons().clear();
             clientDTO.coupons()
                     .stream()
@@ -170,6 +168,9 @@ public class SpringCachingClientServiceImpl implements ClientService {
         }
 
         if (orderTouched) {
+            parts.add(ClientActionPart.ORDERS);
+            orderIdsToEvict = getOrdersIdsForEvict(existing.getOrders(), clientDTO.orders());
+
             existing.getOrders().clear();
             clientDTO.orders()
                     .stream()
@@ -180,43 +181,12 @@ public class SpringCachingClientServiceImpl implements ClientService {
                     });
         }
 
-        afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY);
-            redisTemplate.delete(CacheSpringKeys.PROFILE_KEY_PREFIX + id);
-            versionService.bumpVersion(CacheSpringVersionKeys.PROFILES_PAGE_VER_KEY);
-
-            log.info("Keys: {}, {} was incremented. Key {} was invalidated.",
-                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheSpringVersionKeys.PROFILES_PAGE_VER_KEY,
-                    CacheSpringKeys.PROFILE_KEY_PREFIX + id
-            );
-
-            if (couponsTouched) {
-                redisTemplate.delete(CacheSpringKeys.COUPON_KEY_PREFIX + id);
-                versionService.bumpVersion(CacheSpringVersionKeys.COUPON_PAGE_VER_KEY);
-                versionService.bumpVersion(CacheSpringVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
-
-                log.info("Keys: {}, {} was incremented. Key {} was invalidated.",
-                        CacheSpringVersionKeys.COUPON_PAGE_VER_KEY,
-                        CacheSpringVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
-                        CacheSpringKeys.COUPON_KEY_PREFIX + id
-                );
-            }
-
-            if (orderTouched) {
-                redisTemplate.delete(CacheSpringKeys.ORDER_KEY_PREFIX + id);
-                versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY);
-                versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-                versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
-
-                log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated.",
-                        CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY,
-                        CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                        CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
-                        CacheSpringKeys.ORDER_KEY_PREFIX + id
-                );
-            }
-        });
+        publisher.publishEvent(new ClientUpdateEvent(
+                profileId,
+                parts,
+                orderIdsToEvict,
+                couponIdsToEvict)
+        );
 
         return mapperService.clientToDTO(clientRepository.save(existing));
     }
@@ -236,45 +206,56 @@ public class SpringCachingClientServiceImpl implements ClientService {
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         CLIENT_NOT_FOUND));
 
-        List<Long> ordersId = client.getOrders().stream().map(Order::getId).toList();
+        Set<Long> orderIdsForEvict = getOrdersIdsForEvict(client.getOrders(), Collections.emptyList());
+        EnumSet<ClientActionPart> parts = EnumSet.noneOf(ClientActionPart.class);
 
-        boolean couponsDeleted = client.getCoupons() != null && !client.getCoupons().isEmpty();
-        boolean ordersDeleted = client.getOrders() != null && !client.getOrders().isEmpty();
+        if (client.getCoupons() != null && !client.getCoupons().isEmpty()) parts.add(ClientActionPart.COUPONS);
+        if (client.getOrders() != null && !client.getOrders().isEmpty()) parts.add(ClientActionPart.ORDERS);
+
+        publisher.publishEvent(new ClientDeletedEvent(
+                client.getProfile().getId(),
+                parts,
+                orderIdsForEvict
+        ));
 
         clientRepository.deleteById(id);
+    }
 
-        afterCommitExecutor.run(() -> {
-            redisTemplate.delete(CacheSpringKeys.CLIENT_KEY_PREFIX + id);
-            versionService.bumpVersion(CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY);
-            redisTemplate.delete(CacheSpringKeys.PROFILE_KEY_PREFIX + id);
+    private Set<Long> getCouponsIdsForEvict(Set<Coupon> oldSet, List<CouponDTO> newSet) {
+        Set<Long> res = new HashSet<>();
 
-            log.info("Key {} was incremented. Key {}, {} was invalidated.",
-                    CacheManualVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheSpringKeys.PROFILE_KEY_PREFIX + id,
-                    CacheSpringKeys.CLIENT_KEY_PREFIX + id
-            );
+        Set<Long> oldCouponsIds = oldSet.stream()
+                .map(Coupon::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
-            if (couponsDeleted) {
-                versionService.bumpVersion(CacheSpringVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
-                log.info("Key {} was invcremented.", CacheSpringVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
-            }
+        Set<Long> newCouponsIds = newSet.stream()
+                .map(CouponDTO::id)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
-            if (ordersDeleted) {
-                for (long orderId : ordersId) {
-                    redisTemplate.delete(CacheSpringKeys.ORDER_KEY_PREFIX + orderId);
-                }
+        res.addAll(oldCouponsIds);
+        res.addAll(newCouponsIds);
 
-                versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-                versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY);
-                versionService.bumpVersion(CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+        return res;
+    }
 
-                log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated.",
-                        CacheSpringKeys.ORDERS_PAGE_BY_CLIENT_ID_PREFIX,
-                        CacheSpringVersionKeys.ORDERS_PAGE_VER_KEY,
-                        CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
-                        CacheSpringKeys.ORDER_KEY_PREFIX
-                );
-            }
-        });
+    private Set<Long> getOrdersIdsForEvict(Set<Order> oldSet, List<OrderDTO> newSet) {
+        Set<Long> res = new HashSet<>();
+
+        Set<Long> oldOrdersIds = oldSet.stream()
+                .map(Order::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Set<Long> newOrderIds = newSet.stream()
+                .map(OrderDTO::id)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        res.addAll(oldOrdersIds);
+        res.addAll(newOrderIds);
+
+        return res;
     }
 }

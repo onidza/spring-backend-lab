@@ -17,6 +17,7 @@ import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.service.TransactionAfterCommitExecutor;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +46,8 @@ public class ManualClientServiceImpl implements ClientService {
     private final CacheTtlProps ttlProps;
     private final CacheVersionService versionService;
     private final TransactionAfterCommitExecutor afterCommitExecutor;
+
+    private final ApplicationEventPublisher publisher;
 
     private static final String CLIENT_NOT_FOUND = "Client not found";
 

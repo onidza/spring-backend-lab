@@ -1,6 +1,6 @@
 package com.onidza.backend.service.Client;
 
-import com.onidza.backend.model.OrderStatus;
+import com.onidza.backend.model.dto.order.OrderStatus;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.service.client.ClientServiceImpl;
