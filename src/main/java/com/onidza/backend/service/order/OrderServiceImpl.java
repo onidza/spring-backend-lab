@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -148,14 +149,22 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderDTO> getOrdersByFilters(OrderFilterDTO filter) {
+    public OrdersPageDTO getOrdersByFilters(OrderFilterDTO filter, int page, int size) {
         log.info("Called getOrdersByFilters with filter: {}", filter);
 
-        List<Order> orders = orderRepository.findAll((root, query, cb) -> {
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
+
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by(Sort.Direction.ASC, "id"));
+
+        Specification<Order> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (filter.status() != null) {
-                predicates.add(cb.equal((root.get("status")), filter.status())); //WHERE status = 'PAID'
+                predicates.add(cb.equal((root.get("status")), filter.status()));
             }
 
             if (filter.fromDate() != null) {
@@ -175,10 +184,18 @@ public class OrderServiceImpl implements OrderService {
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
-        });
+        };
 
-        return orders.stream()
-                .map(mapperService::orderToDTO)
-                .toList();
+        Page<OrderDTO> result = orderRepository.findAll(spec, pageable)
+                .map(mapperService::orderToDTO);
+
+        return new OrdersPageDTO(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
     }
 }

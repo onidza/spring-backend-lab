@@ -25,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -315,51 +316,67 @@ public class ManualOrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderDTO> getOrdersByFilters(OrderFilterDTO filter) {
+    public OrdersPageDTO getOrdersByFilters(OrderFilterDTO filter, int page, int size) {
         log.info("Called getOrdersByFilters with filter: {}", filter);
 
         filterCalls.increment();
+
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
+
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by(Sort.Direction.DESC, "orderDate")
+        );
 
         boolean cacheable = isCacheableStatusOnly(filter);
         if (cacheable) {
             long ver = versionService.getKeyVersion(CacheManualVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
             var key = CacheManualKeys.ORDERS_FILTER_STATUS_PREFIX
-                    + filter.status().name() + ":ver=" + ver;
+                    + ":status=" + filter.status().name()
+                    + ":page=" + safePage
+                    + ":size=" + safeSize
+                    + ":sort=orderDate,DESC"
+                    + ":ver=" + ver;
 
             Object objFromCache = redisTemplate.opsForValue().get(key);
 
-            if (objFromCache instanceof List<?> raw) {
-                List<OrderDTO> orderDTOList = raw.stream()
-                        .map(o -> objectMapper.convertValue(o, OrderDTO.class))
-                        .toList();
+            if (objFromCache != null) {
+                OrdersPageDTO cached = objectMapper.convertValue(objFromCache, OrdersPageDTO.class);
 
                 filterCacheHits.increment();
 
                 log.info("Returned getOrdersByFilters with status: {} from cache", filter.status().name());
-                return orderDTOList;
+                return cached;
             }
 
             filterCacheMisses.increment();
 
-            List<OrderDTO> dtoList = Objects.requireNonNull(filterTimer.record(() -> {
-                List<Order> orders = orderRepository.findAll((root, query, cb) -> {
-                    List<Predicate> predicates = new ArrayList<>();
-                    predicates.add(cb.equal(root.get("status"), filter.status()));
-                    return cb.and(predicates.toArray(new Predicate[0]));
-                });
+            OrdersPageDTO computed = Objects.requireNonNull(filterTimer.record(() -> {
+                Specification<Order> spec = (root, query, cb) ->
+                        cb.equal(root.get("status"), filter.status());
 
-                return orders.stream()
-                        .map(mapperService::orderToDTO)
-                        .toList();
+                Page<OrderDTO> result = orderRepository.findAll(spec, pageable)
+                        .map(mapperService::orderToDTO);
+
+                return new OrdersPageDTO(
+                        result.getContent(),
+                        result.getNumber(),
+                        result.getSize(),
+                        result.getTotalElements(),
+                        result.getTotalPages(),
+                        result.hasNext()
+                );
             }));
 
-            redisTemplate.opsForValue().set(key, dtoList, ttlProps.getOrdersByFilters());
-            log.info("Cached orders by status: key={}, size={} ...", key, dtoList.size());
-            return dtoList;
+            redisTemplate.opsForValue().set(key, computed, ttlProps.getOrdersByFilters());
+            log.info("Cached orders by status: key={}, size={} ...", key, computed.items().size());
+            return computed;
         }
 
         return filterTimer.record(() -> {
-            List<Order> orders = orderRepository.findAll((root, query, cb) -> {
+            Specification<Order> spec = (root, query, cb) -> {
                 List<Predicate> predicates = new ArrayList<>();
 
                 if (filter.status() != null) {
@@ -383,11 +400,19 @@ public class ManualOrderServiceImpl implements OrderService {
                 }
 
                 return cb.and(predicates.toArray(new Predicate[0]));
-            });
+            };
 
-            return orders.stream()
-                    .map(mapperService::orderToDTO)
-                    .toList();
+            Page<OrderDTO> result = orderRepository.findAll(spec, pageable)
+                    .map(mapperService::orderToDTO);
+
+            return new OrdersPageDTO(
+                    result.getContent(),
+                    result.getNumber(),
+                    result.getSize(),
+                    result.getTotalElements(),
+                    result.getTotalPages(),
+                    result.hasNext()
+            );
         });
     }
 

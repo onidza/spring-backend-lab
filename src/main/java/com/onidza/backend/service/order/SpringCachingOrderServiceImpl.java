@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +51,7 @@ public class SpringCachingOrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames = CacheSpringKeys.ORDER_KEY_PREFIX,
-            key = "'id:' + #id",
+            key = "#id",
             condition = "#id > 0"
     )
     public OrderDTO getOrderById(Long id) {
@@ -127,7 +128,7 @@ public class SpringCachingOrderServiceImpl implements OrderService {
     @Transactional
     @CacheEvict(
             cacheNames = CacheSpringKeys.CLIENT_KEY_PREFIX,
-            key = "'id:' + #id",
+            key = "#id",
             condition = "#id > 0"
     )
     public OrderDTO addOrderToClient(Long id, OrderDTO orderDTO) {
@@ -164,12 +165,12 @@ public class SpringCachingOrderServiceImpl implements OrderService {
             put = {
                     @CachePut(
                             cacheNames = CacheSpringKeys.ORDER_KEY_PREFIX,
-                            key = "'id:' + #result.id()",
+                            key = "#result.id()",
                             condition = "#id > 0"
                     ),
                     @CachePut(
                             cacheNames = CacheSpringKeys.CLIENT_KEY_PREFIX,
-                            key = "'id:' + #result.clientId()"
+                            key = "#result.clientId()"
                     )
             }
     )
@@ -206,15 +207,15 @@ public class SpringCachingOrderServiceImpl implements OrderService {
     @Override
     @Transactional
     @Caching(
-            put = {
-                    @CachePut(
+            evict = {
+                    @CacheEvict(
                             cacheNames = CacheSpringKeys.ORDER_KEY_PREFIX,
-                            key = "'id:' + #result.id()",
+                            key = "#id",
                             condition = "#id > 0"
                     ),
-                    @CachePut(
+                    @CacheEvict(
                             cacheNames = CacheSpringKeys.CLIENT_KEY_PREFIX,
-                            key = "'id:' + #result.clientId()"
+                            allEntries = true
                     )
             }
     )
@@ -257,10 +258,18 @@ public class SpringCachingOrderServiceImpl implements OrderService {
                     "&& #filter.toDate() == null && #filter.minAmount() == null" +
                     "&& #filter.maxAmount() == null"
     )
-    public List<OrderDTO> getOrdersByFilters(OrderFilterDTO filter) {
+    public OrdersPageDTO getOrdersByFilters(OrderFilterDTO filter, int page, int size) {
         log.info("Called getOrdersByFilters with filter: {}", filter);
 
-        List<Order> orders = orderRepository.findAll((root, query, cb) -> {
+        int safeSize = Math.min(Math.max(size, 1), 20);
+        int safePage = Math.max(page, 0);
+
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by(Sort.Direction.ASC, "id"));
+
+        Specification<Order> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (filter.status() != null) {
@@ -284,10 +293,18 @@ public class SpringCachingOrderServiceImpl implements OrderService {
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
-        });
+        };
 
-        return orders.stream()
-                .map(mapperService::orderToDTO)
-                .toList();
+        Page<OrderDTO> result = orderRepository.findAll(spec, pageable)
+                .map(mapperService::orderToDTO);
+
+        return new OrdersPageDTO(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
     }
 }

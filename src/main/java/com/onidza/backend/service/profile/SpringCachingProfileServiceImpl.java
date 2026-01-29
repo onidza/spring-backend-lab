@@ -40,7 +40,7 @@ public class SpringCachingProfileServiceImpl implements ProfileService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames = CacheSpringKeys.PROFILE_KEY_PREFIX,
-            key = "'id:' + #id",
+            key = "#id",
             condition = "#id > 0"
     )
     public ProfileDTO getProfileById(Long id) {
@@ -83,7 +83,7 @@ public class SpringCachingProfileServiceImpl implements ProfileService {
     @Transactional
     @CachePut(
             cacheNames = CacheSpringKeys.PROFILE_KEY_PREFIX,
-            key = "'if:' + #id",
+            key = "#id",
             condition = "#id > 0"
     )
     public ProfileDTO updateProfile(Long id, ProfileDTO profileDTO) {

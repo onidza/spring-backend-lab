@@ -46,7 +46,7 @@ public class SpringCachingClientServiceImpl implements ClientService {
     @Override
     @Cacheable(
             cacheNames = CacheSpringKeys.CLIENT_KEY_PREFIX,
-            key = "'id:' + #id",
+            key = "#id",
             condition = "#id > 0"
     )
     @Transactional(readOnly = true)
@@ -135,7 +135,7 @@ public class SpringCachingClientServiceImpl implements ClientService {
     @Override
     @CachePut(
             cacheNames = CacheSpringKeys.CLIENT_KEY_PREFIX,
-            key = "'id:' + #result.id()",
+            key = "#result.id()",
             condition = "#id > 0"
     )
     @Transactional
@@ -223,7 +223,7 @@ public class SpringCachingClientServiceImpl implements ClientService {
 
     @CacheEvict(
             cacheNames = CacheSpringKeys.CLIENT_KEY_PREFIX,
-            key = "'id:' +  #id",
+            key = "#id",
             condition = "#id > 0"
     )
     @Override

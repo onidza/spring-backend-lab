@@ -107,7 +107,7 @@ public class OrderController {
     }
 
     @GetMapping("/orders/filtered")
-    public ResponseEntity<List<OrderDTO>> findOrdersByFilters(
+    public ResponseEntity<OrdersPageDTO> findOrdersByFilters(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
@@ -118,7 +118,10 @@ public class OrderController {
             @RequestParam(required = false) BigDecimal minAmount,
             @RequestParam(required = false) BigDecimal maxAmount,
 
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) {
         log.info("Called findOrdersByFilters with status: {}, fromDate {}, toDate {}, minAmount {}, maxAmount {}",
                 status, fromDate, toDate, minAmount, maxAmount);
@@ -131,7 +134,7 @@ public class OrderController {
                 maxAmount);
 
         OrderService service = resolveOrderService(cacheMode);
-        return ResponseEntity.ok(service.getOrdersByFilters(filter));
+        return ResponseEntity.ok(service.getOrdersByFilters(filter, page, size));
     }
 
     private OrderService resolveOrderService(CacheMode cacheMode) {

@@ -48,7 +48,7 @@ public class SpringCachingCouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames = CacheSpringKeys.COUPON_KEY_PREFIX,
-            key = "'id:' + #id",
+            key = "#id",
             condition = "#id > 0"
     )
     public CouponDTO getCouponById(Long id) {
@@ -122,7 +122,7 @@ public class SpringCachingCouponServiceImpl implements CouponService {
     @Transactional
     @CacheEvict(
             cacheNames = CacheSpringKeys.CLIENT_KEY_PREFIX,
-            key = "'id:' + #id",
+            key = "#id",
             condition = "#id > 0"
     )
     public CouponDTO addCouponToClientByClientId(Long id, CouponDTO couponDTO) {
@@ -176,10 +176,10 @@ public class SpringCachingCouponServiceImpl implements CouponService {
             versionService.bumpVersion(CacheSpringVersionKeys.COUPON_PAGE_VER_KEY);
             versionService.bumpVersion(CacheSpringVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
-            Cache cache = cacheManager.getCache("client");
+            Cache cache = cacheManager.getCache(CacheSpringKeys.CLIENT_KEY_PREFIX);
             if (cache != null) {
                 for (Long clientId : ids) {
-                    cache.evict("id:" + clientId);
+                    cache.evict(clientId);
                 }
             }
             versionService.bumpVersion(CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY);
@@ -225,10 +225,10 @@ public class SpringCachingCouponServiceImpl implements CouponService {
             versionService.bumpVersion(CacheSpringVersionKeys.COUPON_PAGE_VER_KEY);
             versionService.bumpVersion(CacheSpringVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
 
-            Cache cache = cacheManager.getCache("client");
+            Cache cache = cacheManager.getCache(CacheSpringKeys.CLIENT_KEY_PREFIX);
             if (cache != null) {
                 for (Long clientId : ids) {
-                    cache.evict("id:" + clientId);
+                    cache.evict(clientId);
                 }
             }
             versionService.bumpVersion(CacheSpringVersionKeys.CLIENTS_PAGE_VER_KEY);

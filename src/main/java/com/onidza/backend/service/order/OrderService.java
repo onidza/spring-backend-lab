@@ -4,8 +4,6 @@ import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
 
-import java.util.List;
-
 public interface OrderService {
 
     OrderDTO getOrderById(Long id);
@@ -20,5 +18,5 @@ public interface OrderService {
 
     void deleteOrderByOrderId(Long id);
 
-    List<OrderDTO> getOrdersByFilters(OrderFilterDTO filter);
+    OrdersPageDTO getOrdersByFilters(OrderFilterDTO filter, int page, int size);
 }

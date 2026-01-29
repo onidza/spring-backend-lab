@@ -37,20 +37,20 @@ class OrderServiceIntegrationIT extends AbstractITConfiguration {
         clientServiceImpl.addClient(inputClientDTO);
         clientServiceImpl.addClient(distinctInputClientDTO);
 
-        List<OrderDTO> result = orderServiceImpl.getOrdersByFilters(OrderDataFactory.createFilter());
+        OrdersPageDTO page = orderServiceImpl.getOrdersByFilters(OrderDataFactory.createFilter(), 0, 20);
 
-        Assertions.assertEquals(1, result.size());
-        Assertions.assertEquals(0, result.get(0).totalAmount().compareTo(new BigDecimal("1500")));
-        Assertions.assertEquals(OrderStatus.NEW, result.get(0).status());
-        Assertions.assertTrue(result.stream().allMatch(o -> o.status() == OrderStatus.NEW));
-        Assertions.assertTrue(result.stream().noneMatch(o -> o.status() == OrderStatus.CANCELLED));
+        Assertions.assertEquals(1, page.items().size());
+        Assertions.assertEquals(0, page.items().get(0).totalAmount().compareTo(new BigDecimal("1500")));
+        Assertions.assertEquals(OrderStatus.NEW, page.items().get(0).status());
+        Assertions.assertTrue(page.items().stream().allMatch(o -> o.status() == OrderStatus.NEW));
+        Assertions.assertTrue(page.items().stream().noneMatch(o -> o.status() == OrderStatus.CANCELLED));
 
-        Assertions.assertTrue(result.stream().allMatch(o ->
+        Assertions.assertTrue(page.items().stream().allMatch(o ->
                 !o.orderDate().isBefore(LocalDateTime.of(2019,1,1,12,0)) &&
                         !o.orderDate().isAfter(LocalDateTime.of(2021,1,1,12,0))
         ));
 
-        Assertions.assertTrue(result.stream().allMatch(o ->
+        Assertions.assertTrue(page.items().stream().allMatch(o ->
                 o.totalAmount().compareTo(BigDecimal.valueOf(100)) >= 0 &&
                         o.totalAmount().compareTo(BigDecimal.valueOf(999999)) <= 0
         ));
