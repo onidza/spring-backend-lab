@@ -1,10 +1,10 @@
 package com.onidza.backend.service.coupon;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.cache.config.manual.CacheManualKeys;
-import com.onidza.backend.cache.config.manual.CacheManualVersionKeys;
-import com.onidza.backend.cache.config.manual.CacheTtlProps;
-import com.onidza.backend.cache.config.CacheVersionService;
+import com.onidza.backend.config.cache.manual.CacheManualKeys;
+import com.onidza.backend.config.cache.manual.CacheManualVersionKeys;
+import com.onidza.backend.config.cache.manual.CacheTtlProps;
+import com.onidza.backend.config.cache.CacheVersionService;
 import com.onidza.backend.model.dto.coupon.CouponDTO;
 import com.onidza.backend.model.dto.coupon.CouponPageDTO;
 import com.onidza.backend.model.entity.Client;

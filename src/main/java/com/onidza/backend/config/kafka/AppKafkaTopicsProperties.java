@@ -1,4 +1,4 @@
-package com.onidza.backend.kafka.config;
+package com.onidza.backend.config.kafka;
 
 import lombok.Getter;
 import lombok.Setter;

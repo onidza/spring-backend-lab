@@ -1,4 +1,4 @@
-package com.onidza.backend.cache.config.manual;
+package com.onidza.backend.config.cache.manual;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

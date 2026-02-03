@@ -1,6 +1,6 @@
-package com.onidza.backend.cache.config.spring;
+package com.onidza.backend.config.cache.spring;
 
-import com.onidza.backend.cache.config.CacheVersionService;
+import com.onidza.backend.config.cache.CacheVersionService;
 import com.onidza.backend.model.dto.order.OrderStatus;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import org.springframework.cache.interceptor.KeyGenerator;

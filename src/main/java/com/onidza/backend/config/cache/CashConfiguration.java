@@ -1,8 +1,8 @@
-package com.onidza.backend.cache.config;
+package com.onidza.backend.config.cache;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.cache.config.spring.CacheSpringKeys;
+import com.onidza.backend.config.cache.spring.CacheSpringKeys;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.dto.coupon.CouponDTO;

@@ -1,4 +1,4 @@
-package com.onidza.backend.cache.config.spring;
+package com.onidza.backend.config.cache.spring;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

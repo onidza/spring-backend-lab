@@ -1,6 +1,6 @@
 package com.onidza.backend.service.client;
 
-import com.onidza.backend.cache.config.spring.CacheSpringKeys;
+import com.onidza.backend.config.cache.spring.CacheSpringKeys;
 import com.onidza.backend.model.dto.client.ClientActionPart;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;

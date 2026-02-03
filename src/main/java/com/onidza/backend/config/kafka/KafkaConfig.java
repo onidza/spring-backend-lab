@@ -1,4 +1,4 @@
-package com.onidza.backend.kafka.config;
+package com.onidza.backend.config.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.ProducerConfig;

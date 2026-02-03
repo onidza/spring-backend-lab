@@ -1,4 +1,4 @@
-package com.onidza.backend.kafka.config;
+package com.onidza.backend.config.kafka;
 
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;

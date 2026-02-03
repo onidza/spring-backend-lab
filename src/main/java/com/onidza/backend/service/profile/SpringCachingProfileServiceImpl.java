@@ -1,8 +1,8 @@
 package com.onidza.backend.service.profile;
 
-import com.onidza.backend.cache.config.CacheVersionService;
-import com.onidza.backend.cache.config.spring.CacheSpringKeys;
-import com.onidza.backend.cache.config.spring.CacheSpringVersionKeys;
+import com.onidza.backend.config.cache.CacheVersionService;
+import com.onidza.backend.config.cache.spring.CacheSpringKeys;
+import com.onidza.backend.config.cache.spring.CacheSpringVersionKeys;
 import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 import com.onidza.backend.model.entity.Client;

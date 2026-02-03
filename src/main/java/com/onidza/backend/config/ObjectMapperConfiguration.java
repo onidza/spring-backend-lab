@@ -1,4 +1,4 @@
-package com.onidza.backend.cache.config;
+package com.onidza.backend.config;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
