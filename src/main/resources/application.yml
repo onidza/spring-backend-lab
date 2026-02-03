@@ -30,6 +30,9 @@ spring:
       host: ${SPRING_REDIS_HOST}
       port: ${SPRING_REDIS_PORT}
 
+  kafka:
+    bootstrap-servers: localhost:9092
+
 management:
   endpoints:
     web:
@@ -52,3 +55,11 @@ app:
 
     get-profile-by-id: 1m
     get-profiles-page: 1m
+
+  kafka:
+    topics:
+      - name: orders.created
+        partitions: 3
+        replicationFactor: 1
+
+
