@@ -1,7 +1,7 @@
 package com.onidza.backend.controller;
 
 
-import com.onidza.backend.model.dto.order.OrderStatus;
+import com.onidza.backend.model.dto.enums.OrderStatus;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;

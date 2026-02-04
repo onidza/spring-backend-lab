@@ -3,7 +3,7 @@ package com.onidza.backend.model.dto.client;
 import com.onidza.backend.model.dto.coupon.CouponDTO;
 import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
-import com.onidza.backend.validation.UniqueEmail;
+import com.onidza.backend.util.validation.UniqueEmail;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;

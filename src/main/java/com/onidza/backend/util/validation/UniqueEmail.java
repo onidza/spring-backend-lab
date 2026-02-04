@@ -1,4 +1,4 @@
-package com.onidza.backend.validation;
+package com.onidza.backend.util.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;

@@ -1,5 +1,6 @@
 package com.onidza.backend.model.dto.order;
 
+import com.onidza.backend.model.dto.enums.OrderStatus;
 import com.onidza.backend.model.entity.Order;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.NotNull;

@@ -3,15 +3,19 @@ package com.onidza.backend.service.order;
 import com.onidza.backend.config.cache.CacheVersionService;
 import com.onidza.backend.config.cache.spring.CacheSpringKeys;
 import com.onidza.backend.config.cache.spring.CacheSpringVersionKeys;
+import com.onidza.backend.model.dto.order.OrderCreateEvent;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Order;
+import com.onidza.backend.model.entity.RetryableTask;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.repository.OrderRepository;
+import com.onidza.backend.repository.RetryableTaskRepository;
 import com.onidza.backend.service.TransactionAfterCommitExecutor;
+import com.onidza.backend.service.retryabletask.RetryableTaskService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +35,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -46,6 +51,8 @@ public class SpringCachingOrderServiceImpl implements OrderService {
 
     private static final String ORDER_NOT_FOUND = "Order not found";
     private static final String CLIENT_NOT_FOUND = "Client not found";
+
+    private final RetryableTaskService retryableTaskService;
 
     @Override
     @Transactional(readOnly = true)
@@ -155,6 +162,10 @@ public class SpringCachingOrderServiceImpl implements OrderService {
                     CacheSpringVersionKeys.ORDERS_FILTER_STATUS_KEY_VER
             );
         });
+
+
+        //todo
+
 
         return mapperService.orderToDTO(orderRepository.save(order));
     }
