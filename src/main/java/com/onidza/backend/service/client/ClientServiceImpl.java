@@ -1,8 +1,6 @@
 package com.onidza.backend.service.client;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.entity.Client;
@@ -27,8 +25,6 @@ public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
     private final MapperService mapperService;
-
-    private final ObjectMapper objectMapper; //todo чек и убрать
 
     @Override
     @Transactional(readOnly = true)
@@ -76,10 +72,6 @@ public class ClientServiceImpl implements ClientService {
         client.getProfile().setClient(client);
 
         Client saved = clientRepository.save(client);
-
-        log.info("ObjectMapper = {}", objectMapper); //todo чек и убрать
-        log.info("WRITE_DATES_AS_TIMESTAMPS = {}",
-                objectMapper.getSerializationConfig().isEnabled(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS));
 
         return mapperService.clientToDTO(saved);
     }

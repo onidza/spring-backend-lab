@@ -9,3 +9,17 @@ databaseChangeLog:
       file: db/changelog/changeset/004-add-indexes.sql
   - include:
       file: db/changelog/changeset/005-add-indexes.sql
+  - include:
+      file: db/changelog/changeset/006-create-retryable_task_table.sql
+  - include:
+      file: db/changelog/changeset/007-drop_old_retryable_task.sql
+  - include:
+      file: db/changelog/changeset/008-create_retryable_task_table_fixed.sql
+  - include:
+      file: db/changelog/changeset/009-drop_old_retryable_task.sql
+  - include:
+      file: db/changelog/changeset/010-create_retryable_task_table_fixed.sql
+  - include:
+      file: db/changelog/changeset/011-drop_old_retryable_task.sql
+  - include:
+      file: db/changelog/changeset/012-create_retryable_task_table_fixed.sql

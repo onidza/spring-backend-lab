@@ -1,5 +1,6 @@
 package com.onidza.backend.service.retryabletask;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.onidza.backend.model.dto.enums.RetryableTaskType;
 import com.onidza.backend.model.entity.Order;
 import com.onidza.backend.model.entity.RetryableTask;
@@ -14,12 +15,15 @@ public class RetryableTaskService {
 
     private final RetryableTaskRepository retryableTaskRepository;
     private final RetryableTaskMapper retryableTaskMapper;
+    private final ObjectMapper objectMapper;
 
     public RetryableTask save(Order order, RetryableTaskType type) {
-        RetryableTask retryableTask = retryableTaskMapper.toRetryableTask(order, type);
+        RetryableTask retryableTask = retryableTaskMapper.toRetryableTask(
+                order,
+                type,
+                objectMapper
+        );
+
         return retryableTaskRepository.save(retryableTask);
     }
-
-    // вернуть OrderCreateEvent чтобы через него проводить сериализацию, а то получается я граф потяну весь
-    //настроить бин objectMapper а весь контекст 1 раз todo
 }

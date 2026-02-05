@@ -13,7 +13,8 @@ TRUNCATE TABLE
     orders,
     clients,
     coupons,
-    profiles
+    profiles,
+    retryable_task
     RESTART IDENTITY;
 
 --------------------------- INSERTS (~10 000 000) -------------

@@ -11,7 +11,6 @@ import org.hibernate.annotations.ColumnTransformer;
 import java.time.Instant;
 
 @Generated
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Setter
 @Getter

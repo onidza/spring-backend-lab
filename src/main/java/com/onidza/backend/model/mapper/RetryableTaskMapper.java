@@ -2,7 +2,6 @@ package com.onidza.backend.model.mapper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.onidza.backend.model.dto.enums.RetryableTaskStatus;
 import com.onidza.backend.model.dto.enums.RetryableTaskType;
 import com.onidza.backend.model.entity.Order;
@@ -21,12 +20,10 @@ public interface RetryableTaskMapper {
     @Mapping(target = "uuid", expression = "java(UUID.randomUUID())")
     @Mapping(source = "order", target = "payload", qualifiedByName = "convertObjectToJson")
     @Mapping(target = "status", expression = "java(RetryableTaskStatus.IN_PROGRESS)")
-    RetryableTask toRetryableTask(Order order, RetryableTaskType type);
+    RetryableTask toRetryableTask(Order order, RetryableTaskType type, @Context ObjectMapper objectMapper);
 
     @Named("convertObjectToJson")
     default String convertObjectToJson(Order order, @Context ObjectMapper objectMapper) {
-        objectMapper.registerModule(new JavaTimeModule());
-
         try {
             return objectMapper.writeValueAsString(order);
         } catch (JsonProcessingException e) {
@@ -36,8 +33,6 @@ public interface RetryableTaskMapper {
 
     @Named("convertJsonToOrder")
     default Order convertJsonToOrder(String json, @Context ObjectMapper objectMapper) {
-        objectMapper.registerModule(new JavaTimeModule());
-
         try {
             return objectMapper.readValue(json, Order.class);
         } catch (JsonProcessingException e) {
