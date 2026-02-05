@@ -3,17 +3,16 @@ package com.onidza.backend.service.order;
 import com.onidza.backend.config.cache.CacheVersionService;
 import com.onidza.backend.config.cache.spring.CacheSpringKeys;
 import com.onidza.backend.config.cache.spring.CacheSpringVersionKeys;
+import com.onidza.backend.model.dto.enums.RetryableTaskType;
 import com.onidza.backend.model.dto.order.OrderCreateEvent;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Order;
-import com.onidza.backend.model.entity.RetryableTask;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.repository.OrderRepository;
-import com.onidza.backend.repository.RetryableTaskRepository;
 import com.onidza.backend.service.TransactionAfterCommitExecutor;
 import com.onidza.backend.service.retryabletask.RetryableTaskService;
 import jakarta.persistence.criteria.Predicate;
@@ -35,7 +34,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -163,9 +161,14 @@ public class SpringCachingOrderServiceImpl implements OrderService {
             );
         });
 
+        OrderCreateEvent event = OrderCreateEvent.builder()
+                .clientId(id)
+                .orderDate(order.getOrderDate())
+                .totalAmount(order.getTotalAmount())
+                .status(order.getStatus())
+                .build();
 
-        //todo
-
+        retryableTaskService.createRetryableTask(event, RetryableTaskType.SEND_CREATE_NOTIFICATION_REQUEST);
 
         return mapperService.orderToDTO(orderRepository.save(order));
     }

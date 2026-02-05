@@ -34,7 +34,7 @@ public class OrderController {
     @GetMapping("/order/{id}")
     public ResponseEntity<OrderDTO> getOrderById(
             @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Called getOrderById with id: {}", id);
 
@@ -45,7 +45,7 @@ public class OrderController {
 
     @GetMapping("/orders")
     public ResponseEntity<OrdersPageDTO> getOrdersPage(
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
@@ -58,7 +58,7 @@ public class OrderController {
     @GetMapping("/{id}/orders")
     public ResponseEntity<OrdersPageDTO> getOrdersPageByClientId(
             @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
@@ -72,7 +72,7 @@ public class OrderController {
     public ResponseEntity<OrderDTO> updateOrderByOrderId(
             @PathVariable Long id,
             @Valid @RequestBody OrderDTO orderDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Called updateOrderByOrderId with id: {}", id);
 
@@ -84,7 +84,7 @@ public class OrderController {
     public ResponseEntity<OrderDTO> addOrderToClient(
             @PathVariable Long id,
             @Valid @RequestBody OrderDTO orderDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Called addOrderToClient with id: {}", id);
 
@@ -96,7 +96,7 @@ public class OrderController {
     @DeleteMapping("/{id}/order")
     public ResponseEntity<Void> deleteOrderById(
             @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Called deleteOrderById with id: {}", id);
 
@@ -117,7 +117,7 @@ public class OrderController {
             @RequestParam(required = false) BigDecimal minAmount,
             @RequestParam(required = false) BigDecimal maxAmount,
 
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
 
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size

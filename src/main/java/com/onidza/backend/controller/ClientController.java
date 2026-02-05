@@ -27,7 +27,7 @@ public class ClientController {
     @GetMapping("/{id}")
     public ResponseEntity<ClientDTO> getClient(
             @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Controller called getClient with id: {}", id);
 
@@ -39,7 +39,7 @@ public class ClientController {
 
     @GetMapping
     public ResponseEntity<ClientsPageDTO> getClientsPage(
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
@@ -52,7 +52,7 @@ public class ClientController {
     @PostMapping
     public ResponseEntity<ClientDTO> addClient(
             @Valid @RequestBody ClientDTO clientDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Controller called addClient");
 
@@ -66,7 +66,7 @@ public class ClientController {
     public ResponseEntity<ClientDTO> updateClient(
             @PathVariable Long id,
             @RequestBody ClientDTO clientDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Controller called updateClient");
 
@@ -79,7 +79,7 @@ public class ClientController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteClientById(
             @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Controller called deleteClientById with id: {}", id);
 

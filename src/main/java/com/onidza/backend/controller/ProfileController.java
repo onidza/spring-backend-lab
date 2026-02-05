@@ -26,7 +26,7 @@ public class ProfileController {
     @GetMapping("/{id}/profile")
     public ResponseEntity<ProfileDTO> getProfile(
             @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Called getProfile with id: {}", id);
 
@@ -37,7 +37,7 @@ public class ProfileController {
 
     @GetMapping("/profiles")
     public ResponseEntity<ProfilesPageDTO> getProfilesPage(
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
@@ -52,7 +52,7 @@ public class ProfileController {
     public ResponseEntity<ProfileDTO> updateProfileToClient(
             @PathVariable Long id,
             @Valid @RequestBody ProfileDTO profileDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Called updateProfileToClient with id: {}", id);
 

@@ -28,7 +28,7 @@ public class CouponController {
     @GetMapping("/coupon/{id}")
     public ResponseEntity<CouponDTO> getCouponById(
             @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Controller called getCouponById with id: {}", id);
 
@@ -40,7 +40,7 @@ public class CouponController {
 
     @GetMapping("/coupons")
     public ResponseEntity<CouponPageDTO> getCouponsPage(
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
@@ -55,7 +55,7 @@ public class CouponController {
     @GetMapping("/{id}/coupons")
     public ResponseEntity<CouponPageDTO> getCouponsPageByClientId(
             @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode,
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
@@ -71,7 +71,7 @@ public class CouponController {
     public ResponseEntity<CouponDTO> addCouponToClientById(
             @PathVariable Long id,
             @Valid @RequestBody CouponDTO couponDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Controller called addCouponToClientById with id: {}", id);
 
@@ -85,7 +85,7 @@ public class CouponController {
     public ResponseEntity<CouponDTO> updateCouponByCouponId(
             @PathVariable Long id,
             @Valid @RequestBody CouponDTO couponDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Controller called updateCouponByCouponId with id: {}", id);
 
@@ -98,7 +98,7 @@ public class CouponController {
     @DeleteMapping("/{id}/coupon")
     public ResponseEntity<Void> deleteCouponById(
             @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "NON_CACHE") CacheMode cacheMode
+            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
     ) {
         log.info("Controller called deleteCouponById with id: {}", id);
 

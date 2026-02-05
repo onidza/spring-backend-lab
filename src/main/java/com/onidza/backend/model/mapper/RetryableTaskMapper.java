@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.onidza.backend.model.dto.enums.RetryableTaskStatus;
 import com.onidza.backend.model.dto.enums.RetryableTaskType;
-import com.onidza.backend.model.entity.Order;
+import com.onidza.backend.model.dto.order.OrderCreateEvent;
 import com.onidza.backend.model.entity.RetryableTask;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
@@ -18,25 +18,26 @@ import java.util.UUID;
 public interface RetryableTaskMapper {
 
     @Mapping(target = "uuid", expression = "java(UUID.randomUUID())")
-    @Mapping(source = "order", target = "payload", qualifiedByName = "convertObjectToJson")
+    @Mapping(source = "event", target = "payload", qualifiedByName = "convertEventToJson")
     @Mapping(target = "status", expression = "java(RetryableTaskStatus.IN_PROGRESS)")
-    RetryableTask toRetryableTask(Order order, RetryableTaskType type, @Context ObjectMapper objectMapper);
+    @Mapping(target = "retryTime", expression = "java(Instant.now())")
+    RetryableTask toRetryableTask(OrderCreateEvent event, RetryableTaskType type, @Context ObjectMapper objectMapper);
 
-    @Named("convertObjectToJson")
-    default String convertObjectToJson(Order order, @Context ObjectMapper objectMapper) {
+    @Named("convertEventToJson")
+    default String convertEventToJson(OrderCreateEvent event, @Context ObjectMapper objectMapper) {
         try {
-            return objectMapper.writeValueAsString(order);
+            return objectMapper.writeValueAsString(event);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Error converting Order to JSON", e);
+            throw new IllegalStateException("Error converting OrderCreateEvent to JSON", e);
         }
     }
 
-    @Named("convertJsonToOrder")
-    default Order convertJsonToOrder(String json, @Context ObjectMapper objectMapper) {
+    @Named("convertJsonToEvent")
+    default OrderCreateEvent convertJsonToEvent(String json, @Context ObjectMapper objectMapper) {
         try {
-            return objectMapper.readValue(json, Order.class);
+            return objectMapper.readValue(json, OrderCreateEvent.class);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to convert JSON to Order", e);
+            throw new IllegalStateException("Failed to convert JSON to OrderCreateEvent", e);
         }
     }
 }
