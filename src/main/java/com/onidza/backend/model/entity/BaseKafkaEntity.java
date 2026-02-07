@@ -28,6 +28,10 @@ public class BaseKafkaEntity implements Serializable {
     @CreatedDate
     private Instant createdAt;
 
+    /**
+     we can use it for validate our IN_PROGRESS stale tasks like in query:
+     WHERE status = IN_PROGRESS and updatedAt <= Instant.now() - delay
+    */
     @LastModifiedDate
     private Instant updatedAt;
 

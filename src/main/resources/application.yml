@@ -30,6 +30,13 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
+    producer:
+      acks: all
+      properties:
+        delivery.timeout.ms: 120000
+        request.timeout.ms: 30000
+        linger.ms: 5
+
 
 management:
   endpoints:
@@ -60,4 +67,6 @@ app:
         partitions: 3
         replicationFactor: 1
 
-
+retryable_task:
+  limit: 100
+  timeoutInSeconds: 600

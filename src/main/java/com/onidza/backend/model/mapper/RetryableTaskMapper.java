@@ -19,7 +19,7 @@ public interface RetryableTaskMapper {
 
     @Mapping(target = "uuid", expression = "java(UUID.randomUUID())")
     @Mapping(source = "event", target = "payload", qualifiedByName = "convertEventToJson")
-    @Mapping(target = "status", expression = "java(RetryableTaskStatus.IN_PROGRESS)")
+    @Mapping(target = "status", expression = "java(RetryableTaskStatus.RETRY)")
     @Mapping(target = "retryTime", expression = "java(Instant.now())")
     RetryableTask toRetryableTask(OrderCreateEvent event, RetryableTaskType type, @Context ObjectMapper objectMapper);
 

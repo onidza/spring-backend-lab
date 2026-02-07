@@ -168,7 +168,10 @@ public class SpringCachingOrderServiceImpl implements OrderService {
                 .status(order.getStatus())
                 .build();
 
-        retryableTaskService.createRetryableTask(event, RetryableTaskType.SEND_CREATE_NOTIFICATION_REQUEST);
+        retryableTaskService.createRetryableTask(
+                event,
+                RetryableTaskType.SEND_CREATE_NOTIFICATION_REQUEST
+        );
 
         return mapperService.orderToDTO(orderRepository.save(order));
     }
