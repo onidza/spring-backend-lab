@@ -4,14 +4,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+.env
+src/main/resources/db/changelog/sql-dump.sql
+node_modules
 
 ### IntelliJ IDEA ###
 .idea
@@ -31,7 +26,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-.env
-src/main/resources/db/changelog/sql-dump.sql
-node_modules

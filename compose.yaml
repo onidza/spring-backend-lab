@@ -3,8 +3,8 @@ services:
     image: 'postgres:18'
     environment:
       POSTGRES_DB: postgres
-      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:?set SPRING_DATASOURCE_USERNAME in .env}
-      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?set SPRING_DATASOURCE_PASSWORD in .env}
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:?need to set SPRING_DATASOURCE_USERNAME in .env} # ${VAR:?error message}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?need to set SPRING_DATASOURCE_PASSWORD in .env} # ${VAR:?error message}
     ports:
       - '5432:5432'
     volumes:
@@ -14,7 +14,7 @@ services:
     image: 'redis:7'
     restart: on-failure
     ports:
-      - "${SPRING_REDIS_PORT:-6379}:6379"
+      - "${SPRING_REDIS_PORT:-6379}:6379" # ${VAR:-default}
     depends_on:
       - postgres
 
