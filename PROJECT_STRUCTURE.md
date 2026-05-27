@@ -23,6 +23,8 @@
 `/mvnw text eol=lf` — `mvnw` должен быть с Linux-переносами строк.
 `*.cmd text eol=crlf` — Windows `.cmd`-файлы должны быть с Windows-переносами строк.
 
+`sql-dump.sql` - делал dump бд для init миграции, оставил на всякий.
+
 ## Environment
 
 `.env` — локальные переменные окружения: пароли, логины, порты.

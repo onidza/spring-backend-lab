@@ -8,11 +8,13 @@
         <version>3.5.7</version>
         <relativePath/>
     </parent>
+
     <groupId>com.onidza</groupId>
     <artifactId>spring-backend-lab</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>spring-backend-lab</name>
     <description>spring-backend-lab</description>
+
     <url/>
     <licenses>
         <license/>
@@ -26,8 +28,10 @@
         <tag/>
         <url/>
     </scm>
+
     <properties>
         <java.version>17</java.version>
+        <testcontainers.version>2.0.5</testcontainers.version>
     </properties>
 
     <dependencies>
@@ -68,19 +72,15 @@
             <scope>test</scope>
         </dependency>
 
+
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
+            <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
 
