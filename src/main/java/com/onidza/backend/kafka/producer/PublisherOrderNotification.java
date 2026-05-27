@@ -1,4 +1,4 @@
-package com.onidza.backend.kafka;
+package com.onidza.backend.kafka.producer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
