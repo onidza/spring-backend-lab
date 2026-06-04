@@ -73,5 +73,5 @@ app:
         replicationFactor: 1
 
 retryable_task:
-  limit: 100
-  timeoutInSeconds: 600
+  limit: 50
+  timeoutInSeconds: 30

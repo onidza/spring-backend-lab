@@ -1,9 +1,10 @@
 package com.onidza.backend.service.client;
 
-
+//todo need helper's methods for entity's
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.entity.Client;
+import com.onidza.backend.model.entity.Order;
 import com.onidza.backend.model.entity.Profile;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
@@ -17,6 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service

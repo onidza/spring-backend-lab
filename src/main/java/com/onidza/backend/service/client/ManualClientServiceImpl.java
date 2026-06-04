@@ -47,8 +47,6 @@ public class ManualClientServiceImpl implements ClientService {
     private final CacheVersionService versionService;
     private final TransactionAfterCommitExecutor afterCommitExecutor;
 
-    private final ApplicationEventPublisher publisher;
-
     private static final String CLIENT_NOT_FOUND = "Client not found";
 
     @Override

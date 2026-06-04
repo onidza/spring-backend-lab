@@ -28,7 +28,7 @@ import java.util.function.Function;
 
 @EnableCaching
 @Configuration
-public class CashConfiguration {
+public class CacheConfiguration {
 
     @Bean
     public RedisTemplate<String, Object> redisObjTemplate(
@@ -49,6 +49,16 @@ public class CashConfiguration {
         return template;
     }
 
+    /*
+ Дефолтную JDK-сериализацию в Redis-кэше обычно не любят потому что:
+1. Нужен implements Serializable у DTO.
+2. Формат нечитаемый в Redis.
+3. Формат жёстко завязан на Java.
+4. Плохо переживает изменения классов.
+5. Неудобно дебажить и смотреть данные руками.
+
+=> ниже переопределенный конфиг для spring cache
+*/
 
     @Bean
     public CacheManager cacheManager(
@@ -91,7 +101,9 @@ public class CashConfiguration {
                 .serializeValuesWith(json.apply(CouponPageDTO.class))
                 .entryTtl(Duration.ofMinutes(1)));
 
-        perCache.put(CacheSpringKeys.COUPONS_PAGE_BY_CLIENT_ID_PREFIX, base.entryTtl(Duration.ofMinutes(1)));
+        perCache.put(CacheSpringKeys.COUPONS_PAGE_BY_CLIENT_ID_PREFIX, base
+                .serializeValuesWith(json.apply(CouponPageDTO.class))
+                .entryTtl(Duration.ofMinutes(1)));
 
         perCache.put(CacheSpringKeys.ORDER_KEY_PREFIX, base
                 .serializeValuesWith(json.apply(OrderDTO.class))
@@ -122,6 +134,16 @@ public class CashConfiguration {
                 .withInitialCacheConfigurations(perCache)
                 .disableCreateOnMissingCache()
 //                .transactionAware()
+
+                /*
+Если используешь @CachePut/@CacheEvict на transactional-методах
+→ включи .transactionAware()
+
+Если сложная инвалидация через события
+→ оставь @TransactionalEventListener(AFTER_COMMIT)
+
+Если используешь оба подхода
+→ это нормально, но нужно явно понимать: аннотации чистят простые ключи, события чистят связанные/страничные кэши.*/
                 .build();
     }
 }
