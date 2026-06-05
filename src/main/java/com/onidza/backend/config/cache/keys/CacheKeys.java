@@ -1,10 +1,10 @@
-package com.onidza.backend.config.cache.spring;
+package com.onidza.backend.config.cache.keys;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-public final class CacheSpringKeys {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class CacheKeys {
 
     public static final String CLIENT_KEY_PREFIX = "client:id";
     public static final String CLIENTS_PAGE_PREFIX = "clientsPage";

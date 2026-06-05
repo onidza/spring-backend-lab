@@ -4,8 +4,6 @@ import com.onidza.backend.model.dto.enums.OrderStatus;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
-import com.onidza.backend.service.client.ClientServiceImpl;
-import com.onidza.backend.service.order.OrderServiceImpl;
 import com.onidza.backend.service.testcontainers.AbstractITConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

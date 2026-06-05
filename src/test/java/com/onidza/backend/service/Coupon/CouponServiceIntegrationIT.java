@@ -3,8 +3,6 @@ package com.onidza.backend.service.Coupon;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.coupon.CouponDTO;
 import com.onidza.backend.model.dto.coupon.CouponPageDTO;
-import com.onidza.backend.service.client.ClientServiceImpl;
-import com.onidza.backend.service.coupon.CouponServiceImpl;
 import com.onidza.backend.service.testcontainers.AbstractITConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

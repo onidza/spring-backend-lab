@@ -5,17 +5,18 @@ import com.onidza.backend.model.dto.enums.OrderStatus;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
-import com.onidza.backend.service.CacheMode;
-import com.onidza.backend.service.order.ManualOrderServiceImpl;
 import com.onidza.backend.service.order.OrderService;
 import com.onidza.backend.service.order.OrderServiceImpl;
-import com.onidza.backend.service.order.SpringCachingOrderServiceImpl;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -25,89 +26,77 @@ import java.time.LocalDateTime;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/clients")
+@Validated
 public class OrderController {
 
-    private final OrderServiceImpl orderServiceImpl;
-    private final ManualOrderServiceImpl manualOrderService;
-    private final SpringCachingOrderServiceImpl springCachingOrderService;
+    private final OrderService orderService;
 
     @GetMapping("/order/{id}")
     public ResponseEntity<OrderDTO> getOrderById(
-            @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
+            @PathVariable @Positive Long id
     ) {
-        log.info("Called getOrderById with id: {}", id);
+        log.info("OrderController called getOrderById with id = {}", id);
+        OrderDTO orderDTO = orderService.getOrderById(id);
 
-        OrderService service = resolveOrderService(cacheMode);
-        OrderDTO orderDTO = service.getOrderById(id);
         return ResponseEntity.ok(orderDTO);
     }
 
     @GetMapping("/orders")
     public ResponseEntity<OrdersPageDTO> getOrdersPage(
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(0) @Max(100) int size
     ) {
-        log.info("Called getOrdersPage");
+        log.info("OrderController called getOrdersPage, page = {}, size = {}", page, size);
 
-        OrderService service = resolveOrderService(cacheMode);
-        return ResponseEntity.ok(service.getOrdersPage(page, size));
+        return ResponseEntity.ok(orderService.getOrdersPage(page, size));
     }
 
     @GetMapping("/{id}/orders")
     public ResponseEntity<OrdersPageDTO> getOrdersPageByClientId(
-            @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @PathVariable @Positive Long id,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(0) @Max(100) int size
     ) {
-        log.info("Called getAllOrdersByClientId with id: {}", id);
+        log.info("OrderController called getOrdersPageByClientId with id = {}", id);
 
-        OrderService service = resolveOrderService(cacheMode);
-        return ResponseEntity.ok(service.getOrdersPageByClientId(id, page, size));
+        return ResponseEntity.ok(orderService.getOrdersPageByClientId(id, page, size));
     }
 
     @PutMapping("/{id}/order")
     public ResponseEntity<OrderDTO> updateOrderByOrderId(
-            @PathVariable Long id,
-            @Valid @RequestBody OrderDTO orderDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
+            @PathVariable @Positive Long id,
+            @Valid @RequestBody OrderDTO orderDTO
     ) {
-        log.info("Called updateOrderByOrderId with id: {}", id);
+        log.info("OrderController called updateOrderByOrderId with id = {}", id);
 
-        OrderService service = resolveOrderService(cacheMode);
-        return ResponseEntity.ok(service.updateOrderByOrderId(id, orderDTO));
+        return ResponseEntity.ok(orderService.updateOrderByOrderId(id, orderDTO));
     }
 
     @PostMapping("/{id}/order")
     public ResponseEntity<OrderDTO> addOrderToClient(
-            @PathVariable Long id,
-            @Valid @RequestBody OrderDTO orderDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
+            @PathVariable @Positive Long id,
+            @Valid @RequestBody OrderDTO orderDTO
     ) {
-        log.info("Called addOrderToClient with id: {}", id);
+        log.info("OrderController called addOrderToClient with id = {}", id);
+        OrderDTO order = orderService.addOrderToClient(id, orderDTO);
 
-        OrderService service = resolveOrderService(cacheMode);
-        OrderDTO order = service.addOrderToClient(id, orderDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
     @DeleteMapping("/{id}/order")
     public ResponseEntity<Void> deleteOrderById(
-            @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
+            @PathVariable @Positive Long id
     ) {
-        log.info("Called deleteOrderById with id: {}", id);
+        log.info("OrderController called deleteOrderById with id = {}", id);
+        orderService.deleteOrderByOrderId(id);
 
-        OrderService service = resolveOrderService(cacheMode);
-        service.deleteOrderByOrderId(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/orders/filtered")
     public ResponseEntity<OrdersPageDTO> findOrdersByFilters(
             @RequestParam(required = false) OrderStatus status,
+
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
 
@@ -117,12 +106,10 @@ public class OrderController {
             @RequestParam(required = false) BigDecimal minAmount,
             @RequestParam(required = false) BigDecimal maxAmount,
 
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
-
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(0) @Max(100) int size
     ) {
-        log.info("Called findOrdersByFilters with status: {}, fromDate {}, toDate {}, minAmount {}, maxAmount {}",
+        log.info("OrderController called findOrdersByFilters with status = {}, fromDate = {}, toDate = {}, minAmount = {}, maxAmount = {}",
                 status, fromDate, toDate, minAmount, maxAmount);
 
         OrderFilterDTO filter = new OrderFilterDTO(
@@ -132,15 +119,6 @@ public class OrderController {
                 minAmount,
                 maxAmount);
 
-        OrderService service = resolveOrderService(cacheMode);
-        return ResponseEntity.ok(service.getOrdersByFilters(filter, page, size));
-    }
-
-    private OrderService resolveOrderService(CacheMode cacheMode) {
-        return switch (cacheMode) {
-            case NON_CACHE -> orderServiceImpl;
-            case MANUAL -> manualOrderService;
-            case SPRING -> springCachingOrderService;
-        };
+        return ResponseEntity.ok(orderService.getOrdersByFilters(filter, page, size));
     }
 }

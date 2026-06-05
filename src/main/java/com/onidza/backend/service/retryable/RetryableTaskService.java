@@ -1,4 +1,4 @@
-package com.onidza.backend.service.retryabletask;
+package com.onidza.backend.service.retryable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.onidza.backend.model.dto.enums.RetryableTaskStatus;

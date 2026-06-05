@@ -3,7 +3,7 @@ package com.onidza.backend.kafka.producer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.onidza.backend.config.kafka.AppKafkaTopicsProperties;
-import com.onidza.backend.service.retryabletask.RetryableTaskService;
+import com.onidza.backend.service.retryable.RetryableTaskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;

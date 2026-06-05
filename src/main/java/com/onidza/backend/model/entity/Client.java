@@ -52,4 +52,14 @@ public class Client {
         this.registrationDate = LocalDateTime.now();
         this.profile = profile;
     }
+
+    public void setBidirectionalCouponClient(Coupon coupon) {
+        coupon.getClients().add(this);
+        this.coupons.add(coupon);
+    }
+
+    public void setBidirectionalOrderClient(Order order) {
+        order.setClient(this);
+        this.orders.add(order);
+    }
 }

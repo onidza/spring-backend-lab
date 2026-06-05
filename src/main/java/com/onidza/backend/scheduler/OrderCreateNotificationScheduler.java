@@ -3,7 +3,7 @@ package com.onidza.backend.scheduler;
 import com.onidza.backend.kafka.producer.PublisherOrderNotification;
 import com.onidza.backend.model.dto.enums.RetryableTaskStatus;
 import com.onidza.backend.model.entity.RetryableTask;
-import com.onidza.backend.service.retryabletask.RetryableTaskService;
+import com.onidza.backend.service.retryable.RetryableTaskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

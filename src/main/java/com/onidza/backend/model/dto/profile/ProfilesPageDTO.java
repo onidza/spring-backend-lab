@@ -6,5 +6,7 @@ public record ProfilesPageDTO(
         List<ProfileDTO> items,
         int page,
         int size,
+        long totalElements,
+        int totalPages,
         boolean hasNext
 ) {}

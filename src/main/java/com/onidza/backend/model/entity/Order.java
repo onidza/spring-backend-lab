@@ -39,4 +39,9 @@ public class Order {
         this.totalAmount = totalAmount;
         this.status = status;
     }
+
+    public void setBiClientOrder(Client client) {
+        this.client = client;
+        client.getOrders().add(this);
+    }
 }

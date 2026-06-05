@@ -29,4 +29,9 @@ public class Profile {
         this.address = address;
         this.phone = phone;
     }
+
+    public void updateInfo(String address, String phone) {
+        this.address = address;
+        this.phone = phone;
+    }
 }

@@ -9,5 +9,5 @@ public interface ProfileService {
 
     ProfilesPageDTO getProfilesPage(int page, int size);
 
-    ProfileDTO updateProfile(Long id, ProfileDTO profileDTO);
+    ProfileDTO updateProfileByClientId(Long id, ProfileDTO profileDTO);
 }

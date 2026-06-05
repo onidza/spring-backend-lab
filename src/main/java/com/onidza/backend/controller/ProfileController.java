@@ -2,70 +2,55 @@ package com.onidza.backend.controller;
 
 import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
-import com.onidza.backend.service.CacheMode;
-import com.onidza.backend.service.profile.ManualProfileServiceImpl;
 import com.onidza.backend.service.profile.ProfileService;
-import com.onidza.backend.service.profile.ProfileServiceImpl;
-import com.onidza.backend.service.profile.SpringCachingProfileServiceImpl;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
 @RequestMapping("/clients")
 @RequiredArgsConstructor
+@Validated
 public class ProfileController {
 
-    private final ProfileServiceImpl profileServiceImpl;
-    private final ManualProfileServiceImpl manualProfileService;
-    private final SpringCachingProfileServiceImpl springCachingProfileService;
+    private final ProfileService profileService;
 
     @GetMapping("/{id}/profile")
     public ResponseEntity<ProfileDTO> getProfile(
-            @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
+            @PathVariable @Positive Long id
     ) {
-        log.info("Called getProfile with id: {}", id);
+        log.info("ProfileService called getProfile with id = {}", id);
+        ProfileDTO profileDTO = profileService.getProfileById(id);
 
-        ProfileService service = resolveProfileService(cacheMode);
-        ProfileDTO profileDTO = service.getProfileById(id);
         return ResponseEntity.ok(profileDTO);
     }
 
     @GetMapping("/profiles")
     public ResponseEntity<ProfilesPageDTO> getProfilesPage(
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(0) @Max(100) int size
     ) {
-        log.info("Called getProfilesPage");
+        log.info("ProfileService called getProfilesPage, page = {}, size = {}", page, size);
+        ProfilesPageDTO profiles = profileService.getProfilesPage(page, size);
 
-        ProfileService service = resolveProfileService(cacheMode);
-        ProfilesPageDTO profiles = service.getProfilesPage(page, size);
         return ResponseEntity.ok(profiles);
     }
 
     @PutMapping("/{id}/profile")
-    public ResponseEntity<ProfileDTO> updateProfileToClient(
-            @PathVariable Long id,
-            @Valid @RequestBody ProfileDTO profileDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
+    public ResponseEntity<ProfileDTO> updateProfileByClientId(
+            @PathVariable @Positive Long id,
+            @Valid @RequestBody ProfileDTO profileDTO
     ) {
-        log.info("Called updateProfileToClient with id: {}", id);
+        log.info("ProfileService called updateProfileByClientId with id = {}", id);
+        ProfileDTO profile = profileService.updateProfileByClientId(id, profileDTO);
 
-        ProfileService service = resolveProfileService(cacheMode);
-        ProfileDTO profile = service.updateProfile(id, profileDTO);
         return ResponseEntity.ok(profile);
-    }
-
-    private ProfileService resolveProfileService(CacheMode cacheMode) {
-        return switch (cacheMode) {
-            case NON_CACHE -> profileServiceImpl;
-            case MANUAL -> manualProfileService;
-            case SPRING -> springCachingProfileService;
-        };
     }
 }

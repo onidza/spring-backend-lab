@@ -40,31 +40,12 @@ spring:
       properties:
         delivery.timeout.ms: 120000
         request.timeout.ms: 30000
-        linger.ms: 5
-
 
 management:
   endpoints:
     web:
       exposure:
         include: health, metrics, info, prometheus
-
-app:
-  cache:
-    client-by-id: 1m
-    get-clients-page: 1m
-
-    getCouponById: 1m
-    get-coupons-page: 1m
-    get-coupons-page-by-client-id: 1m
-
-    get-order-by-id: 1m
-    get-orders-page: 1m
-    get-orders-page-by-client-id: 1m
-    get-orders-by-filters: 30s
-
-    get-profile-by-id: 1m
-    get-profiles-page: 1m
 
   kafka:
     topics:

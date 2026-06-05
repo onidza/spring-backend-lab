@@ -1,18 +1,22 @@
-package com.onidza.backend.config.cache;
+package com.onidza.backend.service.cache;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
 public class CacheVersionService {
 
     private final StringRedisTemplate stringRedisTemplate;
+    private final CacheManager cacheManager;
 
     private static final DefaultRedisScript<Long> INCRBY_SET_TTL_IF_NO_TTL =
             new DefaultRedisScript<>(
@@ -48,5 +52,12 @@ public class CacheVersionService {
                 "1",
                 String.valueOf(ttlSeconds)
         );
+    }
+
+    public void evictCache(String region, Object key) {
+        Cache cache = cacheManager.getCache(region);
+        if (cache != null) {
+            cache.evict(key);
+        }
     }
 }

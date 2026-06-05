@@ -7,7 +7,6 @@ import com.onidza.backend.model.entity.Coupon;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.repository.CouponRepository;
-import com.onidza.backend.service.coupon.CouponServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

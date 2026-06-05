@@ -11,7 +11,7 @@ public interface ClientService {
 
     ClientDTO addClient(ClientDTO clientDTO);
 
-    ClientDTO updateClient(Long id, ClientDTO clientDTO);
+    ClientDTO updateClientById(Long id, ClientDTO clientDTO);
 
-    void deleteClient(Long id);
+    void deleteClientById(Long id);
 }

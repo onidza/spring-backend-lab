@@ -14,7 +14,7 @@ import org.mapstruct.Named;
 import java.time.Instant;
 import java.util.UUID;
 
-@Mapper(componentModel = "spring", imports = {UUID.class, Instant.class, RetryableTaskStatus.class})
+@Mapper(componentModel = "keys", imports = {UUID.class, Instant.class, RetryableTaskStatus.class})
 public interface RetryableTaskMapper {
 
     @Mapping(target = "uuid", expression = "java(UUID.randomUUID())")

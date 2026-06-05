@@ -2,16 +2,16 @@ package com.onidza.backend.controller;
 
 import com.onidza.backend.model.dto.coupon.CouponDTO;
 import com.onidza.backend.model.dto.coupon.CouponPageDTO;
-import com.onidza.backend.service.CacheMode;
 import com.onidza.backend.service.coupon.CouponService;
-import com.onidza.backend.service.coupon.CouponServiceImpl;
-import com.onidza.backend.service.coupon.ManualCouponServiceImpl;
-import com.onidza.backend.service.coupon.SpringCachingCouponServiceImpl;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -19,100 +19,72 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/clients")
+@Validated
 public class CouponController {
 
-    private final CouponServiceImpl couponServiceImpl;
-    private final ManualCouponServiceImpl manualCouponService;
-    private final SpringCachingCouponServiceImpl springCachingCouponService;
+    private final CouponService couponService;
 
     @GetMapping("/coupon/{id}")
     public ResponseEntity<CouponDTO> getCouponById(
-            @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
+            @PathVariable @Positive Long id
     ) {
-        log.info("Controller called getCouponById with id: {}", id);
-
-        CouponService service = resolveCouponService(cacheMode);
-        CouponDTO couponDTO = service.getCouponById(id);
-
+        log.info("CouponController called getCouponById with id = {}", id);
+        CouponDTO couponDTO = couponService.getCouponById(id);
         return ResponseEntity.ok(couponDTO);
     }
 
     @GetMapping("/coupons")
     public ResponseEntity<CouponPageDTO> getCouponsPage(
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
-        log.info("Controller called getCouponsPage, page={}, size={}", page, size);
-
-        CouponService service = resolveCouponService(cacheMode);
-        CouponPageDTO coupons = service.getCouponsPage(page, size);
+        log.info("CouponController called getCouponsPage, page = {}, size = {}", page, size);
+        CouponPageDTO coupons = couponService.getCouponsPage(page, size);
 
         return ResponseEntity.ok(coupons);
     }
 
     @GetMapping("/{id}/coupons")
     public ResponseEntity<CouponPageDTO> getCouponsPageByClientId(
-            @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @PathVariable @Positive Long id,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
-        log.info("Controller called getCouponsPageByClientId with id: {}", id);
-
-        CouponService service = resolveCouponService(cacheMode);
-        CouponPageDTO coupons = service.getCouponsPageByClientId(id, page, size);
+        log.info("CouponController called getCouponsPageByClientId with id = {}", id);
+        CouponPageDTO coupons = couponService.getCouponsPageByClientId(id, page, size);
 
         return ResponseEntity.ok(coupons);
     }
 
     @PostMapping("/{id}/coupons")
-    public ResponseEntity<CouponDTO> addCouponToClientById(
-            @PathVariable Long id,
-            @Valid @RequestBody CouponDTO couponDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
+    public ResponseEntity<CouponDTO> addCouponByClientId(
+            @PathVariable @Positive Long id,
+            @Valid @RequestBody CouponDTO couponDTO
     ) {
-        log.info("Controller called addCouponToClientById with id: {}", id);
-
-        CouponService service = resolveCouponService(cacheMode);
-        CouponDTO coupon = service.addCouponToClientByClientId(id, couponDTO);
+        log.info("CouponController called addCouponByClientId for client with id = {}", id);
+        CouponDTO coupon = couponService.addCouponToClientByClientId(id, couponDTO);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(coupon);
     }
 
     @PutMapping("/{id}/coupons")
     public ResponseEntity<CouponDTO> updateCouponByCouponId(
-            @PathVariable Long id,
-            @Valid @RequestBody CouponDTO couponDTO,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
+            @PathVariable @Positive Long id,
+            @Valid @RequestBody CouponDTO couponDTO
     ) {
-        log.info("Controller called updateCouponByCouponId with id: {}", id);
-
-        CouponService service = resolveCouponService(cacheMode);
-        CouponDTO coupon = service.updateCouponByCouponId(id, couponDTO);
+        log.info("CouponController called updateCouponByCouponId with id = {}", id);
+        CouponDTO coupon = couponService.updateCouponByCouponId(id, couponDTO);
 
         return ResponseEntity.ok(coupon);
     }
 
     @DeleteMapping("/{id}/coupon")
     public ResponseEntity<Void> deleteCouponById(
-            @PathVariable Long id,
-            @RequestParam(value = "cacheMode", defaultValue = "SPRING") CacheMode cacheMode
+            @PathVariable @Positive Long id
     ) {
-        log.info("Controller called deleteCouponById with id: {}", id);
-
-        CouponService service = resolveCouponService(cacheMode);
-        service.deleteCouponByCouponId(id);
+        log.info("CouponController called deleteCouponById with id = {}", id);
+        couponService.deleteCouponByCouponId(id);
 
         return ResponseEntity.noContent().build();
-    }
-
-    private CouponService resolveCouponService(CacheMode cacheMode) {
-        return switch (cacheMode) {
-            case NON_CACHE -> couponServiceImpl;
-            case MANUAL -> manualCouponService;
-            case SPRING -> springCachingCouponService;
-        };
     }
 }

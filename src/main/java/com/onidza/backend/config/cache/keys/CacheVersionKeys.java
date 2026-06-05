@@ -1,10 +1,10 @@
-package com.onidza.backend.config.cache.manual;
+package com.onidza.backend.config.cache.keys;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class CacheManualVersionKeys {
+public class CacheVersionKeys {
 
     public static final String CLIENTS_PAGE_VER_KEY = "clientPage:ver";
 

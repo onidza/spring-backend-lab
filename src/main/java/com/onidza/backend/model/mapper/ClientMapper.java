@@ -8,6 +8,7 @@ import com.onidza.backend.model.entity.Coupon;
 import com.onidza.backend.model.entity.Order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -40,7 +41,7 @@ public class ClientMapper {
                         .stream()
                         .map(couponMapper::toDTO)
                         .toList()
-                );
+        );
     }
 
     public Client toEntity(ClientDTO clientDTO) {
@@ -52,24 +53,21 @@ public class ClientMapper {
                 profileMapper.toEntity(clientDTO.profile())
         );
 
-        Set<Coupon> coupons = new HashSet<>();
-        if (clientDTO.coupons() != null) {
-            for (CouponDTO couponDTO : clientDTO.coupons()) {
-                Coupon coupon = couponMapper.toEntity(couponDTO);
-                coupon.getClients().add(client);
-                coupons.add(coupon);
-            }
-            client.setCoupons(coupons);
+        if (client.getProfile() != null)
+            client.getProfile().setClient(client);
+
+        if (!CollectionUtils.isEmpty(clientDTO.coupons())) {
+            clientDTO.coupons()
+                    .stream()
+                    .map(couponMapper::toEntity)
+                    .forEach(client::setBidirectionalCouponClient);
         }
 
-        Set<Order> orders = new HashSet<>();
-        if (clientDTO.orders() != null) {
-            for (OrderDTO orderDTO : clientDTO.orders()) {
-                Order order = orderMapper.toEntity(orderDTO);
-                order.setClient(client);
-                orders.add(order);
-            }
-            client.setOrders(orders);
+        if (!CollectionUtils.isEmpty(clientDTO.orders())) {
+            clientDTO.orders()
+                    .stream()
+                    .map(orderMapper::toEntity)
+                    .forEach(client::setBidirectionalOrderClient);
         }
 
         return client;
