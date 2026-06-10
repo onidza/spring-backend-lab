@@ -53,13 +53,23 @@ public class Client {
         this.profile = profile;
     }
 
-    public void setBidirectionalCouponClient(Coupon coupon) {
-        coupon.getClients().add(this);
-        this.coupons.add(coupon);
+    public void updateInfo(String name, String email) {
+        this.name = name;
+        this.email = email;
     }
 
     public void setBidirectionalOrderClient(Order order) {
         order.setClient(this);
         this.orders.add(order);
+    }
+
+    public void setBidirectionalCouponClient(Coupon coupon) {
+        coupon.getClients().add(this);
+        this.coupons.add(coupon);
+    }
+
+    public void removeBidirectionalCouponClient(Coupon coupon) {
+        coupon.getClients().remove(this);
+        this.coupons.remove(coupon);
     }
 }

@@ -2,6 +2,7 @@ package com.onidza.backend.service.client;
 
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
+import com.onidza.backend.model.dto.client.ClientsUpdateDTO;
 
 public interface ClientService {
 
@@ -11,7 +12,7 @@ public interface ClientService {
 
     ClientDTO addClient(ClientDTO clientDTO);
 
-    ClientDTO updateClientById(Long id, ClientDTO clientDTO);
+    ClientDTO updateClientById(Long id, ClientsUpdateDTO clientDTO);
 
     void deleteClientById(Long id);
 }

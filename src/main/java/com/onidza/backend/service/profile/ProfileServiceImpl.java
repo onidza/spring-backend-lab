@@ -27,7 +27,6 @@ public class ProfileServiceImpl implements ProfileService {
 
     private final ProfileRepository profileRepository;
     private final ClientRepository clientRepository;
-
     private final MapperService mapperService;
     private final ApplicationEventPublisher publisher;
 

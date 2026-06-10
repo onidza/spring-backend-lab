@@ -2,6 +2,7 @@ package com.onidza.backend.controller;
 
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
+import com.onidza.backend.model.dto.client.ClientsUpdateDTO;
 import com.onidza.backend.service.client.ClientService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -56,7 +57,7 @@ public class ClientController {
     @PutMapping("/{id}")
     public ResponseEntity<ClientDTO> updateClient(
             @PathVariable @Positive Long id,
-            @Valid @RequestBody ClientDTO clientDTO
+            @Valid @RequestBody ClientsUpdateDTO clientDTO
     ) {
         log.info("ClientController called updateClient with id = {}", id);
         ClientDTO updatedClient = clientService.updateClientById(id, clientDTO);

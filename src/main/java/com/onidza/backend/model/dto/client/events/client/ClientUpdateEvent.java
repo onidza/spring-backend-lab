@@ -7,8 +7,5 @@ import java.util.Set;
 
 public record ClientUpdateEvent(
         Long clientId,
-        Long profileId,
-        Set<Long> orderIdsToEvict,
-        Set<Long> couponIdsToEvict,
-        EnumSet<ActionPart> parts
+        Long profileId
 ) {}

@@ -6,7 +6,9 @@ import java.util.EnumSet;
 import java.util.Set;
 
 public record ClientDeletedEvent(
+        Long clientId,
         Long profileId,
-        EnumSet<ActionPart> parts,
-        Set<Long> orderIdsToEvict
+        Set<Long> orderIdsToEvict,
+        Set<Long> couponIdsToEvict,
+        EnumSet<ActionPart> parts
 ) {}
