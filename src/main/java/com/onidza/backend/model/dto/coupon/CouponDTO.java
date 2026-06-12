@@ -27,4 +27,5 @@ public record CouponDTO(
         LocalDateTime expirationDate,
 
         List<Long> clientsId
-) {}
+) {
+}

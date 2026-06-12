@@ -14,9 +14,9 @@ public interface OrderService {
 
     OrderDTO updateOrderByOrderId(Long id, OrderDTO orderDTO);
 
-    OrderDTO addOrderToClient(Long id, OrderDTO orderDTO);
+    OrderDTO addOrderToClientById(Long id, OrderDTO orderDTO);
 
     void deleteOrderByOrderId(Long id);
 
-    OrdersPageDTO getOrdersByFilters(OrderFilterDTO filter, int page, int size);
+    OrdersPageDTO getOrdersByFilter(OrderFilterDTO filter, int page, int size);
 }

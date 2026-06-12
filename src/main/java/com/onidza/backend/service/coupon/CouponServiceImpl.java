@@ -1,6 +1,5 @@
 package com.onidza.backend.service.coupon;
 
-import com.onidza.backend.service.cache.CacheVersionService;
 import com.onidza.backend.config.cache.keys.CacheKeys;
 import com.onidza.backend.config.cache.keys.CacheVersionKeys;
 import com.onidza.backend.model.dto.coupon.CouponDTO;
@@ -10,6 +9,7 @@ import com.onidza.backend.model.entity.Coupon;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.repository.CouponRepository;
+import com.onidza.backend.service.cache.CacheVersionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;

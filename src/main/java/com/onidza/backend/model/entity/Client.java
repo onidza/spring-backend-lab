@@ -58,17 +58,17 @@ public class Client {
         this.email = email;
     }
 
-    public void setBidirectionalOrderClient(Order order) {
+    public void setBiOrderClient(Order order) {
         order.setClient(this);
         this.orders.add(order);
     }
 
-    public void setBidirectionalCouponClient(Coupon coupon) {
+    public void setBiCouponClient(Coupon coupon) {
         coupon.getClients().add(this);
         this.coupons.add(coupon);
     }
 
-    public void removeBidirectionalCouponClient(Coupon coupon) {
+    public void removeBiCouponClient(Coupon coupon) {
         coupon.getClients().remove(this);
         this.coupons.remove(coupon);
     }

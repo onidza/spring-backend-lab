@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 /**
  * DTO for {@link Order}
- * */
+ **/
 
 @Generated
 public record OrderFilterDTO(
@@ -28,5 +28,5 @@ public record OrderFilterDTO(
 
         @PositiveOrZero
         BigDecimal maxAmount
-)
-{}
+) {
+}

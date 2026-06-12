@@ -14,4 +14,5 @@ public record OrderCreateEvent(
         LocalDateTime orderDate,
         BigDecimal totalAmount,
         OrderStatus status
-) {}
+) {
+}

@@ -9,4 +9,5 @@ public record OrdersPageDTO(
         long totalElements,
         int totalPages,
         boolean hasNext
-) {}
+) {
+}

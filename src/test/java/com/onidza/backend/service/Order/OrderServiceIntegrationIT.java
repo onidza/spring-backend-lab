@@ -106,7 +106,7 @@ class OrderServiceIntegrationIT extends AbstractITConfiguration {
     }
 
     @Test
-    void addOrderToClient_returnOrderDTOWithRelations() {
+    void addOrderToClient_returnOrderDTOWithRelationsById() {
         ClientDTO inputClientDTO = OrderDataFactory.createInputClientDTOWithEmptyOrders();
         OrderDTO orderDTOForAdd = OrderDataFactory.createOrderDTOForUpdate();
 

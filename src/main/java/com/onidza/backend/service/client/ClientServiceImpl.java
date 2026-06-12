@@ -4,15 +4,14 @@ import com.onidza.backend.config.cache.keys.CacheKeys;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.dto.client.ClientsUpdateDTO;
-import com.onidza.backend.model.dto.client.events.ActionPart;
-import com.onidza.backend.model.dto.client.events.client.ClientAddEvent;
-import com.onidza.backend.model.dto.client.events.client.ClientDeletedEvent;
-import com.onidza.backend.model.dto.client.events.client.ClientUpdateEvent;
+import com.onidza.backend.model.events.ActionPart;
+import com.onidza.backend.model.events.client.ClientAddEvent;
+import com.onidza.backend.model.events.client.ClientDeletedEvent;
+import com.onidza.backend.model.events.client.ClientUpdateEvent;
 import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Coupon;
 import com.onidza.backend.model.entity.Order;
-import com.onidza.backend.model.entity.Profile;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -145,8 +147,6 @@ public class ClientServiceImpl implements ClientService {
     private ClientAddEvent buildAddEvent(ClientDTO clientDTO) {
         EnumSet<ActionPart> parts = EnumSet.noneOf(ActionPart.class);
 
-        parts.add(ActionPart.PROFILE);
-
         if (!CollectionUtils.isEmpty(clientDTO.orders()))
             parts.add(ActionPart.ORDERS);
 
@@ -161,6 +161,17 @@ public class ClientServiceImpl implements ClientService {
                 existing.getId(),
                 existing.getProfile().getId()
         );
+    }
+
+    private void detachClientRelationsBeforeDelete(Client existing) {
+        if (existing.getCoupons().isEmpty()) {
+            return;
+        }
+
+        new HashSet<>(existing.getCoupons())
+                .forEach(existing::removeBiCouponClient);
+
+        existing.getCoupons().clear();
     }
 
     private void applyClientUpdate(
@@ -182,9 +193,7 @@ public class ClientServiceImpl implements ClientService {
             Client existing
     ) {
         EnumSet<ActionPart> parts = EnumSet.noneOf(ActionPart.class);
-
         Long profileId = existing.getProfile().getId();
-        parts.add(ActionPart.PROFILE);
 
         Set<Long> orderIds = existing.getOrders()
                 .stream()
@@ -213,16 +222,5 @@ public class ClientServiceImpl implements ClientService {
                 couponIds,
                 parts
         );
-    }
-
-    private void detachClientRelationsBeforeDelete(Client existing) {
-        if (existing.getCoupons().isEmpty()) {
-            return;
-        }
-
-        new HashSet<>(existing.getCoupons())
-                .forEach(existing::removeBidirectionalCouponClient);
-
-        existing.getCoupons().clear();
     }
 }

@@ -44,4 +44,14 @@ public class Order {
         this.client = client;
         client.getOrders().add(this);
     }
+
+    public void removeOrderFromClient() {
+        this.client.getOrders().remove(this);
+    }
+
+    public void updateOrder(LocalDateTime orderDate, BigDecimal totalAmount, OrderStatus status) {
+        this.orderDate = orderDate != null ? orderDate : this.orderDate;
+        this.totalAmount = totalAmount;
+        this.status = status;
+    }
 }

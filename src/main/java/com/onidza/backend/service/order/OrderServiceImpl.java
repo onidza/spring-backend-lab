@@ -1,10 +1,6 @@
 package com.onidza.backend.service.order;
 
-import com.onidza.backend.model.dto.client.events.ActionPart;
-import com.onidza.backend.model.dto.client.events.profile.ProfileAddEvent;
-import com.onidza.backend.service.cache.CacheVersionService;
 import com.onidza.backend.config.cache.keys.CacheKeys;
-import com.onidza.backend.config.cache.keys.CacheVersionKeys;
 import com.onidza.backend.model.dto.enums.RetryableTaskType;
 import com.onidza.backend.model.dto.order.OrderCreateEvent;
 import com.onidza.backend.model.dto.order.OrderDTO;
@@ -12,17 +8,17 @@ import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Order;
+import com.onidza.backend.model.events.order.OrderAddEvent;
+import com.onidza.backend.model.events.order.OrderDeleteEvent;
+import com.onidza.backend.model.events.order.OrderUpdateEvent;
 import com.onidza.backend.model.mapper.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.repository.OrderRepository;
 import com.onidza.backend.service.retryable.RetryableTaskService;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,12 +28,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
+import static com.onidza.backend.util.filters.OrderSpecification.*;
 
 @Slf4j
 @Service
@@ -61,7 +53,7 @@ public class OrderServiceImpl implements OrderService {
             key = "#id"
     )
     public OrderDTO getOrderById(Long id) {
-        log.info("OrderServiceImpl getOrderById with id = {}", id);
+        log.info("OrderServiceImpl called getOrderById with id = {}", id);
 
         return mapperService.orderToDTO(orderRepository.findById(id)
                 .orElseThrow(()
@@ -83,7 +75,9 @@ public class OrderServiceImpl implements OrderService {
                 Sort.by(Sort.Direction.ASC, "id")
         );
 
-        Page<OrderDTO> result = orderRepository.findAll(pageable).map(mapperService::orderToDTO);
+        Page<OrderDTO> result = orderRepository
+                .findAll(pageable)
+                .map(mapperService::orderToDTO);
 
         return new OrdersPageDTO(
                 result.getContent(),
@@ -101,8 +95,8 @@ public class OrderServiceImpl implements OrderService {
             cacheNames = CacheKeys.ORDERS_PAGE_BY_CLIENT_ID_PREFIX,
             keyGenerator = "orderPageByClientIdKeyGen"
     )
-    public OrdersPageDTO getOrdersPageByClientId(Long id, int page, int size) {
-        log.info("OrderServiceImpl called getOrdersPageByClientId with id = {}", id);
+    public OrdersPageDTO getOrdersPageByClientId(Long clientId, int page, int size) {
+        log.info("OrderServiceImpl called getOrdersPageByClientId with id = {}", clientId);
 
         Pageable pageable = PageRequest.of(
                 page,
@@ -111,7 +105,7 @@ public class OrderServiceImpl implements OrderService {
         );
 
         Page<OrderDTO> result = orderRepository
-                .findByClientId(id, pageable)
+                .findByClientId(clientId, pageable)
                 .map(mapperService::orderToDTO);
 
         return new OrdersPageDTO(
@@ -126,27 +120,20 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderDTO addOrderToClient(Long id, OrderDTO orderDTO) {
-        log.info("OrderServiceImpl called addOrderToClient with id = {}", id);
+    public OrderDTO addOrderToClientById(Long clientId, OrderDTO orderDTO) {
+        log.info("OrderServiceImpl called addOrderToClientById with id = {}", clientId);
 
-        Client client = clientRepository.findById(id)
+        Client client = clientRepository.findById(clientId)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND));
 
         Order order = mapperService.orderDTOToEntity(orderDTO);
         order.setBiClientOrder(client);
 
-        EnumSet<ActionPart> parts = EnumSet.noneOf(ActionPart.class);
-
-        if (orderDTO.clientId() != null)
-            parts.add(ActionPart.CLIENT);
-
-        parts.add(ActionPart.ORDERS);
-
-        publisher.publishEvent(new ProfileAddEvent(id, parts));
+        publisher.publishEvent(new OrderAddEvent(clientId));
 
         OrderCreateEvent kafkaEvent = OrderCreateEvent.builder()
-                .clientId(id)
+                .clientId(clientId)
                 .orderDate(order.getOrderDate())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
@@ -159,94 +146,44 @@ public class OrderServiceImpl implements OrderService {
 
         return mapperService.orderToDTO(orderRepository.save(order));
     }
-// тут остановился
+
     @Override
     @Transactional
-    @Caching(
-            put = {
-                    @CachePut(
-                            cacheNames = CacheKeys.ORDER_KEY_PREFIX,
-                            key = "#result.id()"
-                    ),
-                    @CachePut(
-                            cacheNames = CacheKeys.CLIENT_KEY_PREFIX,
-                            key = "#result.clientId()"
-                    )
-            }
+    @CachePut(
+            cacheNames = CacheKeys.ORDER_KEY_PREFIX,
+            key = "#orderId"
     )
-    public OrderDTO updateOrderByOrderId(Long id, OrderDTO orderDTO) {
-        log.info("Called updateOrderByOrderId with id: {}", id);
+    public OrderDTO updateOrderByOrderId(Long orderId, OrderDTO orderDTO) {
+        log.info("OrderServiceImpl called updateOrderByOrderId with id = {}", orderId);
 
-        Order order = orderRepository.findById(id)
+        Order existing = orderRepository.findById(orderId)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
 
-        order.setTotalAmount(orderDTO.totalAmount());
-        order.setStatus(orderDTO.status());
-        order.setOrderDate(orderDTO.orderDate());
+        existing.updateOrder(
+                orderDTO.orderDate(),
+                orderDTO.totalAmount(),
+                orderDTO.status()
+        );
 
-        afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+        publisher.publishEvent(new OrderUpdateEvent(existing.getClient().getId(), orderId));
 
-            log.info("Keys: {}, {}, {}, {} was incremented. Keys: {}, {} was invalidated.",
-                    CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
-                    CacheKeys.CLIENT_KEY_PREFIX,
-                    CacheKeys.ORDER_KEY_PREFIX
-            );
-        });
-
-        return mapperService.orderToDTO(order);
+        return mapperService.orderToDTO(existing);
     }
 
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                    @CacheEvict(
-                            cacheNames = CacheKeys.ORDER_KEY_PREFIX,
-                            key = "#id",
-                            condition = "#id > 0"
-                    ),
-                    @CacheEvict(
-                            cacheNames = CacheKeys.CLIENT_KEY_PREFIX,
-                            allEntries = true
-                    )
-            }
-    )
-    public void deleteOrderByOrderId(Long id) {
-        log.info("Called deleteOrderById with id: {}", id);
+    public void deleteOrderByOrderId(Long orderId) {
+        log.info("OrderServiceImpl called deleteOrderByOrderId with id = {}", orderId);
 
-        Order order = orderRepository.findById(id)
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
 
-        Client client = order.getClient();
-        if (client != null) {
-            client.getOrders().remove(order);
-        }
+        order.removeOrderFromClient();
 
-        afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
+        publisher.publishEvent(new OrderDeleteEvent(order.getClient().getId(), orderId));
 
-            log.info("Keys: {}, {}, {}, {} was incremented. Keys: {}, {} was invalidated.",
-                    CacheVersionKeys.ORDERS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER,
-                    CacheKeys.CLIENT_KEY_PREFIX,
-                    CacheKeys.ORDER_KEY_PREFIX
-            );
-        });
-
-        orderRepository.deleteById(id);
+        orderRepository.deleteById(orderId);
     }
 
     @Override
@@ -254,48 +191,23 @@ public class OrderServiceImpl implements OrderService {
     @Cacheable(
             cacheNames = CacheKeys.ORDERS_FILTER_STATUS_KEY_PREFIX,
             keyGenerator = "filterStatusKeyGen",
-            condition = "#filter.status() != null && #filter.fromDate() == null" +
-                    "&& #filter.toDate() == null && #filter.minAmount() == null" +
-                    "&& #filter.maxAmount() == null"
+            condition = "#root.target.isStatusOnlyFilter(filter)"
     )
-    public OrdersPageDTO getOrdersByFilters(OrderFilterDTO filter, int page, int size) {
-        log.info("Called getOrdersByFilters with filter: {}", filter);
-
-        int safeSize = Math.min(Math.max(size, 1), 20);
-        int safePage = Math.max(page, 0);
+    public OrdersPageDTO getOrdersByFilter(OrderFilterDTO filter, int page, int size) {
+        log.info("OrderServiceImpl called getOrdersByFilter with filter = {}", filter);
 
         Pageable pageable = PageRequest.of(
-                safePage,
-                safeSize,
+                page,
+                size,
                 Sort.by(Sort.Direction.ASC, "id"));
 
-        Specification<Order> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
+        Specification<Order> specification = hasStatus(filter.status())
+                .and(orderDateFrom(filter.fromDate()))
+                .and(orderDateTo(filter.toDate()))
+                .and(minAmount(filter.minAmount()))
+                .and(maxAmount(filter.maxAmount()));
 
-            if (filter.status() != null) {
-                predicates.add(cb.equal((root.get("status")), filter.status()));
-            }
-
-            if (filter.fromDate() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("orderDate"), filter.fromDate()));
-            }
-
-            if (filter.toDate() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("orderDate"), filter.toDate()));
-            }
-
-            if (filter.minAmount() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("totalAmount"), filter.minAmount()));
-            }
-
-            if (filter.maxAmount() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("totalAmount"), filter.maxAmount()));
-            }
-
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
-
-        Page<OrderDTO> result = orderRepository.findAll(spec, pageable)
+        Page<OrderDTO> result = orderRepository.findAll(specification, pageable)
                 .map(mapperService::orderToDTO);
 
         return new OrdersPageDTO(
@@ -306,5 +218,13 @@ public class OrderServiceImpl implements OrderService {
                 result.getTotalPages(),
                 result.hasNext()
         );
+    }
+
+    public boolean isStatusOnlyFilter(OrderFilterDTO filter) {
+        return filter.status() != null
+                && filter.fromDate() == null
+                && filter.toDate() == null
+                && filter.minAmount() == null
+                && filter.maxAmount() == null;
     }
 }

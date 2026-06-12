@@ -9,4 +9,5 @@ public record ProfilesPageDTO(
         long totalElements,
         int totalPages,
         boolean hasNext
-) {}
+) {
+}

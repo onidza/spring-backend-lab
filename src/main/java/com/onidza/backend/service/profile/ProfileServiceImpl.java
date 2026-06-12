@@ -1,7 +1,7 @@
 package com.onidza.backend.service.profile;
 
-import com.onidza.backend.model.dto.client.events.profile.ProfileUpdateEvent;
 import com.onidza.backend.config.cache.keys.CacheKeys;
+import com.onidza.backend.model.events.profile.ProfileUpdateEvent;
 import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 import com.onidza.backend.model.entity.Client;
@@ -14,7 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +30,7 @@ public class ProfileServiceImpl implements ProfileService {
 
     private final ProfileRepository profileRepository;
     private final ClientRepository clientRepository;
+
     private final MapperService mapperService;
     private final ApplicationEventPublisher publisher;
 
@@ -58,7 +62,7 @@ public class ProfileServiceImpl implements ProfileService {
                 size,
                 Sort.by(Sort.Direction.ASC, "id"));
 
-        Page<ProfileDTO> result =  profileRepository.findAllProfiles(pageable)
+        Page<ProfileDTO> result = profileRepository.findAllProfiles(pageable)
                 .map(mapperService::profileToDTO);
 
         return new ProfilesPageDTO(
@@ -77,20 +81,17 @@ public class ProfileServiceImpl implements ProfileService {
             cacheNames = CacheKeys.PROFILE_KEY_PREFIX,
             key = "#result.id()"
     )
-    public ProfileDTO updateProfileByClientId(Long id, ProfileDTO profileDTO) {
-        log.info("ProfileServiceImpl called updateProfileByClientId with id: {}", id);
+    public ProfileDTO updateProfileByClientId(Long clientId, ProfileDTO profileDTO) {
+        log.info("ProfileServiceImpl called updateProfileByClientId with id = {}", clientId);
 
-        Client client = clientRepository.findById(id)
+        Client client = clientRepository.findById(clientId)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
 
         Profile profile = client.getProfile();
+        profile.updateInfo(profileDTO.address(), profileDTO.phone());
 
-        if (profile != null)
-            profile.updateInfo(profileDTO.address(), profileDTO.phone());
-        else throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Client hasn't a profile");
-
-        publisher.publishEvent(new ProfileUpdateEvent(id));
+        publisher.publishEvent(new ProfileUpdateEvent(clientId));
 
         return mapperService.profileToDTO(profile);
     }

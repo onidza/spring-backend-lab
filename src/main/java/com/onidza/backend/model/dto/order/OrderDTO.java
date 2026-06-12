@@ -30,4 +30,5 @@ public record OrderDTO(
         OrderStatus status,
 
         Long clientId
-) {}
+) {
+}

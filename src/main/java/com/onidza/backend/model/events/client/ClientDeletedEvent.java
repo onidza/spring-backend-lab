@@ -1,6 +1,6 @@
-package com.onidza.backend.model.dto.client.events.client;
+package com.onidza.backend.model.events.client;
 
-import com.onidza.backend.model.dto.client.events.ActionPart;
+import com.onidza.backend.model.events.ActionPart;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -11,4 +11,5 @@ public record ClientDeletedEvent(
         Set<Long> orderIdsToEvict,
         Set<Long> couponIdsToEvict,
         EnumSet<ActionPart> parts
-) {}
+) {
+}

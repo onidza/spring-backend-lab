@@ -7,4 +7,5 @@ public record CouponPageDTO(
         int page,
         int size,
         boolean hasNext
-) {}
+) {
+}

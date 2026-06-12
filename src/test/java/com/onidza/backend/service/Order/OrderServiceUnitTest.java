@@ -265,7 +265,7 @@ class OrderServiceUnitTest {
     }
 
     @Test
-    void addOrderToClient_returnOrderDTOWithRelations() {
+    void addOrderToClient_returnOrderDTOWithRelationsById() {
         Client client = OrderDataFactory.createPersistClientEntityWithEmptyOrders();
         OrderDTO orderDTOForAdd = OrderDataFactory.createOrderDTOForUpdate();
         Order orderEntityForAdd = OrderDataFactory.createPersistentOrderEntityForAdd();
@@ -295,7 +295,7 @@ class OrderServiceUnitTest {
     }
 
     @Test
-    void addOrderToClient_ClientNotFound_throwsExceptions() {
+    void addOrderToClient_ClientByIdNotFound_throwsExceptions() {
         OrderDTO orderDTOForAdd = OrderDataFactory.createOrderDTOForUpdate();
 
         Mockito.when(clientRepository.findById(1L))

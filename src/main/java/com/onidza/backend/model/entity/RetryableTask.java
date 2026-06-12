@@ -4,8 +4,13 @@ import com.onidza.backend.model.dto.enums.RetryableTaskStatus;
 import com.onidza.backend.model.dto.enums.RetryableTaskType;
 import com.onidza.backend.util.converters.RetryableTaskStatusConverter;
 import com.onidza.backend.util.converters.RetryableTaskTypeConverter;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Generated;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnTransformer;
 
 import java.time.Instant;

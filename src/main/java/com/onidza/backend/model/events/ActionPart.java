@@ -1,3 +1,3 @@
-package com.onidza.backend.model.dto.client.events;
+package com.onidza.backend.model.events;
 
 public enum ActionPart {CLIENT, PROFILE, COUPONS, ORDERS}

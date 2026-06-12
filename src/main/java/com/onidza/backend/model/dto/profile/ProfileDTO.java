@@ -25,4 +25,5 @@ public record ProfileDTO(
         String phone,
 
         Long clientId
-) {}
+) {
+}

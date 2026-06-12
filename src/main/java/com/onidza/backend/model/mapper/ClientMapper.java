@@ -1,17 +1,10 @@
 package com.onidza.backend.model.mapper;
 
 import com.onidza.backend.model.dto.client.ClientDTO;
-import com.onidza.backend.model.dto.coupon.CouponDTO;
-import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.entity.Client;
-import com.onidza.backend.model.entity.Coupon;
-import com.onidza.backend.model.entity.Order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -60,14 +53,14 @@ public class ClientMapper {
             clientDTO.coupons()
                     .stream()
                     .map(couponMapper::toEntity)
-                    .forEach(client::setBidirectionalCouponClient);
+                    .forEach(client::setBiCouponClient);
         }
 
         if (!CollectionUtils.isEmpty(clientDTO.orders())) {
             clientDTO.orders()
                     .stream()
                     .map(orderMapper::toEntity)
-                    .forEach(client::setBidirectionalOrderClient);
+                    .forEach(client::setBiOrderClient);
         }
 
         return client;

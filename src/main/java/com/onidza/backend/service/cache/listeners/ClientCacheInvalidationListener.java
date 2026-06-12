@@ -1,15 +1,14 @@
-package com.onidza.backend.service.cache;
+package com.onidza.backend.service.cache.listeners;
 
 import com.onidza.backend.config.cache.keys.CacheKeys;
 import com.onidza.backend.config.cache.keys.CacheVersionKeys;
-import com.onidza.backend.model.dto.client.events.ActionPart;
-import com.onidza.backend.model.dto.client.events.client.ClientAddEvent;
-import com.onidza.backend.model.dto.client.events.client.ClientDeletedEvent;
-import com.onidza.backend.model.dto.client.events.client.ClientUpdateEvent;
+import com.onidza.backend.model.events.ActionPart;
+import com.onidza.backend.model.events.client.ClientAddEvent;
+import com.onidza.backend.model.events.client.ClientDeletedEvent;
+import com.onidza.backend.model.events.client.ClientUpdateEvent;
+import com.onidza.backend.service.cache.CacheVersionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;

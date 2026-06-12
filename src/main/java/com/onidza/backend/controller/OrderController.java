@@ -6,7 +6,6 @@ import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
 import com.onidza.backend.service.order.OrderService;
-import com.onidza.backend.service.order.OrderServiceImpl;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -78,7 +77,7 @@ public class OrderController {
             @Valid @RequestBody OrderDTO orderDTO
     ) {
         log.info("OrderController called addOrderToClient with id = {}", id);
-        OrderDTO order = orderService.addOrderToClient(id, orderDTO);
+        OrderDTO order = orderService.addOrderToClientById(id, orderDTO);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
@@ -109,7 +108,8 @@ public class OrderController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(0) @Max(100) int size
     ) {
-        log.info("OrderController called findOrdersByFilters with status = {}, fromDate = {}, toDate = {}, minAmount = {}, maxAmount = {}",
+        log.info("OrderController called findOrdersByFilters with status = {}, " +
+                        "fromDate = {}, toDate = {}, minAmount = {}, maxAmount = {}",
                 status, fromDate, toDate, minAmount, maxAmount);
 
         OrderFilterDTO filter = new OrderFilterDTO(
@@ -117,8 +117,9 @@ public class OrderController {
                 fromDate,
                 toDate,
                 minAmount,
-                maxAmount);
+                maxAmount
+        );
 
-        return ResponseEntity.ok(orderService.getOrdersByFilters(filter, page, size));
+        return ResponseEntity.ok(orderService.getOrdersByFilter(filter, page, size));
     }
 }
