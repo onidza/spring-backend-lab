@@ -1,13 +1,15 @@
 package com.onidza.backend.model.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Generated
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

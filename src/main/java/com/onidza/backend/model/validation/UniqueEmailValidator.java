@@ -1,4 +1,4 @@
-package com.onidza.backend.util.validation;
+package com.onidza.backend.model.validation;
 
 import com.onidza.backend.repository.ClientRepository;
 import jakarta.validation.ConstraintValidator;

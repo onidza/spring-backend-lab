@@ -5,9 +5,9 @@ import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 
 public interface ProfileService {
 
-    ProfileDTO getProfileById(Long id);
+    ProfileDTO getProfile(Long id);
 
     ProfilesPageDTO getProfilesPage(int page, int size);
 
-    ProfileDTO updateProfileByClientId(Long id, ProfileDTO profileDTO);
+    ProfileDTO updateProfile(Long id, ProfileDTO profileDTO);
 }

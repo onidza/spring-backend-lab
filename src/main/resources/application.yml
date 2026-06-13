@@ -47,12 +47,13 @@ management:
       exposure:
         include: health, metrics, info, prometheus
 
+app:
   kafka:
     topics:
       - name: orders-notification
         partitions: 3
-        replicationFactor: 1
+        replication-factor: 1
 
 retryable_task:
-  limit: 50
   timeoutInSeconds: 30
+  limit: 50

@@ -1,21 +1,14 @@
 package com.onidza.backend.model.dto.order;
 
-import com.onidza.backend.model.dto.enums.OrderStatus;
-import com.onidza.backend.model.entity.Order;
+import com.onidza.backend.model.enums.OrderStatus;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
-import lombok.Generated;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * DTO for {@link Order}
- * */
-
-@Generated
 public record OrderDTO(
         Long id,
 

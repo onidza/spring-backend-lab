@@ -3,22 +3,15 @@ package com.onidza.backend.model.dto.client;
 import com.onidza.backend.model.dto.coupon.CouponDTO;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.profile.ProfileDTO;
-import com.onidza.backend.model.entity.Client;
-import com.onidza.backend.util.validation.UniqueEmail;
+import com.onidza.backend.model.validation.UniqueEmail;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Generated;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * DTO for {@link Client}
- * */
-
-@Generated
 public record ClientDTO(
         Long id,
 

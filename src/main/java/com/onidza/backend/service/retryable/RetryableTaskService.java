@@ -1,11 +1,11 @@
 package com.onidza.backend.service.retryable;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onidza.backend.model.dto.enums.RetryableTaskStatus;
-import com.onidza.backend.model.dto.enums.RetryableTaskType;
-import com.onidza.backend.model.dto.order.OrderCreateEvent;
+import com.onidza.backend.model.dto.kafka.OrderCreateEvent;
 import com.onidza.backend.model.entity.RetryableTask;
-import com.onidza.backend.model.mapper.RetryableTaskMapper;
+import com.onidza.backend.model.enums.RetryableTaskStatus;
+import com.onidza.backend.model.enums.RetryableTaskType;
 import com.onidza.backend.repository.RetryableTaskRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,6 @@ import java.util.UUID;
 public class RetryableTaskService {
 
     private final RetryableTaskRepository retryableTaskRepository;
-    private final RetryableTaskMapper retryableTaskMapper;
     private final ObjectMapper objectMapper;
 
     @Value("${retryable_task.timeoutInSeconds}")
@@ -37,13 +36,9 @@ public class RetryableTaskService {
 
     @Transactional
     public void createRetryableTask(OrderCreateEvent event, RetryableTaskType type) {
-        RetryableTask retryableTask = retryableTaskMapper.toRetryableTask(
-                event,
-                type,
-                objectMapper
-        );
+        RetryableTask retryableTask = RetryableTask.retry(toJson(event), type);
+        log.info("RetryableTask = {} was created", retryableTask);
 
-        log.info("RetryableTask with uuid: {} was saved in db.", retryableTask.getUuid());
         retryableTaskRepository.save(retryableTask);
     }
 
@@ -79,5 +74,14 @@ public class RetryableTaskService {
 
         existingTask.setStatus(RetryableTaskStatus.SUCCESS);
         log.info("RetryableTask {} status updated to SUCCESS", uuid);
+    }
+
+    private String toJson(OrderCreateEvent event) {
+        try {
+            return objectMapper.writeValueAsString(event);
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize OrderCreateEvent: event = {}", event, e);
+            throw new IllegalStateException("Failed to serialize OrderCreateEvent", e);
+        }
     }
 }

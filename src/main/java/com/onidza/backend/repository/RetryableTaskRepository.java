@@ -1,7 +1,7 @@
 package com.onidza.backend.repository;
 
-import com.onidza.backend.model.dto.enums.RetryableTaskStatus;
 import com.onidza.backend.model.entity.RetryableTask;
+import com.onidza.backend.model.enums.RetryableTaskStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,4 +1,4 @@
-package com.onidza.backend.model.dto.enums;
+package com.onidza.backend.model.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,45 +1,43 @@
 package com.onidza.backend.service.coupon;
 
 import com.onidza.backend.config.cache.keys.CacheKeys;
-import com.onidza.backend.config.cache.keys.CacheVersionKeys;
 import com.onidza.backend.model.dto.coupon.CouponDTO;
 import com.onidza.backend.model.dto.coupon.CouponPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Coupon;
-import com.onidza.backend.model.mapper.MapperService;
+import com.onidza.backend.model.events.coupon.CouponAddEvent;
+import com.onidza.backend.model.events.coupon.CouponDeleteEvent;
+import com.onidza.backend.model.events.coupon.CouponUpdateEvent;
+import com.onidza.backend.model.mappers.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.repository.CouponRepository;
-import com.onidza.backend.service.cache.CacheVersionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CouponServiceImpl implements CouponService {
 
-    private final MapperService mapperService;
     private final CouponRepository couponRepository;
     private final ClientRepository clientRepository;
 
-    private final TransactionAfterCommitExecutor afterCommitExecutor;
-    private final CacheVersionService versionService;
-    private final CacheManager cacheManager;
+    private final ApplicationEventPublisher publisher;
+    private final MapperService mapperService;
 
     private static final String COUPON_NOT_FOUND = "Coupon not found";
 
@@ -47,11 +45,10 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames = CacheKeys.COUPON_KEY_PREFIX,
-            key = "#id",
-            condition = "#id > 0"
+            key = "#id"
     )
-    public CouponDTO getCouponById(Long id) {
-        log.info("Service called getCouponByCouponId with id: {}", id);
+    public CouponDTO getCoupon(Long id) {
+        log.info("CouponServiceImpl called getCoupon with id = {}", id);
 
         return mapperService.couponToDTO(couponRepository.findById(id)
                 .orElseThrow(()
@@ -65,24 +62,23 @@ public class CouponServiceImpl implements CouponService {
             keyGenerator = "couponPageKeyGen"
     )
     public CouponPageDTO getCouponsPage(int page, int size) {
-        log.info("Service called getCouponsPage");
-
-        int safeSize = Math.min(Math.max(size, 1), 20);
-        int safePage = Math.max(page, 0);
+        log.info("CouponServiceImpl called getCouponsPage, page = {}, size = {}", page, size);
 
         Pageable pageable = PageRequest.of(
-                safePage,
-                safeSize,
+                page,
+                size,
                 Sort.by(Sort.Direction.ASC, "id")
         );
 
-        Slice<CouponDTO> result = couponRepository.findAll(pageable)
+        Page<CouponDTO> result = couponRepository.findAll(pageable)
                 .map(mapperService::couponToDTO);
 
         return new CouponPageDTO(
                 result.getContent(),
                 result.getNumber(),
                 result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
                 result.hasNext()
         );
     }
@@ -91,153 +87,101 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames = CacheKeys.COUPONS_PAGE_BY_CLIENT_ID_PREFIX,
-            keyGenerator = "couponPageByClientIdKeyGen",
-            condition = "#id > 0"
+            keyGenerator = "couponPageByClientIdKeyGen"
     )
-    public CouponPageDTO getCouponsPageByClientId(Long id, int page, int size) {
-        log.info("Service called getCouponsPageByClientId with id: {}", id);
-
-        int safeSize = Math.min(Math.max(size, 1), 20);
-        int safePage = Math.max(page, 0);
+    public CouponPageDTO getCouponsByClientIdPage(Long clientId, int page, int size) {
+        log.info("CouponServiceImpl called getCouponsByClientIdPage with id = {}", clientId);
 
         Pageable pageable = PageRequest.of(
-                safePage,
-                safeSize,
+                page,
+                size,
                 Sort.by(Sort.Direction.ASC, "id")
         );
 
-        Slice<CouponDTO> result = couponRepository.findByClientsId(id, pageable)
+        Page<CouponDTO> result = couponRepository.findDistinctByClientsId(clientId, pageable)
                 .map(mapperService::couponToDTO);
 
         return new CouponPageDTO(
                 result.getContent(),
                 result.getNumber(),
                 result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
                 result.hasNext()
         );
     }
 
     @Override
     @Transactional
-    @CacheEvict(
-            cacheNames = CacheKeys.CLIENT_KEY_PREFIX,
-            key = "#id",
-            condition = "#id > 0"
-    )
-    public CouponDTO addCouponToClientByClientId(Long id, CouponDTO couponDTO) {
-        log.info("Service called addCouponToClientById with id: {}", id);
+    public CouponDTO createCouponForClient(Long clientId, CouponDTO couponDTO) {
+        log.info("CouponServiceImpl called createCouponForClient with id = {}", clientId);
 
-        Client client = clientRepository.findById(id)
+        Client client = clientRepository.findById(clientId)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found"));
 
         Coupon coupon = mapperService.couponDTOToEntity(couponDTO);
-        coupon.getClients().add(client);
-        client.getCoupons().add(coupon);
+        Coupon savedCoupon = couponRepository.save(coupon);
 
-        afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
+        client.setBiCouponClient(savedCoupon);
 
-            log.info("Keys: {}, {}, {} was incremented.",
-                    CacheVersionKeys.COUPON_PAGE_VER_KEY,
-                    CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY
-            );
-        });
+        publisher.publishEvent(new CouponAddEvent(clientId));
 
-        return mapperService.couponToDTO(couponRepository.save(coupon));
+        return mapperService.couponToDTO(savedCoupon);
     }
 
     @Override
     @Transactional
     @CachePut(
             cacheNames = CacheKeys.COUPON_KEY_PREFIX,
-            key = "#result.id()",
-            condition = "#id > 0"
+            key = "#couponId"
     )
-    public CouponDTO updateCouponByCouponId(Long id, CouponDTO couponDTO) {
-        log.info("Service called updateCouponByCouponId with id: {}", id);
+    public CouponDTO updateCoupon(Long couponId, CouponDTO couponDTO) {
+        log.info("CouponServiceImpl called updateCoupon with id = {}", couponId);
 
-        Coupon coupon = couponRepository.findById(id)
+        Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND));
 
-        coupon.setCode(couponDTO.code());
-        coupon.setDiscount(couponDTO.discount());
-        coupon.setExpirationDate(couponDTO.expirationDate());
+        coupon.updateCoupon(mapperService.couponDTOToEntity(couponDTO));
 
-        CouponDTO result = mapperService.couponToDTO(coupon);
-        List<Long> ids = result.clientsId();
+        CouponUpdateEvent event = buildCouponUpdateEvent(coupon);
+        publisher.publishEvent(event);
 
-        afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
-
-            Cache cache = cacheManager.getCache(CacheKeys.CLIENT_KEY_PREFIX);
-            if (cache != null) {
-                for (Long clientId : ids) {
-                    cache.evict(clientId);
-                }
-            }
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-
-            log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated.",
-                    CacheVersionKeys.COUPON_PAGE_VER_KEY,
-                    CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheKeys.CLIENT_KEY_PREFIX
-            );
-        });
-
-        return result;
+        return mapperService.couponToDTO(coupon);
     }
 
     @Override
     @Transactional
-    @CacheEvict(
-            cacheNames = CacheKeys.COUPON_KEY_PREFIX,
-            key = "#id",
-            condition = "#id > 0"
-    )
-    public void deleteCouponByCouponId(Long id) {
-        log.info("Service called deleteCouponById with id: {}", id);
+    public void deleteCoupon(Long couponId) {
+        log.info("CouponServiceImpl called deleteCoupon with id = {}", couponId);
 
-        Coupon coupon = couponRepository.findById(id)
+        Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, COUPON_NOT_FOUND));
 
-        List<Client> clients = coupon.getClients();
+        CouponDeleteEvent event = buildCouponDeleteEvent(coupon);
+        publisher.publishEvent(event);
 
-        List<Long> ids = clients
+        coupon.deleteCouponFromClients();
+        couponRepository.deleteById(couponId);
+    }
+
+    private CouponDeleteEvent buildCouponDeleteEvent(Coupon coupon) {
+        Set<Long> clientIds = coupon.getClients()
                 .stream()
                 .map(Client::getId)
-                .toList();
+                .collect(Collectors.toSet());
 
-        clients.forEach(client -> client.getCoupons().remove(coupon));
-        clients.clear();
+        return new CouponDeleteEvent(clientIds, coupon.getId());
+    }
 
-        couponRepository.deleteById(id);
+    private CouponUpdateEvent buildCouponUpdateEvent(Coupon coupon) {
+        Set<Long> clientIds = coupon.getClients()
+                .stream()
+                .map(Client::getId)
+                .collect(Collectors.toSet());
 
-        afterCommitExecutor.run(() -> {
-            versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
-
-            Cache cache = cacheManager.getCache(CacheKeys.CLIENT_KEY_PREFIX);
-            if (cache != null) {
-                for (Long clientId : ids) {
-                    cache.evict(clientId);
-                }
-            }
-            versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
-
-            log.info("Keys: {}, {}, {} was incremented. Key {} was invalidated.",
-                    CacheVersionKeys.COUPON_PAGE_VER_KEY,
-                    CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY,
-                    CacheVersionKeys.CLIENTS_PAGE_VER_KEY,
-                    CacheKeys.CLIENT_KEY_PREFIX
-            );
-        });
+        return new CouponUpdateEvent(clientIds, coupon.getId());
     }
 }

@@ -1,7 +1,7 @@
 package com.onidza.backend.config.cache.keys;
 
-import com.onidza.backend.model.dto.enums.OrderStatus;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
+import com.onidza.backend.model.enums.OrderStatus;
 import com.onidza.backend.service.cache.CacheVersionService;
 import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
@@ -39,12 +39,15 @@ public class CacheKeyGenerators {
     @Bean
     public KeyGenerator couponPageByClientIdKeyGen(CacheVersionService versionService) {
         return (target, method, params) -> {
+            Long clientId = (Long) params[0];
+
             long ver = versionService.getKeyVersion(
-                    CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY
+                    CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_FORMATTED_KEY
+                            .formatted(clientId)
             );
 
             return BY_CLIENT_PAGE_KEY_FORMAT.formatted(
-                    params[0],
+                    clientId,
                     ver,
                     params[1],
                     params[2]
@@ -66,12 +69,15 @@ public class CacheKeyGenerators {
     @Bean
     public KeyGenerator orderPageByClientIdKeyGen(CacheVersionService versionService) {
         return (target, method, params) -> {
+            Long clientId = (Long) params[0];
+
             long ver = versionService.getKeyVersion(
-                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY
+                    CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_FORMATTED_KEY
+                            .formatted(clientId)
             );
 
             return BY_CLIENT_PAGE_KEY_FORMAT.formatted(
-                    params[0],
+                    clientId,
                     ver,
                     params[1],
                     params[2]

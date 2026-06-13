@@ -20,33 +20,36 @@ public class OrderCacheInvalidationListener {
     private final CacheVersionService versionService;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onClientAdded(OrderAddEvent e) {
+    public void onOrderAdded(OrderAddEvent e) {
         versionService.evictCache(CacheKeys.CLIENT_KEY_PREFIX, e.clientId());
         versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
 
         versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-        versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+        versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_FORMATTED_KEY
+                .formatted(e.clientId()));
         versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onClientUpdated(OrderUpdateEvent e) {
+    public void onOrderUpdated(OrderUpdateEvent e) {
         versionService.evictCache(CacheKeys.CLIENT_KEY_PREFIX, e.clientId());
         versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
 
         versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-        versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+        versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_FORMATTED_KEY
+                .formatted(e.clientId()));
         versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onClientDeleted(OrderDeleteEvent e) {
+    public void onOrderDeleted(OrderDeleteEvent e) {
         versionService.evictCache(CacheKeys.CLIENT_KEY_PREFIX, e.clientId());
         versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
 
         versionService.evictCache(CacheKeys.ORDER_KEY_PREFIX, e.orderId());
         versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-        versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+        versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_FORMATTED_KEY
+                .formatted(e.clientId()));
         versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
     }
 }

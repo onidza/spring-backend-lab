@@ -1,7 +1,7 @@
-package com.onidza.backend.util.filters;
+package com.onidza.backend.model.filters;
 
-import com.onidza.backend.model.dto.enums.OrderStatus;
 import com.onidza.backend.model.entity.Order;
+import com.onidza.backend.model.enums.OrderStatus;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -46,5 +46,4 @@ public final class OrderSpecification {
                         ? cb.conjunction()
                         : cb.lessThanOrEqualTo(root.get("totalAmount"), maxAmount);
     }
-}
 }

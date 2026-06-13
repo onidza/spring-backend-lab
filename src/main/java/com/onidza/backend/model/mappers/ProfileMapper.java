@@ -1,4 +1,4 @@
-package com.onidza.backend.model.mapper;
+package com.onidza.backend.model.mappers;
 
 import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.entity.Profile;

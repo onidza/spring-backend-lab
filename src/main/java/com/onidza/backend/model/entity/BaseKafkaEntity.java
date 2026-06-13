@@ -4,8 +4,9 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Version;
-import lombok.Generated;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -15,15 +16,15 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 
-@Generated
 @Getter
 @Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BaseKafkaEntity implements Serializable {
 
     @Id
-    private UUID uuid;
+    private UUID uuid = UUID.randomUUID();
 
     @CreatedDate
     private Instant createdAt;

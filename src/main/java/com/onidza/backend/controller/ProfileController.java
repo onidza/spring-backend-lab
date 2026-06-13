@@ -27,7 +27,7 @@ public class ProfileController {
             @PathVariable @Positive Long id
     ) {
         log.info("ProfileService called getProfile with id = {}", id);
-        ProfileDTO profileDTO = profileService.getProfileById(id);
+        ProfileDTO profileDTO = profileService.getProfile(id);
 
         return ResponseEntity.ok(profileDTO);
     }
@@ -49,7 +49,7 @@ public class ProfileController {
             @Valid @RequestBody ProfileDTO profileDTO
     ) {
         log.info("ProfileService called updateProfileByClientId with id = {}", id);
-        ProfileDTO profile = profileService.updateProfileByClientId(id, profileDTO);
+        ProfileDTO profile = profileService.updateProfile(id, profileDTO);
 
         return ResponseEntity.ok(profile);
     }

@@ -1,7 +1,7 @@
 package com.onidza.backend.model.dto.client;
 
 import com.onidza.backend.model.dto.profile.ProfileDTO;
-import com.onidza.backend.util.validation.UniqueEmail;
+import com.onidza.backend.model.validation.UniqueEmail;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;

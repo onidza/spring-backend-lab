@@ -18,7 +18,7 @@ public class ProfileCacheInvalidationListener {
     private final CacheVersionService versionService;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onClientUpdated(ProfileUpdateEvent e) {
+    public void onProfileUpdated(ProfileUpdateEvent e) {
         versionService.evictCache(CacheKeys.CLIENT_KEY_PREFIX, e.clientId());
         versionService.bumpVersion(CacheVersionKeys.CLIENTS_PAGE_VER_KEY);
 

@@ -1,10 +1,10 @@
 package com.onidza.backend.controller;
 
 
-import com.onidza.backend.model.dto.enums.OrderStatus;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
+import com.onidza.backend.model.enums.OrderStatus;
 import com.onidza.backend.service.order.OrderService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -31,11 +31,11 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping("/order/{id}")
-    public ResponseEntity<OrderDTO> getOrderById(
+    public ResponseEntity<OrderDTO> getOrder(
             @PathVariable @Positive Long id
     ) {
-        log.info("OrderController called getOrderById with id = {}", id);
-        OrderDTO orderDTO = orderService.getOrderById(id);
+        log.info("OrderController called getOrder with id = {}", id);
+        OrderDTO orderDTO = orderService.getOrder(id);
 
         return ResponseEntity.ok(orderDTO);
     }
@@ -51,49 +51,49 @@ public class OrderController {
     }
 
     @GetMapping("/{id}/orders")
-    public ResponseEntity<OrdersPageDTO> getOrdersPageByClientId(
+    public ResponseEntity<OrdersPageDTO> getOrdersByClientIdPage(
             @PathVariable @Positive Long id,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(0) @Max(100) int size
     ) {
-        log.info("OrderController called getOrdersPageByClientId with id = {}", id);
+        log.info("OrderController called getOrdersByClientIdPage with id = {}", id);
 
-        return ResponseEntity.ok(orderService.getOrdersPageByClientId(id, page, size));
+        return ResponseEntity.ok(orderService.getOrdersByClientIdPage(id, page, size));
     }
 
     @PutMapping("/{id}/order")
-    public ResponseEntity<OrderDTO> updateOrderByOrderId(
+    public ResponseEntity<OrderDTO> updateOrder(
             @PathVariable @Positive Long id,
             @Valid @RequestBody OrderDTO orderDTO
     ) {
-        log.info("OrderController called updateOrderByOrderId with id = {}", id);
+        log.info("OrderController called updateOrder with id = {}", id);
 
-        return ResponseEntity.ok(orderService.updateOrderByOrderId(id, orderDTO));
+        return ResponseEntity.ok(orderService.updateOrder(id, orderDTO));
     }
 
     @PostMapping("/{id}/order")
-    public ResponseEntity<OrderDTO> addOrderToClient(
+    public ResponseEntity<OrderDTO> createOrderForClient(
             @PathVariable @Positive Long id,
             @Valid @RequestBody OrderDTO orderDTO
     ) {
-        log.info("OrderController called addOrderToClient with id = {}", id);
-        OrderDTO order = orderService.addOrderToClientById(id, orderDTO);
+        log.info("OrderController called createOrderForClient with id = {}", id);
+        OrderDTO order = orderService.createOrderForClient(id, orderDTO);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
     @DeleteMapping("/{id}/order")
-    public ResponseEntity<Void> deleteOrderById(
+    public ResponseEntity<Void> deleteOrder(
             @PathVariable @Positive Long id
     ) {
-        log.info("OrderController called deleteOrderById with id = {}", id);
-        orderService.deleteOrderByOrderId(id);
+        log.info("OrderController called deleteOrder with id = {}", id);
+        orderService.deleteOrder(id);
 
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/orders/filtered")
-    public ResponseEntity<OrdersPageDTO> findOrdersByFilters(
+    public ResponseEntity<OrdersPageDTO> getOrdersByFilter(
             @RequestParam(required = false) OrderStatus status,
 
             @RequestParam(required = false)
@@ -108,7 +108,7 @@ public class OrderController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(0) @Max(100) int size
     ) {
-        log.info("OrderController called findOrdersByFilters with status = {}, " +
+        log.info("OrderController called getOrdersByFilter with status = {}, " +
                         "fromDate = {}, toDate = {}, minAmount = {}, maxAmount = {}",
                 status, fromDate, toDate, minAmount, maxAmount);
 

@@ -29,7 +29,7 @@ public class ClientController {
             @PathVariable @Positive Long id
     ) {
         log.info("ClientController called getClient with id = {}", id);
-        ClientDTO client = clientService.getClientById(id);
+        ClientDTO client = clientService.getClient(id);
 
         return ResponseEntity.ok(client);
     }
@@ -45,11 +45,11 @@ public class ClientController {
     }
 
     @PostMapping
-    public ResponseEntity<ClientDTO> addClient(
+    public ResponseEntity<ClientDTO> createClient(
             @Valid @RequestBody ClientDTO clientDTO
     ) {
-        log.info("ClientController called addClient");
-        ClientDTO savedClient = clientService.addClient(clientDTO);
+        log.info("ClientController called createClient");
+        ClientDTO savedClient = clientService.createClient(clientDTO);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(savedClient);
     }
@@ -60,17 +60,17 @@ public class ClientController {
             @Valid @RequestBody ClientsUpdateDTO clientDTO
     ) {
         log.info("ClientController called updateClient with id = {}", id);
-        ClientDTO updatedClient = clientService.updateClientById(id, clientDTO);
+        ClientDTO updatedClient = clientService.updateClient(id, clientDTO);
 
         return ResponseEntity.ok(updatedClient);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteClientById(
+    public ResponseEntity<Void> deleteClient(
             @PathVariable @Positive Long id
     ) {
-        log.info("ClientController called deleteClientById with id = {}", id);
-        clientService.deleteClientById(id);
+        log.info("ClientController called deleteClient with id = {}", id);
+        clientService.deleteClient(id);
 
         return ResponseEntity.noContent().build();
     }

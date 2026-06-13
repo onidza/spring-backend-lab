@@ -1,12 +1,12 @@
 package com.onidza.backend.service.profile;
 
 import com.onidza.backend.config.cache.keys.CacheKeys;
-import com.onidza.backend.model.events.profile.ProfileUpdateEvent;
 import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.dto.profile.ProfilesPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Profile;
-import com.onidza.backend.model.mapper.MapperService;
+import com.onidza.backend.model.events.profile.ProfileUpdateEvent;
+import com.onidza.backend.model.mappers.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,12 +38,12 @@ public class ProfileServiceImpl implements ProfileService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames = CacheKeys.PROFILE_KEY_PREFIX,
-            key = "#id"
+            key = "#profileId"
     )
-    public ProfileDTO getProfileById(Long id) {
-        log.info("ProfileServiceImpl getProfileById with id = {}", id);
+    public ProfileDTO getProfile(Long profileId) {
+        log.info("ProfileServiceImpl getProfile with id = {}", profileId);
 
-        return mapperService.profileToDTO(profileRepository.findById(id)
+        return mapperService.profileToDTO(profileRepository.findById(profileId)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found")));
     }
@@ -81,8 +81,8 @@ public class ProfileServiceImpl implements ProfileService {
             cacheNames = CacheKeys.PROFILE_KEY_PREFIX,
             key = "#result.id()"
     )
-    public ProfileDTO updateProfileByClientId(Long clientId, ProfileDTO profileDTO) {
-        log.info("ProfileServiceImpl called updateProfileByClientId with id = {}", clientId);
+    public ProfileDTO updateProfile(Long clientId, ProfileDTO profileDTO) {
+        log.info("ProfileServiceImpl called updateProfile with id = {}", clientId);
 
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(()

@@ -6,13 +6,13 @@ import com.onidza.backend.model.dto.client.ClientsUpdateDTO;
 
 public interface ClientService {
 
-    ClientDTO getClientById(Long id);
+    ClientDTO getClient(Long id);
 
     ClientsPageDTO getClientsPage(int page, int size);
 
-    ClientDTO addClient(ClientDTO clientDTO);
+    ClientDTO createClient(ClientDTO clientDTO);
 
-    ClientDTO updateClientById(Long id, ClientsUpdateDTO clientDTO);
+    ClientDTO updateClient(Long id, ClientsUpdateDTO clientDTO);
 
-    void deleteClientById(Long id);
+    void deleteClient(Long id);
 }

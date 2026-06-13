@@ -5,15 +5,15 @@ import com.onidza.backend.model.dto.coupon.CouponPageDTO;
 
 public interface CouponService {
 
-    CouponDTO getCouponById(Long id);
+    CouponDTO getCoupon(Long id);
 
     CouponPageDTO getCouponsPage(int page, int size);
 
-    CouponPageDTO getCouponsPageByClientId(Long id, int page, int size);
+    CouponPageDTO getCouponsByClientIdPage(Long id, int page, int size);
 
-    CouponDTO addCouponToClientByClientId(Long id, CouponDTO couponDTO);
+    CouponDTO createCouponForClient(Long id, CouponDTO couponDTO);
 
-    CouponDTO updateCouponByCouponId(Long id, CouponDTO couponDTO);
+    CouponDTO updateCoupon(Long id, CouponDTO couponDTO);
 
-    void deleteCouponByCouponId(Long id);
+    void deleteCoupon(Long id);
 }

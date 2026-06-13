@@ -1,16 +1,9 @@
 package com.onidza.backend.model.dto.profile;
 
-import com.onidza.backend.model.entity.Profile;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Generated;
 
-/**
- * DTO for {@link Profile}
- * */
-
-@Generated
 public record ProfileDTO(
         Long id,
 

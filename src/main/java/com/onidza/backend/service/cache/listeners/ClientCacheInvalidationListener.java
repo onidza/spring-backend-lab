@@ -2,7 +2,7 @@ package com.onidza.backend.service.cache.listeners;
 
 import com.onidza.backend.config.cache.keys.CacheKeys;
 import com.onidza.backend.config.cache.keys.CacheVersionKeys;
-import com.onidza.backend.model.events.ActionPart;
+import com.onidza.backend.model.events.client.ActionPart;
 import com.onidza.backend.model.events.client.ClientAddEvent;
 import com.onidza.backend.model.events.client.ClientDeletedEvent;
 import com.onidza.backend.model.events.client.ClientUpdateEvent;
@@ -57,7 +57,7 @@ public class ClientCacheInvalidationListener {
             ));
 
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_FORMATTED_KEY);
             versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
         }
 
@@ -67,7 +67,7 @@ public class ClientCacheInvalidationListener {
             );
 
             versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_KEY);
+            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_FORMATTED_KEY);
         }
     }
 }

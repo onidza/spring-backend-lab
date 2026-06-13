@@ -1,17 +1,17 @@
 package com.onidza.backend.service.order;
 
 import com.onidza.backend.config.cache.keys.CacheKeys;
-import com.onidza.backend.model.dto.enums.RetryableTaskType;
-import com.onidza.backend.model.dto.order.OrderCreateEvent;
+import com.onidza.backend.model.dto.kafka.OrderCreateEvent;
 import com.onidza.backend.model.dto.order.OrderDTO;
 import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.dto.order.OrdersPageDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Order;
+import com.onidza.backend.model.enums.RetryableTaskType;
 import com.onidza.backend.model.events.order.OrderAddEvent;
 import com.onidza.backend.model.events.order.OrderDeleteEvent;
 import com.onidza.backend.model.events.order.OrderUpdateEvent;
-import com.onidza.backend.model.mapper.MapperService;
+import com.onidza.backend.model.mappers.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.repository.OrderRepository;
 import com.onidza.backend.service.retryable.RetryableTaskService;
@@ -29,7 +29,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import static com.onidza.backend.util.filters.OrderSpecification.*;
+
+import static com.onidza.backend.model.filters.OrderSpecification.*;
 
 @Slf4j
 @Service
@@ -50,12 +51,12 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     @Cacheable(
             cacheNames = CacheKeys.ORDER_KEY_PREFIX,
-            key = "#id"
+            key = "#orderId"
     )
-    public OrderDTO getOrderById(Long id) {
-        log.info("OrderServiceImpl called getOrderById with id = {}", id);
+    public OrderDTO getOrder(Long orderId) {
+        log.info("OrderServiceImpl called getOrder with id = {}", orderId);
 
-        return mapperService.orderToDTO(orderRepository.findById(id)
+        return mapperService.orderToDTO(orderRepository.findById(orderId)
                 .orElseThrow(()
                         -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND)));
     }
@@ -95,8 +96,8 @@ public class OrderServiceImpl implements OrderService {
             cacheNames = CacheKeys.ORDERS_PAGE_BY_CLIENT_ID_PREFIX,
             keyGenerator = "orderPageByClientIdKeyGen"
     )
-    public OrdersPageDTO getOrdersPageByClientId(Long clientId, int page, int size) {
-        log.info("OrderServiceImpl called getOrdersPageByClientId with id = {}", clientId);
+    public OrdersPageDTO getOrdersByClientIdPage(Long clientId, int page, int size) {
+        log.info("OrderServiceImpl called getOrdersByClientIdPage with id = {}", clientId);
 
         Pageable pageable = PageRequest.of(
                 page,
@@ -116,74 +117,6 @@ public class OrderServiceImpl implements OrderService {
                 result.getTotalPages(),
                 result.hasNext()
         );
-    }
-
-    @Override
-    @Transactional
-    public OrderDTO addOrderToClientById(Long clientId, OrderDTO orderDTO) {
-        log.info("OrderServiceImpl called addOrderToClientById with id = {}", clientId);
-
-        Client client = clientRepository.findById(clientId)
-                .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND));
-
-        Order order = mapperService.orderDTOToEntity(orderDTO);
-        order.setBiClientOrder(client);
-
-        publisher.publishEvent(new OrderAddEvent(clientId));
-
-        OrderCreateEvent kafkaEvent = OrderCreateEvent.builder()
-                .clientId(clientId)
-                .orderDate(order.getOrderDate())
-                .totalAmount(order.getTotalAmount())
-                .status(order.getStatus())
-                .build();
-
-        retryableTaskService.createRetryableTask(
-                kafkaEvent,
-                RetryableTaskType.SEND_CREATE_NOTIFICATION_REQUEST
-        );
-
-        return mapperService.orderToDTO(orderRepository.save(order));
-    }
-
-    @Override
-    @Transactional
-    @CachePut(
-            cacheNames = CacheKeys.ORDER_KEY_PREFIX,
-            key = "#orderId"
-    )
-    public OrderDTO updateOrderByOrderId(Long orderId, OrderDTO orderDTO) {
-        log.info("OrderServiceImpl called updateOrderByOrderId with id = {}", orderId);
-
-        Order existing = orderRepository.findById(orderId)
-                .orElseThrow(()
-                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
-
-        existing.updateOrder(
-                orderDTO.orderDate(),
-                orderDTO.totalAmount(),
-                orderDTO.status()
-        );
-
-        publisher.publishEvent(new OrderUpdateEvent(existing.getClient().getId(), orderId));
-
-        return mapperService.orderToDTO(existing);
-    }
-
-    @Override
-    @Transactional
-    public void deleteOrderByOrderId(Long orderId) {
-        log.info("OrderServiceImpl called deleteOrderByOrderId with id = {}", orderId);
-
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
-
-        order.removeOrderFromClient();
-
-        publisher.publishEvent(new OrderDeleteEvent(order.getClient().getId(), orderId));
-
-        orderRepository.deleteById(orderId);
     }
 
     @Override
@@ -218,6 +151,70 @@ public class OrderServiceImpl implements OrderService {
                 result.getTotalPages(),
                 result.hasNext()
         );
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO createOrderForClient(Long clientId, OrderDTO orderDTO) {
+        log.info("OrderServiceImpl called createOrderForClient with id = {}", clientId);
+
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(()
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, CLIENT_NOT_FOUND));
+
+        Order order = mapperService.orderDTOToEntity(orderDTO);
+        order.setBiClientOrder(client);
+
+        publisher.publishEvent(new OrderAddEvent(clientId));
+
+        OrderCreateEvent kafkaEvent = OrderCreateEvent.builder()
+                .clientId(clientId)
+                .orderDate(order.getOrderDate())
+                .totalAmount(order.getTotalAmount())
+                .status(order.getStatus())
+                .build();
+
+        retryableTaskService.createRetryableTask(
+                kafkaEvent,
+                RetryableTaskType.SEND_CREATE_NOTIFICATION_REQUEST
+        );
+
+        return mapperService.orderToDTO(orderRepository.save(order));
+    }
+
+    @Override
+    @Transactional
+    @CachePut(
+            cacheNames = CacheKeys.ORDER_KEY_PREFIX,
+            key = "#orderId"
+    )
+    public OrderDTO updateOrder(Long orderId, OrderDTO orderDTO) {
+        log.info("OrderServiceImpl called updateOrder with id = {}", orderId);
+
+        Order existing = orderRepository.findById(orderId)
+                .orElseThrow(()
+                        -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
+
+        existing.updateOrder(mapperService.orderDTOToEntity(orderDTO));
+
+        publisher.publishEvent(new OrderUpdateEvent(existing.getClient().getId(), orderId));
+
+        return mapperService.orderToDTO(existing);
+    }
+
+    @Override
+    @Transactional
+    public void deleteOrder(Long orderId) {
+        log.info("OrderServiceImpl called deleteOrder with id = {}", orderId);
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, ORDER_NOT_FOUND));
+
+        order.removeOrderFromClient();
+
+        publisher.publishEvent(new OrderDeleteEvent(order.getClient().getId(), orderId));
+
+        orderRepository.deleteById(orderId);
     }
 
     public boolean isStatusOnlyFilter(OrderFilterDTO filter) {

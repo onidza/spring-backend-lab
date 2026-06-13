@@ -4,15 +4,15 @@ import com.onidza.backend.config.cache.keys.CacheKeys;
 import com.onidza.backend.model.dto.client.ClientDTO;
 import com.onidza.backend.model.dto.client.ClientsPageDTO;
 import com.onidza.backend.model.dto.client.ClientsUpdateDTO;
-import com.onidza.backend.model.events.ActionPart;
-import com.onidza.backend.model.events.client.ClientAddEvent;
-import com.onidza.backend.model.events.client.ClientDeletedEvent;
-import com.onidza.backend.model.events.client.ClientUpdateEvent;
 import com.onidza.backend.model.dto.profile.ProfileDTO;
 import com.onidza.backend.model.entity.Client;
 import com.onidza.backend.model.entity.Coupon;
 import com.onidza.backend.model.entity.Order;
-import com.onidza.backend.model.mapper.MapperService;
+import com.onidza.backend.model.events.client.ActionPart;
+import com.onidza.backend.model.events.client.ClientAddEvent;
+import com.onidza.backend.model.events.client.ClientDeletedEvent;
+import com.onidza.backend.model.events.client.ClientUpdateEvent;
+import com.onidza.backend.model.mappers.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,14 +52,14 @@ public class ClientServiceImpl implements ClientService {
             key = "#clientId"
     )
     @Transactional(readOnly = true)
-    public ClientDTO getClientById(Long clientId) {
-        log.info("ClientServiceImpl called getClientById with id = {}", clientId);
+    public ClientDTO getClient(Long clientId) {
+        log.info("ClientServiceImpl called getClient with id = {}", clientId);
 
         return mapperService
                 .clientToDTO(clientRepository.findById(clientId)
-                        .orElseThrow(()
-                                -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                CLIENT_NOT_FOUND)));
+                        .orElseThrow(() ->
+                                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                        CLIENT_NOT_FOUND)));
     }
 
     @Override
@@ -91,8 +91,8 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional
-    public ClientDTO addClient(ClientDTO clientDTO) {
-        log.info("ClientServiceImpl called addClient with name = {}", clientDTO.name());
+    public ClientDTO createClient(ClientDTO clientDTO) {
+        log.info("ClientServiceImpl called createClient = {}", clientDTO);
 
         Client saved = clientRepository.save(mapperService.clientDTOToEntity(clientDTO));
 
@@ -108,8 +108,8 @@ public class ClientServiceImpl implements ClientService {
             key = "#result.id()"
     )
     @Transactional
-    public ClientDTO updateClientById(Long clientId, ClientsUpdateDTO clientDTO) {
-        log.info("ClientServiceImpl called updateClientById with id = {}", clientId);
+    public ClientDTO updateClient(Long clientId, ClientsUpdateDTO clientDTO) {
+        log.info("ClientServiceImpl called updateClient with id = {}", clientId);
 
         Client existing = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -125,8 +125,8 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional
-    public void deleteClientById(Long clientId) {
-        log.info("ClientServiceImpl called deleteClientById with id = {}", clientId);
+    public void deleteClient(Long clientId) {
+        log.info("ClientServiceImpl called deleteClient with id = {}", clientId);
 
         Client existing = clientRepository.findById(clientId)
                 .orElseThrow(()

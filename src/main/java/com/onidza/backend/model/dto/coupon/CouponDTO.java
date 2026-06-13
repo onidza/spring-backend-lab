@@ -1,17 +1,10 @@
 package com.onidza.backend.model.dto.coupon;
 
-import com.onidza.backend.model.entity.Coupon;
 import jakarta.validation.constraints.*;
-import lombok.Generated;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * DTO for {@link Coupon}
- * */
-
-@Generated
 public record CouponDTO(
         Long id,
 

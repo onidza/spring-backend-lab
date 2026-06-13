@@ -1,13 +1,15 @@
 package com.onidza.backend.model.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Generated
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -36,5 +38,15 @@ public class Coupon {
         this.code = code;
         this.discount = discount;
         this.expirationDate = expirationDate;
+    }
+
+    public void updateCoupon(Coupon coupon) {
+        this.code = coupon.code;
+        this.discount = coupon.discount;
+        this.expirationDate = coupon.expirationDate;
+    }
+
+    public void deleteCouponFromClients() {
+        this.clients.forEach(client -> client.getCoupons().remove(this));
     }
 }

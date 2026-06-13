@@ -1,13 +1,15 @@
 package com.onidza.backend.model.entity;
 
-import com.onidza.backend.model.dto.enums.OrderStatus;
+import com.onidza.backend.model.enums.OrderStatus;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Generated
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -49,9 +51,9 @@ public class Order {
         this.client.getOrders().remove(this);
     }
 
-    public void updateOrder(LocalDateTime orderDate, BigDecimal totalAmount, OrderStatus status) {
-        this.orderDate = orderDate != null ? orderDate : this.orderDate;
-        this.totalAmount = totalAmount;
-        this.status = status;
+    public void updateOrder(Order order) {
+        this.orderDate = order.orderDate != null ? order.orderDate : this.orderDate;
+        this.totalAmount = order.totalAmount;
+        this.status = order.status;
     }
 }

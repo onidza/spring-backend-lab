@@ -1,24 +1,20 @@
 package com.onidza.backend.model.entity;
 
-import com.onidza.backend.model.dto.enums.RetryableTaskStatus;
-import com.onidza.backend.model.dto.enums.RetryableTaskType;
-import com.onidza.backend.util.converters.RetryableTaskStatusConverter;
-import com.onidza.backend.util.converters.RetryableTaskTypeConverter;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.Generated;
+import com.onidza.backend.model.enums.RetryableTaskStatus;
+import com.onidza.backend.model.enums.RetryableTaskType;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnTransformer;
 
 import java.time.Instant;
 
-@Generated
 @Entity
 @Setter
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "retryable_task")
 public class RetryableTask extends BaseKafkaEntity {
 
@@ -26,11 +22,22 @@ public class RetryableTask extends BaseKafkaEntity {
     @ColumnTransformer(write = "?::jsonb")
     private String payload;
 
-    @Convert(converter = RetryableTaskTypeConverter.class)
-    RetryableTaskType type;
+    @Enumerated(value = EnumType.STRING)
+    private RetryableTaskType type;
 
-    @Convert(converter = RetryableTaskStatusConverter.class)
-    RetryableTaskStatus status;
+    @Enumerated(value = EnumType.STRING)
+    private RetryableTaskStatus status;
 
     private Instant retryTime;
+
+    private RetryableTask(String payload, RetryableTaskType type) {
+        this.payload = payload;
+        this.type = type;
+        this.status = RetryableTaskStatus.RETRY;
+        this.retryTime = Instant.now();
+    }
+
+    public static RetryableTask retry(String payload, RetryableTaskType type) {
+        return new RetryableTask(payload, type);
+    }
 }

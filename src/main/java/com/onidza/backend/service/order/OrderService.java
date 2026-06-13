@@ -6,17 +6,17 @@ import com.onidza.backend.model.dto.order.OrdersPageDTO;
 
 public interface OrderService {
 
-    OrderDTO getOrderById(Long id);
+    OrderDTO getOrder(Long id);
 
     OrdersPageDTO getOrdersPage(int page, int size);
 
-    OrdersPageDTO getOrdersPageByClientId(Long id, int page, int size);
+    OrdersPageDTO getOrdersByClientIdPage(Long id, int page, int size);
 
-    OrderDTO updateOrderByOrderId(Long id, OrderDTO orderDTO);
+    OrderDTO updateOrder(Long id, OrderDTO orderDTO);
 
-    OrderDTO addOrderToClientById(Long id, OrderDTO orderDTO);
+    OrderDTO createOrderForClient(Long id, OrderDTO orderDTO);
 
-    void deleteOrderByOrderId(Long id);
+    void deleteOrder(Long id);
 
     OrdersPageDTO getOrdersByFilter(OrderFilterDTO filter, int page, int size);
 }
