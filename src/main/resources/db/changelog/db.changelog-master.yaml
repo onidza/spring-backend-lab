@@ -23,3 +23,5 @@ databaseChangeLog:
       file: db/changelog/changeset/011-drop_old_retryable_task.sql
   - include:
       file: db/changelog/changeset/012-create_retryable_task_table_fixed.sql
+  - include:
+      file: db/changelog/changeset/013-update-retryable-task-status-value.yaml

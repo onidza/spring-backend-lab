@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 013-update-retryable-task-status-value
+      author: onidza
+      changes:
+        - update:
+            tableName: retryable_task
+            columns:
+              - column:
+                  name: status
+                  value: "IN_PROGRESS"
+            where: "status = 'IN PROGRESS'"
+      rollback:
+        - update:
+            tableName: retryable_task
+            columns:
+              - column:
+                  name: status
+                  value: "IN PROGRESS"
+            where: "status = 'IN_PROGRESS'"

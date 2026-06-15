@@ -1,9 +1,6 @@
 package com.onidza.backend.kafka.producer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.onidza.backend.config.kafka.AppKafkaTopicsProperties;
-import com.onidza.backend.service.retryable.RetryableTaskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -18,30 +15,15 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class PublisherOrderNotification {
 
-    private final RetryableTaskService retryableTaskService;
-    private final ObjectMapper objectMapper;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final AppKafkaTopicsProperties properties;
 
-    public <T> void sendNotificationInTopic(UUID uuid, T payload) {
-        String message;
-        try {
-            message = objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize payload of type " +
-                    payload.getClass().getName(), e);
-        }
+    public CompletableFuture<SendResult<String, String>> sendNotificationInTopic(
+            UUID uuid,
+            String payload
+    ) {
+        String topic = properties.getTopic("order-notification").getName();
 
-        String topic = properties.getTopics().get(0).getName();
-
-        CompletableFuture<SendResult<String, String>> future =
-                kafkaTemplate.send(topic, uuid.toString(), message);
-
-        future.whenComplete((res, ex) -> {
-            if (ex == null) {
-                retryableTaskService.markSent(uuid);
-                log.info("Task {} was send in topic {}", uuid, topic);
-            }
-        });
+        return kafkaTemplate.send(topic, uuid.toString(), payload);
     }
 }

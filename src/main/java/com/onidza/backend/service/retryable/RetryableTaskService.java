@@ -28,11 +28,11 @@ public class RetryableTaskService {
     private final RetryableTaskRepository retryableTaskRepository;
     private final ObjectMapper objectMapper;
 
-    @Value("${retryable_task.timeoutInSeconds}")
-    private Integer retryTime;
+    @Value("${retryable_task.delay}")
+    private Integer delay;
 
-    @Value("${retryable_task.limit}")
-    private Integer limit;
+    @Value("${retryable_task.batchLimit}")
+    private Integer batchLimit;
 
     @Transactional
     public void createRetryableTask(OrderCreateEvent event, RetryableTaskType type) {
@@ -43,37 +43,59 @@ public class RetryableTaskService {
     }
 
     @Transactional
-    public List<RetryableTask> getBatchForProcessing(
+    public List<RetryableTask> claimBatchForProcessing(
             RetryableTaskStatus retryStatus,
-            RetryableTaskStatus inProgressStatus
+            RetryableTaskStatus inProgressStatus,
+            Instant now,
+            Instant staleBefore
     ) {
         var tasks = retryableTaskRepository.findAllForProcessing(
                 retryStatus,
                 inProgressStatus,
-                Instant.now(),
-                PageRequest.of(0, limit)
+                now,
+                staleBefore,
+                PageRequest.of(0, batchLimit)
         );
 
-        Instant newRetryTime = Instant.now().plus(Duration.ofSeconds(retryTime));
+        Instant newRetryTime = Instant.now().plus(Duration.ofSeconds(delay));
 
         tasks.forEach(t -> {
             t.setRetryTime(newRetryTime);
             t.setStatus(RetryableTaskStatus.IN_PROGRESS);
-            log.info("RetryableTask {} was delayed on {}", t.getUuid(), newRetryTime);
+
+            log.info("RetryableTask = {} was claimed for processing until = {}",
+                    t.getUuid(), newRetryTime);
         });
 
         return tasks;
     }
 
     @Transactional
-    public void markSent(UUID uuid) {
+    public void markSuccess(UUID uuid) {
         RetryableTask existingTask = retryableTaskRepository.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "RetryableTask not found, uuid=" + uuid
+                        "RetryableTask not found, uuid = " + uuid
                 ));
 
         existingTask.setStatus(RetryableTaskStatus.SUCCESS);
-        log.info("RetryableTask {} status updated to SUCCESS", uuid);
+
+        log.info("RetryableTask = {}, status updated to SUCCESS", uuid);
+    }
+
+    @Transactional
+    public void markRetry(UUID uuid, Throwable ex) {
+        RetryableTask existingTask = retryableTaskRepository.findByUuid(uuid)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "RetryableTask not found, uuid = " + uuid
+                ));
+
+        Instant nextRetryTime = Instant.now().plus(Duration.ofSeconds(delay));
+
+        existingTask.setStatus(RetryableTaskStatus.RETRY);
+        existingTask.setRetryTime(nextRetryTime);
+
+        log.warn("RetryableTask = {}, status returned to RETRY, nextRetryTime = {}",
+                uuid, nextRetryTime, ex);
     }
 
     private String toJson(OrderCreateEvent event) {

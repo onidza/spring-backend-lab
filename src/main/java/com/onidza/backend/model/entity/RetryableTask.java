@@ -16,7 +16,7 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "retryable_task")
-public class RetryableTask extends BaseKafkaEntity {
+public class RetryableTask extends BaseRetryableTask {
 
     @Column(columnDefinition = "jsonb")
     @ColumnTransformer(write = "?::jsonb")

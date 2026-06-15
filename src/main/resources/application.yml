@@ -17,12 +17,7 @@ spring:
     properties:
       hibernate:
         default_batch_fetch_size: 20
-        format_sql: true
-        use_sql_comments: true
-
-  jackson:
-    mapper:
-      accept-case-insensitive-enums: true
+#        format_sql: true
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
@@ -35,11 +30,6 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
-    producer:
-      acks: all
-      properties:
-        delivery.timeout.ms: 120000
-        request.timeout.ms: 30000
 
 management:
   endpoints:
@@ -50,10 +40,11 @@ management:
 app:
   kafka:
     topics:
-      - name: orders-notification
+      order-notification:
+        name: order-notification
         partitions: 3
         replication-factor: 1
 
 retryable_task:
-  timeoutInSeconds: 30
-  limit: 50
+  delay: 30
+  batchLimit: 50

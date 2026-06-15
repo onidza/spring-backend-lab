@@ -23,14 +23,17 @@ public interface RetryableTaskRepository extends JpaRepository<RetryableTask, UU
     @Query("""
             SELECT t
             FROM RetryableTask t
-            WHERE t.retryTime <= :now
-              AND (t.status = :retryStatus OR t.status = :inProgressStatus)
+            WHERE
+              (t.status = :retryStatus AND t.retryTime <= :now)
+            OR
+              (t.status = :inProgressStatus AND t.updatedAt <= :staleBefore)
             ORDER BY t.retryTime
             """)
     List<RetryableTask> findAllForProcessing(
             @Param("retryStatus") RetryableTaskStatus retryStatus,
             @Param("inProgressStatus") RetryableTaskStatus inProgressStatus,
             @Param("now") Instant now,
+            @Param("staleBefore") Instant staleBefore,
             Pageable pageable
     );
 }

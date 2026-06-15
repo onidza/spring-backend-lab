@@ -16,7 +16,7 @@ import java.util.Map;
 public class KafkaConfig {
 
     @Bean
-    public ProducerFactory<String, String> producerFactory(KafkaProperties kafkaProperties) {
+    public ProducerFactory<String, String> orderEventProducerFactory(KafkaProperties kafkaProperties) {
         Map<String, Object> config = new HashMap<>(kafkaProperties.buildProducerProperties());
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -25,7 +25,7 @@ public class KafkaConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, String> kafkaTemplate(ProducerFactory<String, String> pf) {
+    public KafkaTemplate<String, String> orderEventKafkaTemplate(ProducerFactory<String, String> pf) {
         return new KafkaTemplate<>(pf);
     }
 }
