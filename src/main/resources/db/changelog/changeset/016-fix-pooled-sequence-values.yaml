@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-fix-pooled-sequence-values
+      author: onidza
+      changes:
+        - sql:
+            sql: |
+              SELECT setval(
+                  'client_seq',
+                  COALESCE((SELECT MAX(id) FROM clients), 0) + 50,
+                  false
+              );
+
+              SELECT setval(
+                  'order_seq',
+                  COALESCE((SELECT MAX(id) FROM orders), 0) + 50,
+                  false
+              );
+
+              SELECT setval(
+                  'coupon_seq',
+                  COALESCE((SELECT MAX(id) FROM coupons), 0) + 50,
+                  false
+              );
+
+              SELECT setval(
+                  'profile_seq',
+                  COALESCE((SELECT MAX(id) FROM profiles), 0) + 50,
+                  false
+              );

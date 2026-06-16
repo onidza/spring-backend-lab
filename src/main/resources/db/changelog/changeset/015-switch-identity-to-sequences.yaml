@@ -1,0 +1,65 @@
+databaseChangeLog:
+  - changeSet:
+      id: 015-switch-identity-to-sequences
+      author: onidza
+      changes:
+        - sql:
+            sql: |
+              -- clients
+              ALTER TABLE clients ALTER COLUMN id DROP IDENTITY IF EXISTS;
+              ALTER TABLE clients ALTER COLUMN id DROP DEFAULT;
+              ALTER TABLE clients ALTER COLUMN id SET DEFAULT nextval('client_seq'::regclass);
+              ALTER SEQUENCE client_seq OWNED BY clients.id;
+
+              SELECT setval(
+                  'client_seq',
+                  COALESCE((SELECT MAX(id) FROM clients), 0) + 1,
+                  false
+              );
+
+              DROP SEQUENCE IF EXISTS clients_id_seq;
+
+
+              -- profiles
+              ALTER TABLE profiles ALTER COLUMN id DROP IDENTITY IF EXISTS;
+              ALTER TABLE profiles ALTER COLUMN id DROP DEFAULT;
+              ALTER TABLE profiles ALTER COLUMN id SET DEFAULT nextval('profile_seq'::regclass);
+              ALTER SEQUENCE profile_seq OWNED BY profiles.id;
+
+              SELECT setval(
+                  'profile_seq',
+                  COALESCE((SELECT MAX(id) FROM profiles), 0) + 1,
+                  false
+              );
+
+              DROP SEQUENCE IF EXISTS profiles_id_seq;
+
+
+              -- orders
+              ALTER TABLE orders ALTER COLUMN id DROP IDENTITY IF EXISTS;
+              ALTER TABLE orders ALTER COLUMN id DROP DEFAULT;
+              ALTER TABLE orders ALTER COLUMN id SET DEFAULT nextval('order_seq'::regclass);
+              ALTER SEQUENCE order_seq OWNED BY orders.id;
+
+              SELECT setval(
+                  'order_seq',
+                  COALESCE((SELECT MAX(id) FROM orders), 0) + 1,
+                  false
+              );
+
+              DROP SEQUENCE IF EXISTS orders_id_seq;
+
+
+              -- coupons
+              ALTER TABLE coupons ALTER COLUMN id DROP IDENTITY IF EXISTS;
+              ALTER TABLE coupons ALTER COLUMN id DROP DEFAULT;
+              ALTER TABLE coupons ALTER COLUMN id SET DEFAULT nextval('coupon_seq'::regclass);
+              ALTER SEQUENCE coupon_seq OWNED BY coupons.id;
+
+              SELECT setval(
+                  'coupon_seq',
+                  COALESCE((SELECT MAX(id) FROM coupons), 0) + 1,
+                  false
+              );
+
+              DROP SEQUENCE IF EXISTS coupons_id_seq;

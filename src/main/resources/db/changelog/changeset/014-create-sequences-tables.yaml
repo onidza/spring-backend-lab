@@ -1,0 +1,66 @@
+databaseChangeLog:
+  - changeSet:
+      id: 014-create-sequences-tables
+      author: onidza
+      changes:
+        - createSequence:
+            sequenceName: client_seq
+            startValue: 1
+            incrementBy: 50
+
+        - sql:
+            sql: |
+              SELECT setval(
+                  'client_seq',
+                  COALESCE((SELECT MAX(id) FROM clients), 0) + 1,
+                  false
+              );
+
+        - createSequence:
+            sequenceName: profile_seq
+            startValue: 1
+            incrementBy: 50
+
+        - sql:
+            sql: |
+              SELECT setval(
+                  'profile_seq',
+                  COALESCE((SELECT MAX(id) FROM profiles), 0) + 1,
+                  false
+              );
+
+        - createSequence:
+            sequenceName: order_seq
+            startValue: 1
+            incrementBy: 50
+
+        - sql:
+            sql: |
+              SELECT setval(
+                  'order_seq',
+                  COALESCE((SELECT MAX(id) FROM orders), 0) + 1,
+                  false
+              );
+
+        - createSequence:
+            sequenceName: coupon_seq
+            startValue: 1
+            incrementBy: 50
+
+        - sql:
+            sql: |
+              SELECT setval(
+                  'coupon_seq',
+                  COALESCE((SELECT MAX(id) FROM coupons), 0) + 1,
+                  false
+              );
+
+      rollback:
+        - dropSequence:
+            sequenceName: client_seq
+        - dropSequence:
+            sequenceName: profile_seq
+        - dropSequence:
+            sequenceName: order_seq
+        - dropSequence:
+            sequenceName: coupon_seq

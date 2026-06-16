@@ -57,7 +57,8 @@ public class ClientCacheInvalidationListener {
             ));
 
             versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_FORMATTED_KEY);
+            versionService.bumpVersion(CacheVersionKeys.ORDERS_PAGE_BY_CLIENT_ID_VER_FORMATTED_KEY
+                    .formatted(e.clientId()));
             versionService.bumpVersion(CacheVersionKeys.ORDERS_FILTER_STATUS_KEY_VER);
         }
 
@@ -67,7 +68,8 @@ public class ClientCacheInvalidationListener {
             );
 
             versionService.bumpVersion(CacheVersionKeys.COUPON_PAGE_VER_KEY);
-            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_FORMATTED_KEY);
+            versionService.bumpVersion(CacheVersionKeys.COUPONS_PAGE_BY_CLIENT_ID_VER_FORMATTED_KEY
+                    .formatted(e.clientId()));
         }
     }
 }

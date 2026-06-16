@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -18,7 +18,11 @@ import java.util.List;
 public class Coupon {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "coupon_seq")
+    @SequenceGenerator(
+            name = "coupon_seq",
+            sequenceName = "coupon_seq"
+    )
     private Long id;
 
     @Column(name = "code", nullable = false)
@@ -31,8 +35,7 @@ public class Coupon {
     private LocalDateTime expirationDate;
 
     @ManyToMany(mappedBy = "coupons")
-//    @JsonBackReference("client-coupon")
-    private List<Client> clients = new ArrayList<>();
+    private Set<Client> clients = new HashSet<>();
 
     public Coupon(String code, float discount, LocalDateTime expirationDate) {
         this.code = code;

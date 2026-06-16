@@ -14,7 +14,11 @@ import lombok.Setter;
 public class Profile {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "profile_seq")
+    @SequenceGenerator(
+            name = "profile_seq",
+            sequenceName = "profile_seq"
+    )
     private Long id;
 
     @Column(name = "address", nullable = false)
@@ -24,7 +28,6 @@ public class Profile {
     private String phone;
 
     @OneToOne(mappedBy = "profile")
-//    @JsonBackReference("client-profile")
     private Client client;
 
     public Profile(String address, String phone) {

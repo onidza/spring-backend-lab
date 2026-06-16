@@ -18,7 +18,11 @@ import java.time.LocalDateTime;
 public class Order {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_seq")
+    @SequenceGenerator(
+            name = "order_seq",
+            sequenceName = "order_seq"
+    )
     private Long id;
 
     @Column(name = "order_date")
@@ -31,9 +35,8 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false)
-//    @JsonBackReference("client-order")
     private Client client;
 
     public Order(LocalDateTime orderDate, BigDecimal totalAmount, OrderStatus status) {

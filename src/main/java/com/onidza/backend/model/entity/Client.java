@@ -18,7 +18,11 @@ import java.util.Set;
 public class Client {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "client_seq")
+    @SequenceGenerator(
+            name = "client_seq",
+            sequenceName = "client_seq"
+    )
     private Long id;
 
     @Column(name = "name", nullable = false)
@@ -32,11 +36,9 @@ public class Client {
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "profile_id", nullable = false, unique = true)
-//    @JsonManagedReference("client-profile")
     private Profile profile;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
-//    @JsonManagedReference("client-order")
     private Set<Order> orders = new HashSet<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -45,7 +47,6 @@ public class Client {
             joinColumns = @JoinColumn(name = "client_id"),
             inverseJoinColumns = @JoinColumn(name = "coupon_id")
     )
-//    @JsonManagedReference("client-coupon")
     private Set<Coupon> coupons = new HashSet<>();
 
     public Client(String name, String email, Profile profile) {

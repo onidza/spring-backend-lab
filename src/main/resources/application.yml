@@ -17,7 +17,10 @@ spring:
     properties:
       hibernate:
         default_batch_fetch_size: 20
-#        format_sql: true
+        jdbc:
+          batch_size: 50
+          order_inserts: true
+          order_updates: true
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
