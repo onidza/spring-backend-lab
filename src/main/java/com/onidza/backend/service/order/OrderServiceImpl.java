@@ -11,6 +11,7 @@ import com.onidza.backend.model.enums.RetryableTaskType;
 import com.onidza.backend.model.events.order.OrderAddEvent;
 import com.onidza.backend.model.events.order.OrderDeleteEvent;
 import com.onidza.backend.model.events.order.OrderUpdateEvent;
+import com.onidza.backend.model.filters.OrderSpecification;
 import com.onidza.backend.model.mappers.MapperService;
 import com.onidza.backend.repository.ClientRepository;
 import com.onidza.backend.repository.OrderRepository;
@@ -24,13 +25,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
-import static com.onidza.backend.model.filters.OrderSpecification.*;
 
 @Slf4j
 @Service
@@ -134,14 +132,10 @@ public class OrderServiceImpl implements OrderService {
                 size,
                 Sort.by(Sort.Direction.ASC, "id"));
 
-        Specification<Order> specification = hasStatus(filter.status())
-                .and(orderDateFrom(filter.fromDate()))
-                .and(orderDateTo(filter.toDate()))
-                .and(minAmount(filter.minAmount()))
-                .and(maxAmount(filter.maxAmount()));
-
-        Page<OrderDTO> result = orderRepository.findAll(specification, pageable)
-                .map(mapperService::orderToDTO);
+        Page<OrderDTO> result = orderRepository.findAll(
+                OrderSpecification.byFilter(filter),
+                pageable
+        ).map(mapperService::orderToDTO);
 
         return new OrdersPageDTO(
                 result.getContent(),

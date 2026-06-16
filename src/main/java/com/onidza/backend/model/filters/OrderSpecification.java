@@ -1,49 +1,43 @@
 package com.onidza.backend.model.filters;
 
+import com.onidza.backend.model.dto.order.OrderFilterDTO;
 import com.onidza.backend.model.entity.Order;
-import com.onidza.backend.model.enums.OrderStatus;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class OrderSpecification {
 
-    public static Specification<Order> hasStatus(OrderStatus status) {
-        return (root, query, cb) ->
-                status == null
-                        ? cb.conjunction()
-                        : cb.equal(root.get("status"), status);
-    }
+    public static Specification<Order> byFilter(OrderFilterDTO filter) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-    public static Specification<Order> orderDateFrom(LocalDateTime fromDate) {
-        return (root, query, cb) ->
-                fromDate == null
-                        ? cb.conjunction()
-                        : cb.greaterThanOrEqualTo(root.get("orderDate"), fromDate);
-    }
+            if (filter.status() != null) {
+                predicates.add(cb.equal(root.get("status"), filter.status()));
+            }
 
-    public static Specification<Order> orderDateTo(LocalDateTime toDate) {
-        return (root, query, cb) ->
-                toDate == null
-                        ? cb.conjunction()
-                        : cb.lessThanOrEqualTo(root.get("orderDate"), toDate);
-    }
+            if (filter.fromDate() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("orderDate"), filter.fromDate()));
+            }
 
-    public static Specification<Order> minAmount(BigDecimal minAmount) {
-        return (root, query, cb) ->
-                minAmount == null
-                        ? cb.conjunction()
-                        : cb.greaterThanOrEqualTo(root.get("totalAmount"), minAmount);
-    }
+            if (filter.toDate() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("orderDate"), filter.toDate()));
+            }
 
-    public static Specification<Order> maxAmount(BigDecimal maxAmount) {
-        return (root, query, cb) ->
-                maxAmount == null
-                        ? cb.conjunction()
-                        : cb.lessThanOrEqualTo(root.get("totalAmount"), maxAmount);
+            if (filter.minAmount() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("totalAmount"), filter.minAmount()));
+            }
+
+            if (filter.maxAmount() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("totalAmount"), filter.maxAmount()));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
     }
 }
