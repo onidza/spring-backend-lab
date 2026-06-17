@@ -30,7 +30,7 @@ import java.util.function.Function;
 
 @EnableCaching
 @Configuration
-public class CacheConfiguration {
+public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager(

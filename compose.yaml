@@ -44,6 +44,8 @@ services:
   keycloak-db:
     image: postgres:18
     container_name: keycloak-db
+    labels:
+      org.springframework.boot.ignore: true
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: ${SPRING_KL_DATASOURCE_USERNAME}
@@ -51,7 +53,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - keycloak_db_data:/var/lib/postgresql/data
+      - keycloak_db_data:/var/lib/postgresql
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.6.3

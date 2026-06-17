@@ -1,6 +1,7 @@
 server:
   port: 8080
 
+
 spring:
   application:
     name: spring-backend-lab
@@ -34,6 +35,12 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/spring-backend-lab
+
 management:
   endpoints:
     web:
@@ -51,3 +58,7 @@ app:
 retryable_task:
   delay: 30
   batchLimit: 50
+
+logging:
+  level:
+    org.springframework.security: DEBUG
