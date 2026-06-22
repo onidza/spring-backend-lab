@@ -30,7 +30,12 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/error")
+                        .permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/clients", "/clients/*")
                         .hasAnyRole("USER", "ADMIN")
@@ -44,7 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/clients/*")
                         .hasRole("ADMIN")
 
-                        .anyRequest().authenticated()
+                        .anyRequest().denyAll()
                 )
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(jwt ->

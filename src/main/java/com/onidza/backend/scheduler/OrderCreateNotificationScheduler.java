@@ -36,10 +36,8 @@ public class OrderCreateNotificationScheduler {
                         staleBefore
                 );
 
-        if (tasks.isEmpty()) {
-            log.info("Not found retryable tasks for processing");
-            return;
-        }
+        if (tasks.isEmpty()) return;
+
         log.info("Found retryable tasks batch = {} size for processing",
                 tasks.size());
 
