@@ -16,3 +16,7 @@ spring:
         jwt:
           issuer-uri: https://auth.spring-backend-lab.ru/realms/spring-backend-lab
           jwk-set-uri: http://keycloak:8080/realms/spring-backend-lab/protocol/openid-connect/certs
+
+logging:
+  level:
+    org.springframework.security: INFO
