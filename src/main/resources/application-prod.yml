@@ -1,62 +1,22 @@
-server:
-  port: 8080
-
 spring:
-  application:
-    name: spring-backend-lab
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate:
-        default_batch_fetch_size: 20
-        jdbc:
-          batch_size: 50
-          order_inserts: true
-          order_updates: true
-
-  liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.yaml
-    enabled: true
+    url: jdbc:postgresql://postgres:5432/spring_backend_lab
 
   data:
     redis:
-      host: ${SPRING_REDIS_HOST}
-      port: ${SPRING_REDIS_PORT}
+      host: redis
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: kafka:9092
 
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8081/realms/spring-backend-lab
+          issuer-uri: https://auth.spring-backend-lab.ru/realms/spring-backend-lab
+          jwk-set-uri: http://keycloak:8080/realms/spring-backend-lab/protocol/openid-connect/certs
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health, metrics, info, prometheus
-
-app:
-  kafka:
-    topics:
-      order-notification:
-        name: order-notification
-        partitions: 3
-        replication-factor: 1
-
-retryable_task:
-  delay: 30
-  batchLimit: 50
-
-logging:
-  level:
-    org.springframework.security: DEBUG
+#logging:
+#  level:
+#    org.springframework.security: INFO
